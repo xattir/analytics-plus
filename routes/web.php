@@ -58,16 +58,16 @@ Route::prefix('dashboard')->middleware(['auth','ActiveAccount','verified'])->nam
     Route::get('/notifications', [FrontendProfileController::class,'notifications'])->name('notifications');
     
     // Analytics routes for users
-    Route::resource('analytics', \App\Http\Controllers\Backend\BackendAnalyticsController::class)->only(['index', 'create', 'store', 'show']);
-    Route::get('analytics/{site}/tracking-code', [\App\Http\Controllers\Backend\BackendAnalyticsController::class, 'trackingCode'])->name('analytics.tracking-code');
-    Route::get('analytics/{site}/members', [\App\Http\Controllers\Backend\BackendAnalyticsController::class, 'members'])->name('analytics.members');
-    Route::post('analytics/{site}/invite', [\App\Http\Controllers\Backend\BackendAnalyticsController::class, 'sendInvitation'])->name('analytics.invite');
-    Route::post('analytics/{site}/remove-member', [\App\Http\Controllers\Backend\BackendAnalyticsController::class, 'removeMember'])->name('analytics.remove-member');
-    Route::delete('analytics/invitations/{invitation}', [\App\Http\Controllers\Backend\BackendAnalyticsController::class, 'cancelInvitation'])->name('analytics.cancel-invitation');
+    Route::resource('analytics', BackendAnalyticsController::class, ['parameters' => ['analytics' => 'site']])->only(['index', 'create', 'store', 'show']);
+    Route::get('analytics/{site}/tracking-code', [BackendAnalyticsController::class, 'trackingCode'])->name('analytics.tracking-code');
+    Route::get('analytics/{site}/members', [BackendAnalyticsController::class, 'members'])->name('analytics.members');
+    Route::post('analytics/{site}/invite', [BackendAnalyticsController::class, 'sendInvitation'])->name('analytics.invite');
+    Route::post('analytics/{site}/remove-member', [BackendAnalyticsController::class, 'removeMember'])->name('analytics.remove-member');
+    Route::delete('analytics/invitations/{invitation}', [BackendAnalyticsController::class, 'cancelInvitation'])->name('analytics.cancel-invitation');
     
     // Public invitation routes
-    Route::get('analytics/invitations/{token}/accept', [\App\Http\Controllers\Backend\BackendAnalyticsController::class, 'acceptInvitation'])->name('analytics.accept-invitation');
-    Route::get('analytics/invitations/{token}/reject', [\App\Http\Controllers\Backend\BackendAnalyticsController::class, 'rejectInvitation'])->name('analytics.reject-invitation');
+    Route::get('analytics/invitations/{token}/accept', [BackendAnalyticsController::class, 'acceptInvitation'])->name('analytics.accept-invitation');
+    Route::get('analytics/invitations/{token}/reject', [BackendAnalyticsController::class, 'rejectInvitation'])->name('analytics.reject-invitation');
     
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/settings',[FrontendProfileController::class,'profile_edit'])->name('edit');
@@ -124,7 +124,7 @@ Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->gr
         Route::get('error-reports/{report}',[BackendTrafficsController::class,'error_report'])->name('traffics.error-report');
         
         // Analytics routes for admin dashboard
-        Route::resource('analytics', BackendAnalyticsController::class)->only(['index', 'create', 'store', 'show']);
+        Route::resource('analytics', BackendAnalyticsController::class, ['parameters' => ['analytics' => 'site']])->only(['index', 'create', 'store', 'show']);
         Route::get('analytics/{site}/tracking-code', [BackendAnalyticsController::class, 'trackingCode'])->name('analytics.tracking-code');
         Route::get('analytics/{site}/members', [BackendAnalyticsController::class, 'members'])->name('analytics.members');
         Route::post('analytics/{site}/invite', [BackendAnalyticsController::class, 'sendInvitation'])->name('analytics.invite');

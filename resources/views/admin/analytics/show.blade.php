@@ -1,24 +1,24 @@
-@extends('layouts.admin', ['page_title' => 'Analytics Dashboard - ' . $site->domain])
+@extends('layouts.admin', ['page_title' => 'لوحة تحكم التحليلات - ' . $site->domain])
 
 @section('content')
 <div class="col-12 p-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4>Analytics Dashboard: {{ $site->domain }}</h4>
+        <h4>لوحة تحكم التحليلات: {{ $site->domain }}</h4>
         <div>
             @if(isset($isAdminRoute) && $isAdminRoute)
-                <a href="{{ route('admin.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">Get Tracking Code</a>
+                <a href="{{ route('admin.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">الحصول على كود التتبع</a>
                 @if(isset($isSuperAdmin) && $isSuperAdmin)
-                    <a href="{{ route('admin.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">Manage Team</a>
+                    <a href="{{ route('admin.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">إدارة الفريق</a>
                 @elseif($site->user_id == auth()->id())
-                    <a href="{{ route('admin.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">Manage Team</a>
+                    <a href="{{ route('admin.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">إدارة الفريق</a>
                 @endif
-                <a href="{{ route('admin.analytics.index') }}" class="btn btn-sm btn-secondary">Back to Sites</a>
+                <a href="{{ route('admin.analytics.index') }}" class="btn btn-sm btn-secondary">العودة إلى المواقع</a>
             @else
-                <a href="{{ route('user.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">Get Tracking Code</a>
+                <a href="{{ route('user.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">الحصول على كود التتبع</a>
                 @if($site->user_id == auth()->id())
-                    <a href="{{ route('user.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">Manage Team</a>
+                    <a href="{{ route('user.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">إدارة الفريق</a>
                 @endif
-                <a href="{{ route('user.analytics.index') }}" class="btn btn-sm btn-secondary">Back to Sites</a>
+                <a href="{{ route('user.analytics.index') }}" class="btn btn-sm btn-secondary">العودة إلى المواقع</a>
             @endif
         </div>
     </div>
@@ -26,16 +26,16 @@
     <!-- Date Range Filter -->
     <form method="GET" action="{{ (isset($isAdminRoute) && $isAdminRoute) ? route('admin.analytics.show', ['site' => $site->site_key]) : route('user.analytics.show', ['site' => $site->site_key]) }}" class="row mb-3">
         <div class="col-md-4">
-            <label>Date From</label>
+            <label>من تاريخ</label>
             <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control">
         </div>
         <div class="col-md-4">
-            <label>Date To</label>
+            <label>إلى تاريخ</label>
             <input type="date" name="date_to" value="{{ $dateTo }}" class="form-control">
         </div>
         <div class="col-md-4">
             <label>&nbsp;</label>
-            <button type="submit" class="btn btn-primary d-block">Filter</button>
+            <button type="submit" class="btn btn-primary d-block">تصفية</button>
         </div>
     </form>
     
@@ -44,7 +44,7 @@
         <div class="col-md-3">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="card-title text-muted mb-2">Total Sessions</h6>
+                    <h6 class="card-title text-muted mb-2">إجمالي الجلسات</h6>
                     <h2 class="mb-0">{{ number_format($stats['total_sessions']) }}</h2>
                 </div>
             </div>
@@ -52,7 +52,7 @@
         <div class="col-md-3">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="card-title text-muted mb-2">Unique Visitors</h6>
+                    <h6 class="card-title text-muted mb-2">الزوار الفريدون</h6>
                     <h2 class="mb-0">{{ number_format($stats['unique_visitors']) }}</h2>
                 </div>
             </div>
@@ -60,7 +60,7 @@
         <div class="col-md-3">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="card-title text-muted mb-2">Pageviews</h6>
+                    <h6 class="card-title text-muted mb-2">مشاهدات الصفحة</h6>
                     <h2 class="mb-0">{{ number_format($stats['total_pageviews']) }}</h2>
                 </div>
             </div>
@@ -68,7 +68,7 @@
         <div class="col-md-3">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="card-title text-muted mb-2">Bounce Rate</h6>
+                    <h6 class="card-title text-muted mb-2">معدل الارتداد</h6>
                     <h2 class="mb-0">{{ number_format($stats['bounce_rate'], 2) }}%</h2>
                 </div>
             </div>
@@ -79,7 +79,7 @@
         <div class="col-md-3">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="card-title text-muted mb-2">Avg. Duration</h6>
+                    <h6 class="card-title text-muted mb-2">متوسط المدة</h6>
                     <h2 class="mb-0">{{ gmdate('H:i:s', ($stats['avg_duration'] ?? 0) / 1000) }}</h2>
                 </div>
             </div>
@@ -87,7 +87,7 @@
         <div class="col-md-3">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="card-title text-muted mb-2">Pages/Session</h6>
+                    <h6 class="card-title text-muted mb-2">صفحات/جلسة</h6>
                     <h2 class="mb-0">{{ number_format($stats['avg_pages_per_session'] ?? 0, 2) }}</h2>
                 </div>
             </div>
@@ -95,7 +95,7 @@
         <div class="col-md-3">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="card-title text-muted mb-2">New Visitors</h6>
+                    <h6 class="card-title text-muted mb-2">زوار جدد</h6>
                     <h2 class="mb-0">{{ number_format($stats['new_visitors']) }}</h2>
                 </div>
             </div>
@@ -103,7 +103,7 @@
         <div class="col-md-3">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="card-title text-muted mb-2">Returning Visitors</h6>
+                    <h6 class="card-title text-muted mb-2">زوار عائدون</h6>
                     <h2 class="mb-0">{{ number_format($stats['returning_visitors']) }}</h2>
                 </div>
             </div>
@@ -115,7 +115,7 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Sessions & Pageviews Over Time</h5>
+                    <h5 class="mb-0">الجلسات ومشاهدات الصفحة مع الوقت</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="timeSeriesChart" style="max-height: 300px;"></canvas>
@@ -129,7 +129,7 @@
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Top Browsers</h5>
+                    <h5 class="mb-0">أفضل المتصفحات</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="browsersChart" style="max-height: 250px;"></canvas>
@@ -140,7 +140,7 @@
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Top Devices</h5>
+                    <h5 class="mb-0">أفضل الأجهزة</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="devicesChart" style="max-height: 250px;"></canvas>
@@ -151,7 +151,7 @@
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Top Operating Systems</h5>
+                    <h5 class="mb-0">أفضل أنظمة التشغيل</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="osChart" style="max-height: 250px;"></canvas>
@@ -165,15 +165,15 @@
         <div class="col-md-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Top Pages</h5>
+                    <h5 class="mb-0">أفضل الصفحات</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm table-hover">
                             <thead>
                                 <tr>
-                                    <th>Path</th>
-                                    <th class="text-end">Views</th>
+                                    <th>المسار</th>
+                                    <th class="text-end">المشاهدات</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -184,7 +184,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="2" class="text-center text-muted">No data available</td>
+                                    <td colspan="2" class="text-center text-muted">لا توجد بيانات متاحة</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -197,15 +197,15 @@
         <div class="col-md-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Top Countries</h5>
+                    <h5 class="mb-0">أفضل الدول</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm table-hover">
                             <thead>
                                 <tr>
-                                    <th>Country</th>
-                                    <th class="text-end">Visitors</th>
+                                    <th>الدولة</th>
+                                    <th class="text-end">الزوار</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -215,14 +215,14 @@
                                         @if($country->country)
                                             <span class="badge bg-primary">{{ $country->country }}</span>
                                         @else
-                                            <span class="text-muted">Unknown</span>
+                                            <span class="text-muted">غير معروف</span>
                                         @endif
                                     </td>
                                     <td class="text-end"><strong>{{ number_format($country->count) }}</strong></td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="2" class="text-center text-muted">No data available</td>
+                                    <td colspan="2" class="text-center text-muted">لا توجد بيانات متاحة</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -238,23 +238,23 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Recent Sessions</h5>
-                    <span class="badge bg-secondary">{{ $sessions->total() }} total</span>
+                    <h5 class="mb-0">الجلسات الأخيرة</h5>
+                    <span class="badge bg-secondary">إجمالي {{ $sessions->total() }}</span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Session ID</th>
-                                    <th>Entry Path</th>
-                                    <th>Pages</th>
-                                    <th>Duration</th>
-                                    <th>Device</th>
-                                    <th>Browser</th>
-                                    <th>Country</th>
-                                    <th>First Seen</th>
-                                    <th>Actions</th>
+                                    <th>معرف الجلسة</th>
+                                    <th>مسار الدخول</th>
+                                    <th>الصفحات</th>
+                                    <th>المدة</th>
+                                    <th>الجهاز</th>
+                                    <th>المتصفح</th>
+                                    <th>الدولة</th>
+                                    <th>أول ظهور</th>
+                                    <th>الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -264,7 +264,7 @@
                                     <td><code class="small">{{ Str::limit($session->entry_path, 30) }}</code></td>
                                     <td>
                                         <span class="badge bg-info">{{ $session->pages_count }}</span>
-                                        <small class="text-muted">({{ $session->paths_count }} paths)</small>
+                                        <small class="text-muted">({{ $session->paths_count }} مسار)</small>
                                     </td>
                                     <td>{{ gmdate('H:i:s', ($session->duration_ms ?? 0) / 1000) }}</td>
                                     <td>
@@ -284,12 +284,12 @@
                                     </td>
                                     <td>{{ $session->first_seen->format('Y-m-d H:i') }}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-info" onclick="viewSessionDetails('{{ $session->session_id }}')">View</button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewSessionDetails('{{ $session->session_id }}')">عرض</button>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="9" class="text-center text-muted py-4">No sessions found for this period</td>
+                                    <td colspan="9" class="text-center text-muted py-4">لا توجد جلسات لهذه الفترة</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -321,7 +321,7 @@ if (timeSeriesCtx) {
                 @endforeach
             ],
             datasets: [{
-                label: 'Sessions',
+                label: 'الجلسات',
                 data: [
                     @foreach($timeSeries as $data)
                     {{ $data->sessions ?? 0 }},
@@ -333,7 +333,7 @@ if (timeSeriesCtx) {
                 tension: 0.4,
                 fill: true
             }, {
-                label: 'Pageviews',
+                label: 'مشاهدات الصفحة',
                 data: [
                     @foreach($timeSeries as $data)
                     {{ $data->pageviews ?? 0 }},
