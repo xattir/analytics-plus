@@ -37,6 +37,11 @@ class RouteServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->configureRateLimiting();
+        
+        // Explicitly bind AnalyticsSite to use site_key for route model binding
+        Route::bind('site', function ($value) {
+            return \App\Models\AnalyticsSite::where('site_key', $value)->firstOrFail();
+        });
 
         $this->routes(function () {
             Route::prefix('api')
