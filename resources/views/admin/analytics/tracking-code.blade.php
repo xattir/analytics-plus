@@ -15,7 +15,7 @@
     
     <div class="mb-3">
         <button class="btn btn-primary" onclick="copyToClipboard()">Copy to Clipboard</button>
-        <a href="{{ request()->routeIs('admin.*') ? route('admin.analytics.show', $site->site_key) : route('user.analytics.show', $site->site_key) }}" class="btn btn-secondary">View Dashboard</a>
+        <a href="{{ request()->routeIs('admin.*') ? route('admin.analytics.show', ['site' => $site->site_key]) : route('user.analytics.show', ['site' => $site->site_key]) }}" class="btn btn-secondary">View Dashboard</a>
     </div>
     
     <script>

@@ -4,7 +4,7 @@
 <div class="col-12 p-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4>Manage Team: {{ $site->domain }}</h4>
-        <a href="{{ request()->routeIs('admin.*') ? route('admin.analytics.show', $site->site_key) : route('user.analytics.show', $site->site_key) }}" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="{{ request()->routeIs('admin.*') ? route('admin.analytics.show', ['site' => $site->site_key]) : route('user.analytics.show', ['site' => $site->site_key]) }}" class="btn btn-secondary">Back to Dashboard</a>
     </div>
     
     <!-- Current Members -->
@@ -34,7 +34,7 @@
                         <td>{{ $member->email }}</td>
                         <td>{{ $member->pivot->created_at->format('Y-m-d') }}</td>
                         <td>
-                            <form method="POST" action="{{ request()->routeIs('admin.*') ? route('admin.analytics.remove-member', $site->site_key) : route('user.analytics.remove-member', $site->site_key) }}" class="d-inline">
+                            <form method="POST" action="{{ request()->routeIs('admin.*') ? route('admin.analytics.remove-member', ['site' => $site->site_key]) : route('user.analytics.remove-member', ['site' => $site->site_key]) }}" class="d-inline">
                                 @csrf
                                 <input type="hidden" name="user_id" value="{{ $member->id }}">
                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Remove</button>
@@ -56,7 +56,7 @@
             <h5>Invite New Member</h5>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ request()->routeIs('admin.*') ? route('admin.analytics.invite', $site->site_key) : route('user.analytics.invite', $site->site_key) }}">
+            <form method="POST" action="{{ request()->routeIs('admin.*') ? route('admin.analytics.invite', ['site' => $site->site_key]) : route('user.analytics.invite', ['site' => $site->site_key]) }}">
                 @csrf
                 <div class="row">
                     <div class="col-md-8">

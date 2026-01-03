@@ -56,14 +56,14 @@
                     <td>{{ $site->created_at->format('Y-m-d H:i') }}</td>
                     <td>
                         @if(isset($isSuperAdmin) && $isSuperAdmin)
-                            <a href="{{ route('admin.analytics.show', $site->site_key) }}" class="btn btn-sm btn-info">View Dashboard</a>
-                            <a href="{{ route('admin.analytics.tracking-code', $site->site_key) }}" class="btn btn-sm btn-success">Get Code</a>
-                            <a href="{{ route('admin.analytics.members', $site->site_key) }}" class="btn btn-sm btn-secondary">Manage Team</a>
+                            <a href="{{ route('admin.analytics.show', ['site' => $site->site_key]) }}" class="btn btn-sm btn-info">View Dashboard</a>
+                            <a href="{{ route('admin.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">Get Code</a>
+                            <a href="{{ route('admin.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-secondary">Manage Team</a>
                         @else
-                            <a href="{{ route('user.analytics.show', $site->site_key) }}" class="btn btn-sm btn-info">View Dashboard</a>
-                            <a href="{{ route('user.analytics.tracking-code', $site->site_key) }}" class="btn btn-sm btn-success">Get Code</a>
+                            <a href="{{ route('user.analytics.show', ['site' => $site->site_key]) }}" class="btn btn-sm btn-info">View Dashboard</a>
+                            <a href="{{ route('user.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">Get Code</a>
                             @if($site->user_id == auth()->id())
-                                <a href="{{ route('user.analytics.members', $site->site_key) }}" class="btn btn-sm btn-secondary">Manage Team</a>
+                                <a href="{{ route('user.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-secondary">Manage Team</a>
                             @endif
                         @endif
                     </td>

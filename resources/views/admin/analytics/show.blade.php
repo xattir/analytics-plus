@@ -6,17 +6,17 @@
         <h4>Analytics Dashboard: {{ $site->domain }}</h4>
         <div>
             @if(isset($isAdminRoute) && $isAdminRoute)
-                <a href="{{ route('admin.analytics.tracking-code', $site->site_key) }}" class="btn btn-sm btn-success">Get Tracking Code</a>
+                <a href="{{ route('admin.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">Get Tracking Code</a>
                 @if(isset($isSuperAdmin) && $isSuperAdmin)
-                    <a href="{{ route('admin.analytics.members', $site->site_key) }}" class="btn btn-sm btn-primary">Manage Team</a>
+                    <a href="{{ route('admin.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">Manage Team</a>
                 @elseif($site->user_id == auth()->id())
-                    <a href="{{ route('admin.analytics.members', $site->site_key) }}" class="btn btn-sm btn-primary">Manage Team</a>
+                    <a href="{{ route('admin.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">Manage Team</a>
                 @endif
                 <a href="{{ route('admin.analytics.index') }}" class="btn btn-sm btn-secondary">Back to Sites</a>
             @else
-                <a href="{{ route('user.analytics.tracking-code', $site->site_key) }}" class="btn btn-sm btn-success">Get Tracking Code</a>
+                <a href="{{ route('user.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">Get Tracking Code</a>
                 @if($site->user_id == auth()->id())
-                    <a href="{{ route('user.analytics.members', $site->site_key) }}" class="btn btn-sm btn-primary">Manage Team</a>
+                    <a href="{{ route('user.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">Manage Team</a>
                 @endif
                 <a href="{{ route('user.analytics.index') }}" class="btn btn-sm btn-secondary">Back to Sites</a>
             @endif
@@ -24,7 +24,7 @@
     </div>
     
     <!-- Date Range Filter -->
-    <form method="GET" action="{{ (isset($isAdminRoute) && $isAdminRoute) ? route('admin.analytics.show', $site->site_key) : route('user.analytics.show', $site->site_key) }}" class="row mb-3">
+    <form method="GET" action="{{ (isset($isAdminRoute) && $isAdminRoute) ? route('admin.analytics.show', ['site' => $site->site_key]) : route('user.analytics.show', ['site' => $site->site_key]) }}" class="row mb-3">
         <div class="col-md-4">
             <label>Date From</label>
             <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control">
