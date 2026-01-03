@@ -1,0 +1,344 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\AnalyticsSite;
+use App\Models\AnalyticsSession;
+use App\Models\AnalyticsSessionPath;
+use App\Helpers\UserSystemInfoHelper;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Stevebauman\Location\Facades\Location;
+
+class AnalyticsController extends Controller
+{
+    /**
+     * Track a page view event
+     */
+    public function track(Request $request)
+    {
+        try {
+            $siteKey = $request->input('site_key');
+            if (!$siteKey) {
+                return response()->json(['error' => 'site_key is required'], 400);
+            }
+
+            // Get or create site
+            $site = AnalyticsSite::firstOrCreate(
+                ['site_key' => $siteKey],
+                ['domain' => $request->input('domain', parse_url($request->input('url', ''), PHP_URL_HOST) ?? 'unknown')]
+            );
+
+            // Get session ID from request or generate new one
+            $sessionId = $request->input('session_id') ?? $this->generateSessionId();
+            
+            // Get or create session
+            $session = AnalyticsSession::firstOrNew([
+                'site_id' => $site->id,
+                'session_id' => $sessionId,
+            ]);
+
+            $isNewSession = !$session->exists;
+            $now = now();
+
+            // Get request data
+            $path = $request->input('path', '/');
+            $userAgent = $request->input('user_agent') ?? $request->header('User-Agent', '');
+            $ip = $this->getIpAddress($request);
+            
+            // Parse user agent
+            $deviceInfo = $this->parseDeviceInfo($userAgent, $request);
+            
+            // Get geo location
+            $geoInfo = $this->getGeoInfo($ip);
+            
+            // Check if bot
+            $isBot = $this->isBot($userAgent);
+            
+            // Get device fingerprint
+            $fingerprint = $request->input('fingerprint') ?? $this->generateFingerprint($request);
+            
+            // Check if returning visitor
+            $isReturning = $this->isReturningVisitor($site->id, $fingerprint);
+            
+            // Parse UTM parameters
+            $utmParams = $this->parseUtmParams($request);
+            
+            // Get network info
+            $networkInfo = $this->getNetworkInfo($request);
+            
+            // Get screen/viewport info
+            $screenInfo = $this->getScreenInfo($request);
+            
+            // Get engagement metrics
+            $engagement = $this->getEngagementMetrics($request);
+            
+            // Update or create session
+            if ($isNewSession) {
+                $session->first_seen = $now;
+                $session->entry_path = $path;
+                $session->pages_count = 1;
+            } else {
+                $session->pages_count = ($session->pages_count ?? 0) + 1;
+            }
+            
+            $session->last_seen = $now;
+            $session->exit_path = $path;
+            $session->duration_ms = $request->input('duration_ms', 0);
+            $session->user_agent = $userAgent;
+            $session->device_fingerprint = $fingerprint;
+            $session->device_type = $deviceInfo['device_type'];
+            $session->os = $deviceInfo['os'];
+            $session->os_version = $deviceInfo['os_version'];
+            $session->browser = $deviceInfo['browser'];
+            $session->browser_version = $deviceInfo['browser_version'];
+            $session->browser_engine = $deviceInfo['browser_engine'];
+            $session->screen_width = $screenInfo['screen_width'];
+            $session->screen_height = $screenInfo['screen_height'];
+            $session->viewport_width = $screenInfo['viewport_width'];
+            $session->viewport_height = $screenInfo['viewport_height'];
+            $session->device_pixel_ratio = $screenInfo['device_pixel_ratio'];
+            $session->network_type = $networkInfo['network_type'];
+            $session->rtt_ms = $networkInfo['rtt_ms'];
+            $session->downlink_mbps = $networkInfo['downlink_mbps'];
+            $session->country = $geoInfo['country_code'];
+            $session->city = $geoInfo['city'];
+            $session->isp = $geoInfo['isp'];
+            $session->utm_source = $utmParams['utm_source'];
+            $session->utm_medium = $utmParams['utm_medium'];
+            $session->utm_campaign = $utmParams['utm_campaign'];
+            $session->is_returning = $isReturning;
+            $session->is_bounce = $request->input('is_bounce', false);
+            $session->is_bot = $isBot;
+            $session->max_scroll_percent = max($session->max_scroll_percent ?? 0, $engagement['scroll_percent']);
+            $session->active_time_ms = ($session->active_time_ms ?? 0) + $engagement['active_time_ms'];
+            $session->idle_time_ms = ($session->idle_time_ms ?? 0) + $engagement['idle_time_ms'];
+            $session->ip = inet_pton($ip);
+            
+            $session->save();
+            
+            // Track path
+            $pathPosition = AnalyticsSessionPath::where('session_id', $sessionId)
+                ->where('site_id', $site->id)
+                ->max('position') ?? 0;
+            
+            AnalyticsSessionPath::create([
+                'site_id' => $site->id,
+                'session_id' => $sessionId,
+                'path' => $path,
+                'position' => $pathPosition + 1,
+                'scroll_percent' => $engagement['scroll_percent'],
+                'time_spent_ms' => $engagement['time_spent_ms'],
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'session_id' => $sessionId,
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Analytics tracking error: ' . $e->getMessage());
+            return response()->json(['error' => 'Tracking failed'], 500);
+        }
+    }
+    
+    /**
+     * Generate a unique session ID
+     */
+    private function generateSessionId(): string
+    {
+        return (string) Str::uuid();
+    }
+    
+    /**
+     * Get IP address from request
+     */
+    private function getIpAddress(Request $request): string
+    {
+        $ip = $request->input('ip');
+        if ($ip) {
+            return $ip;
+        }
+        
+        return UserSystemInfoHelper::get_ip();
+    }
+    
+    /**
+     * Parse device information from user agent and request
+     */
+    private function parseDeviceInfo(string $userAgent, Request $request): array
+    {
+        $device = UserSystemInfoHelper::get_device();
+        $os = UserSystemInfoHelper::get_os();
+        $browser = UserSystemInfoHelper::get_browsers();
+        
+        // Map device type
+        $deviceType = null;
+        $deviceLower = strtolower($device);
+        if (stripos($deviceLower, 'mobile') !== false) {
+            $deviceType = 'mobile';
+        } elseif (stripos($deviceLower, 'tablet') !== false) {
+            $deviceType = 'tablet';
+        } else {
+            $deviceType = 'desktop';
+        }
+        
+        // Extract OS version
+        $osVersion = null;
+        if (preg_match('/(?:Windows|Mac OS X|Linux|Android|iOS)\s+([\d.]+)/i', $userAgent, $matches)) {
+            $osVersion = $matches[1];
+        }
+        
+        // Extract browser version
+        $browserVersion = null;
+        if (preg_match('/(?:Chrome|Firefox|Safari|Edge|Opera)\/([\d.]+)/i', $userAgent, $matches)) {
+            $browserVersion = $matches[1];
+        }
+        
+        // Detect browser engine
+        $browserEngine = null;
+        if (stripos($userAgent, 'Chrome') !== false || stripos($userAgent, 'Edge') !== false) {
+            $browserEngine = 'Blink';
+        } elseif (stripos($userAgent, 'Firefox') !== false) {
+            $browserEngine = 'Gecko';
+        } elseif (stripos($userAgent, 'Safari') !== false && stripos($userAgent, 'Chrome') === false) {
+            $browserEngine = 'WebKit';
+        }
+        
+        return [
+            'device_type' => $deviceType,
+            'os' => $os,
+            'os_version' => $osVersion,
+            'browser' => $browser,
+            'browser_version' => $browserVersion,
+            'browser_engine' => $browserEngine,
+        ];
+    }
+    
+    /**
+     * Get geo location information
+     */
+    private function getGeoInfo(string $ip): array
+    {
+        try {
+            $location = Location::get($ip);
+            if ($location) {
+                return [
+                    'country_code' => $location->countryCode ?? null,
+                    'city' => $location->cityName ?? null,
+                    'isp' => null, // Location package may not provide ISP
+                ];
+            }
+        } catch (\Exception $e) {
+            // Fall through to default
+        }
+        
+        return [
+            'country_code' => null,
+            'city' => null,
+            'isp' => null,
+        ];
+    }
+    
+    /**
+     * Check if user agent is a bot
+     */
+    private function isBot(string $userAgent): bool
+    {
+        $botPatterns = [
+            'bot', 'crawler', 'spider', 'scraper', 'curl', 'wget',
+            'python', 'java', 'go-http', 'php', 'ruby', 'perl',
+            'googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider',
+            'yandexbot', 'sogou', 'exabot', 'facebot', 'ia_archiver',
+        ];
+        
+        $userAgentLower = strtolower($userAgent);
+        foreach ($botPatterns as $pattern) {
+            if (strpos($userAgentLower, $pattern) !== false) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Generate device fingerprint
+     */
+    private function generateFingerprint(Request $request): string
+    {
+        $components = [
+            $request->input('screen_width'),
+            $request->input('screen_height'),
+            $request->input('timezone'),
+            $request->input('language'),
+            $request->header('User-Agent'),
+        ];
+        
+        return hash('sha256', implode('|', array_filter($components)));
+    }
+    
+    /**
+     * Check if visitor is returning
+     */
+    private function isReturningVisitor(int $siteId, string $fingerprint): bool
+    {
+        return AnalyticsSession::where('site_id', $siteId)
+            ->where('device_fingerprint', $fingerprint)
+            ->where('created_at', '<', now()->subHours(24))
+            ->exists();
+    }
+    
+    /**
+     * Parse UTM parameters from request
+     */
+    private function parseUtmParams(Request $request): array
+    {
+        return [
+            'utm_source' => $request->input('utm_source'),
+            'utm_medium' => $request->input('utm_medium'),
+            'utm_campaign' => $request->input('utm_campaign'),
+        ];
+    }
+    
+    /**
+     * Get network information
+     */
+    private function getNetworkInfo(Request $request): array
+    {
+        return [
+            'network_type' => $request->input('network_type'),
+            'rtt_ms' => $request->input('rtt_ms'),
+            'downlink_mbps' => $request->input('downlink_mbps'),
+        ];
+    }
+    
+    /**
+     * Get screen/viewport information
+     */
+    private function getScreenInfo(Request $request): array
+    {
+        return [
+            'screen_width' => $request->input('screen_width'),
+            'screen_height' => $request->input('screen_height'),
+            'viewport_width' => $request->input('viewport_width'),
+            'viewport_height' => $request->input('viewport_height'),
+            'device_pixel_ratio' => $request->input('device_pixel_ratio'),
+        ];
+    }
+    
+    /**
+     * Get engagement metrics
+     */
+    private function getEngagementMetrics(Request $request): array
+    {
+        return [
+            'scroll_percent' => $request->input('scroll_percent', 0),
+            'time_spent_ms' => $request->input('time_spent_ms', 0),
+            'active_time_ms' => $request->input('active_time_ms', 0),
+            'idle_time_ms' => $request->input('idle_time_ms', 0),
+        ];
+    }
+}

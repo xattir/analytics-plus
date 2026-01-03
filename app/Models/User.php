@@ -128,5 +128,21 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(\App\Models\ItemSeen::class,'type_id','id')->where('type',"USER");
     }
 
+    public function analyticsSites()
+    {
+        return $this->hasMany(\App\Models\AnalyticsSite::class, 'user_id');
+    }
+    
+    public function memberAnalyticsSites()
+    {
+        return $this->belongsToMany(\App\Models\AnalyticsSite::class, 'analytics_site_users', 'user_id', 'site_id')
+            ->withTimestamps();
+    }
+    
+    public function analyticsInvitations()
+    {
+        return $this->hasMany(\App\Models\AnalyticsSiteInvitation::class, 'email', 'email');
+    }
+
 
 }

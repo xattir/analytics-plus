@@ -11,13 +11,7 @@ class BackendTestController extends Controller
     public function test(Request $request)
     {
 
-        config(['nafezly-payments.VERIFY_ROUTE_NAME'=>"payment-verify"]);
-
-        $payment = new YallaPayPayment();
-        $res = $payment->setAmount(500)->pay();
-        return $res['redirect_url'];
-        dd($res);
-
+       
         
         dd("TEST");
     }
