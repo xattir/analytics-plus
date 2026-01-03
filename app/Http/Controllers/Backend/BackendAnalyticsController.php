@@ -150,6 +150,9 @@ class BackendAnalyticsController extends Controller
         // Get real-time visitors
         $realtimeVisitors = $this->getRealtimeVisitors($siteId);
         
+        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdminRoute = request()->routeIs('admin.*');
+        
         return view('admin.analytics.show', compact(
             'site',
             'stats',
@@ -164,7 +167,9 @@ class BackendAnalyticsController extends Controller
             'topCampaigns',
             'realtimeVisitors',
             'dateFrom',
-            'dateTo'
+            'dateTo',
+            'isSuperAdmin',
+            'isAdminRoute'
         ));
     }
 
@@ -191,7 +196,11 @@ class BackendAnalyticsController extends Controller
             'domain' => $request->domain,
         ]);
         
-        return redirect()->route('user.analytics.show', $site->id)
+        $redirectRoute = request()->routeIs('admin.*') 
+            ? route('admin.analytics.show', $site->id)
+            : route('user.analytics.show', $site->id);
+        
+        return redirect($redirectRoute)
             ->with('success', 'Analytics site created successfully. Use the tracking code below.');
     }
 
@@ -388,8 +397,8 @@ class BackendAnalyticsController extends Controller
     {
         $site = AnalyticsSite::findOrFail($siteId);
         
-        // Check if user owns or is a member
-        if (!$site->canAccess(auth()->id())) {
+        // Superadmin can access any site, others need ownership or membership
+        if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
             abort(403, 'You do not have access to this site.');
         }
         $baseUrl = config('app.url');
@@ -414,8 +423,8 @@ HTML;
     {
         $site = AnalyticsSite::findOrFail($siteId);
         
-        // Only owner can send invitations
-        if ($site->user_id != auth()->id()) {
+        // Only owner or superadmin can send invitations
+        if (!$this->isSuperAdmin() && $site->user_id != auth()->id()) {
             abort(403, 'Only the site owner can send invitations.');
         }
         
@@ -516,8 +525,8 @@ HTML;
     {
         $site = AnalyticsSite::findOrFail($siteId);
         
-        // Only owner can manage members
-        if ($site->user_id != auth()->id()) {
+        // Only owner or superadmin can manage members
+        if (!$this->isSuperAdmin() && $site->user_id != auth()->id()) {
             abort(403, 'Only the site owner can manage members.');
         }
         
@@ -534,8 +543,8 @@ HTML;
     {
         $site = AnalyticsSite::findOrFail($siteId);
         
-        // Only owner can remove members
-        if ($site->user_id != auth()->id()) {
+        // Only owner or superadmin can remove members
+        if (!$this->isSuperAdmin() && $site->user_id != auth()->id()) {
             abort(403, 'Only the site owner can remove members.');
         }
         
@@ -555,8 +564,8 @@ HTML;
     {
         $invitation = AnalyticsSiteInvitation::findOrFail($invitationId);
         
-        // Only owner can cancel invitations
-        if ($invitation->site->user_id != auth()->id()) {
+        // Only owner or superadmin can cancel invitations
+        if (!$this->isSuperAdmin() && $invitation->site->user_id != auth()->id()) {
             abort(403, 'Only the site owner can cancel invitations.');
         }
         

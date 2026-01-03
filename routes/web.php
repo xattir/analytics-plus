@@ -122,6 +122,14 @@ Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->gr
         Route::get('error-reports',[BackendTrafficsController::class,'error_reports'])->name('traffics.error-reports');
         Route::get('error-reports/{report}',[BackendTrafficsController::class,'error_report'])->name('traffics.error-report');
         
+        // Analytics routes for admin dashboard
+        Route::resource('analytics', BackendAnalyticsController::class)->only(['index', 'create', 'store', 'show']);
+        Route::get('analytics/{site}/tracking-code', [BackendAnalyticsController::class, 'trackingCode'])->name('analytics.tracking-code');
+        Route::get('analytics/{site}/members', [BackendAnalyticsController::class, 'members'])->name('analytics.members');
+        Route::post('analytics/{site}/invite', [BackendAnalyticsController::class, 'sendInvitation'])->name('analytics.invite');
+        Route::post('analytics/{site}/remove-member', [BackendAnalyticsController::class, 'removeMember'])->name('analytics.remove-member');
+        Route::delete('analytics/invitations/{invitation}', [BackendAnalyticsController::class, 'cancelInvitation'])->name('analytics.cancel-invitation');
+        
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/',[BackendSettingController::class,'index'])->name('index');
             Route::put('/update',[BackendSettingController::class,'update'])->name('update');

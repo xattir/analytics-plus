@@ -4,7 +4,7 @@
 <div class="col-12 p-3">
     <h4>Create New Analytics Site</h4>
     
-    <form method="POST" action="{{ route('user.analytics.store') }}" class="col-12 col-lg-6">
+    <form method="POST" action="{{ request()->routeIs('admin.*') ? route('admin.analytics.store') : route('user.analytics.store') }}" class="col-12 col-lg-6">
         @csrf
         
         <div class="mb-3">
@@ -14,7 +14,7 @@
         </div>
         
         <button type="submit" class="btn btn-primary">Create Site</button>
-        <a href="{{ route('user.analytics.index') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ request()->routeIs('admin.*') ? route('admin.analytics.index') : route('user.analytics.index') }}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
 @endsection

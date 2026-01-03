@@ -3,8 +3,8 @@
 @section('content')
 <div class="col-12 p-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4>Analytics Sites</h4>
-        <a href="{{ route('user.analytics.create') }}" class="btn btn-primary">Create New Site</a>
+        <h4>Analytics Sites @if(isset($isSuperAdmin) && $isSuperAdmin) <small class="text-muted">(All Sites - Superadmin View)</small> @endif</h4>
+        <a href="{{ request()->routeIs('admin.*') ? route('admin.analytics.create') : route('user.analytics.create') }}" class="btn btn-primary">Create New Site</a>
     </div>
     
     @if(isset($pendingInvitations) && $pendingInvitations->count() > 0)
@@ -28,6 +28,9 @@
                 <tr>
                     <th>ID</th>
                     <th>Domain</th>
+                    @if(isset($isSuperAdmin) && $isSuperAdmin)
+                    <th>Owner</th>
+                    @endif
                     <th>Site Key</th>
                     <th>Sessions</th>
                     <th>Created At</th>
@@ -39,20 +42,35 @@
                 <tr>
                     <td>{{ $site->id }}</td>
                     <td>{{ $site->domain }}</td>
+                    @if(isset($isSuperAdmin) && $isSuperAdmin)
+                    <td>
+                        @if($site->owner)
+                            {{ $site->owner->name }} ({{ $site->owner->email }})
+                        @else
+                            <span class="text-muted">No owner</span>
+                        @endif
+                    </td>
+                    @endif
                     <td><code>{{ $site->site_key }}</code></td>
                     <td>{{ $site->sessions_count }}</td>
                     <td>{{ $site->created_at->format('Y-m-d H:i') }}</td>
                     <td>
-                        <a href="{{ route('user.analytics.show', $site->id) }}" class="btn btn-sm btn-info">View Dashboard</a>
-                        <a href="{{ route('user.analytics.tracking-code', $site->id) }}" class="btn btn-sm btn-success">Get Code</a>
-                        @if($site->user_id == auth()->id())
-                            <a href="{{ route('user.analytics.members', $site->id) }}" class="btn btn-sm btn-secondary">Manage Team</a>
+                        @if(isset($isSuperAdmin) && $isSuperAdmin)
+                            <a href="{{ route('admin.analytics.show', $site->id) }}" class="btn btn-sm btn-info">View Dashboard</a>
+                            <a href="{{ route('admin.analytics.tracking-code', $site->id) }}" class="btn btn-sm btn-success">Get Code</a>
+                            <a href="{{ route('admin.analytics.members', $site->id) }}" class="btn btn-sm btn-secondary">Manage Team</a>
+                        @else
+                            <a href="{{ route('user.analytics.show', $site->id) }}" class="btn btn-sm btn-info">View Dashboard</a>
+                            <a href="{{ route('user.analytics.tracking-code', $site->id) }}" class="btn btn-sm btn-success">Get Code</a>
+                            @if($site->user_id == auth()->id())
+                                <a href="{{ route('user.analytics.members', $site->id) }}" class="btn btn-sm btn-secondary">Manage Team</a>
+                            @endif
                         @endif
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center">No analytics sites found. <a href="{{ route('user.analytics.create') }}">Create one</a></td>
+                    <td colspan="{{ isset($isSuperAdmin) && $isSuperAdmin ? '7' : '6' }}" class="text-center">No analytics sites found. <a href="{{ request()->routeIs('admin.*') ? route('admin.analytics.create') : route('user.analytics.create') }}">Create one</a></td>
                 </tr>
                 @endforelse
             </tbody>
