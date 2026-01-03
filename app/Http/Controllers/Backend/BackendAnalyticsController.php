@@ -415,8 +415,20 @@ class BackendAnalyticsController extends Controller
 <script>
     window.ANALYTICS_SITE_KEY = '{$site->site_key}';
     window.ANALYTICS_API_URL = '{$baseUrl}/api/analytics/track';
+    (function() {
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = '{$baseUrl}/js/analytics.js';
+        script.onload = function() {
+            // Script loaded successfully
+        };
+        script.onerror = function() {
+            console.error('Analytics script failed to load');
+        };
+        var firstScript = document.getElementsByTagName('script')[0];
+        firstScript.parentNode.insertBefore(script, firstScript);
+    })();
 </script>
-<script src="{$baseUrl}/js/analytics.js"></script>
 <!-- End Analytics Tracking Code -->
 HTML;
         

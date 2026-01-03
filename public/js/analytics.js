@@ -252,32 +252,28 @@
         }
     }
     
-    // Send tracking data
+    // Send tracking data (always async)
     function sendTracking(data, async = false) {
         if (!window.ANALYTICS_SITE_KEY) {
             console.warn('Analytics: ANALYTICS_SITE_KEY is not set');
             return;
         }
         
-        if (async) {
-            // Use fetch with keepalive for async requests
-            fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-                keepalive: true,
-            }).catch(function(error) {
+        // Always use async fetch with keepalive for non-blocking requests
+        fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            keepalive: true,
+            // Don't wait for response - fire and forget
+        }).catch(function(error) {
+            // Silently fail - don't block page rendering
+            if (window.console && console.error) {
                 console.error('Analytics tracking error:', error);
-            });
-        } else {
-            // Use XMLHttpRequest for synchronous requests
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', API_URL, true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify(data));
-        }
+            }
+        });
     }
     
     // Get URL parameter
@@ -310,12 +306,23 @@
         return null;
     }
     
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    // Initialize when DOM is ready (async-safe)
+    function initializeAnalytics() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            // Use requestIdleCallback if available for better performance
+            if (window.requestIdleCallback) {
+                requestIdleCallback(init, { timeout: 2000 });
+            } else {
+                // Fallback: use setTimeout for async execution
+                setTimeout(init, 0);
+            }
+        }
     }
+    
+    // Start initialization
+    initializeAnalytics();
     
     // Expose API
     window.Analytics = {
