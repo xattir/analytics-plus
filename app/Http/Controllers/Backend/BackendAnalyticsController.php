@@ -19,33 +19,62 @@ class BackendAnalyticsController extends Controller
     {
         $this->middleware('auth');
     }
+    
+    /**
+     * Check if user is superadmin
+     */
+    private function isSuperAdmin()
+    {
+        return auth()->user()->hasRole('superadmin');
+    }
+    
+    /**
+     * Check if user is admin (admin or superadmin)
+     */
+    private function isAdmin()
+    {
+        return auth()->user()->hasRole('admin') || $this->isSuperAdmin();
+    }
 
     /**
-     * List all analytics sites for the authenticated user (owned or member)
+     * List all analytics sites
+     * - Superadmin: sees all sites
+     * - Admin: sees only their own sites and sites they're members of
+     * - Regular users: sees only their own sites and sites they're members of
      */
     public function index(Request $request)
     {
         $userId = auth()->id();
+        $isSuperAdmin = $this->isSuperAdmin();
         
-        // Get sites user owns
-        $ownedSites = AnalyticsSite::where('user_id', $userId)
-            ->withCount('sessions')
-            ->get();
-        
-        // Get sites user is a member of
-        $memberSites = AnalyticsSite::whereHas('users', function($query) use ($userId) {
-            $query->where('user_id', $userId);
-        })->withCount('sessions')->get();
-        
-        // Merge and paginate
-        $allSites = $ownedSites->merge($memberSites)->unique('id');
-        $sites = new \Illuminate\Pagination\LengthAwarePaginator(
-            $allSites->forPage(\Illuminate\Pagination\Paginator::resolveCurrentPage(), 20),
-            $allSites->count(),
-            20,
-            \Illuminate\Pagination\Paginator::resolveCurrentPage(),
-            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
-        );
+        if ($isSuperAdmin) {
+            // Superadmin sees all sites
+            $sites = AnalyticsSite::withCount('sessions')
+                ->with('owner')
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+        } else {
+            // Regular users and admins see only their sites
+            // Get sites user owns
+            $ownedSites = AnalyticsSite::where('user_id', $userId)
+                ->withCount('sessions')
+                ->get();
+            
+            // Get sites user is a member of
+            $memberSites = AnalyticsSite::whereHas('users', function($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })->withCount('sessions')->get();
+            
+            // Merge and paginate
+            $allSites = $ownedSites->merge($memberSites)->unique('id');
+            $sites = new \Illuminate\Pagination\LengthAwarePaginator(
+                $allSites->forPage(\Illuminate\Pagination\Paginator::resolveCurrentPage(), 20),
+                $allSites->count(),
+                20,
+                \Illuminate\Pagination\Paginator::resolveCurrentPage(),
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+        }
         
         // Get pending invitations for current user
         $pendingInvitations = AnalyticsSiteInvitation::where('email', auth()->user()->email)
@@ -53,7 +82,7 @@ class BackendAnalyticsController extends Controller
             ->with('site')
             ->get();
         
-        return view('admin.analytics.index', compact('sites', 'pendingInvitations'));
+        return view('admin.analytics.index', compact('sites', 'pendingInvitations', 'isSuperAdmin'));
     }
 
     /**
@@ -63,8 +92,8 @@ class BackendAnalyticsController extends Controller
     {
         $site = AnalyticsSite::findOrFail($siteId);
         
-        // Check if user owns or is a member
-        if (!$site->canAccess(auth()->id())) {
+        // Superadmin can access any site, others need ownership or membership
+        if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
             abort(403, 'You do not have access to this site.');
         }
         
