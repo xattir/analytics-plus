@@ -532,8 +532,10 @@ HTML;
         
         $members = $site->users;
         $invitations = $site->invitations()->where('status', 'pending')->get();
+        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdminRoute = request()->routeIs('admin.*');
         
-        return view('admin.analytics.members', compact('site', 'members', 'invitations'));
+        return view('admin.analytics.members', compact('site', 'members', 'invitations', 'isSuperAdmin', 'isAdminRoute'));
     }
     
     /**
