@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service-dash-peterayoub-me
+  namespace: dashboard-namespace
+spec:
+  selector:
+    app: nginx-basic-dash-peterayoub-me
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      name: http
+    - protocol: TCP
+      port: 443
+      targetPort: 443
+      name: https
+  #type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-service-dash-peterayoub-me
+  namespace: dashboard-namespace
+spec:
+  selector:
+    app: php-basic-dash-peterayoub-me
+  ports:
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service-dash-peterayoub-me
+  namespace: dashboard-namespace
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis-dash-peterayoub-me
