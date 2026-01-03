@@ -205,8 +205,8 @@ class BackendAnalyticsController extends Controller
         ]);
         
         $redirectRoute = request()->routeIs('admin.*') 
-            ? route('admin.analytics.show', $site->id)
-            : route('user.analytics.show', $site->id);
+            ? route('admin.analytics.show', $site->site_key)
+            : route('user.analytics.show', $site->site_key);
         
         return redirect($redirectRoute)
             ->with('success', 'Analytics site created successfully. Use the tracking code below.');
@@ -491,6 +491,7 @@ HTML;
     {
         $invitation = AnalyticsSiteInvitation::where('token', $token)
             ->where('status', 'pending')
+            ->with('site')
             ->firstOrFail();
         
         if ($invitation->isExpired()) {
@@ -515,7 +516,7 @@ HTML;
             'accepted_at' => Carbon::now(),
         ]);
         
-        return redirect()->route('user.analytics.show', $invitation->site_id)
+        return redirect()->route('user.analytics.show', $invitation->site->site_key)
             ->with('success', 'Invitation accepted! You now have access to this site.');
     }
     
