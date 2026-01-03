@@ -88,9 +88,9 @@ class BackendAnalyticsController extends Controller
     /**
      * Show analytics dashboard for a specific site
      */
-    public function show(Request $request, $siteId)
+    public function show(Request $request, AnalyticsSite $site)
     {
-        $site = AnalyticsSite::findOrFail($siteId);
+        $siteId = $site->id;
         
         // Superadmin can access any site, others need ownership or membership
         if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
@@ -150,6 +150,13 @@ class BackendAnalyticsController extends Controller
         // Get real-time visitors
         $realtimeVisitors = $this->getRealtimeVisitors($siteId);
         
+        // Get sessions with path counts
+        $sessions = AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+            ->withCount('paths')
+            ->orderBy('first_seen', 'desc')
+            ->paginate(20);
+        
         $isSuperAdmin = $this->isSuperAdmin();
         $isAdminRoute = request()->routeIs('admin.*');
         
@@ -166,6 +173,7 @@ class BackendAnalyticsController extends Controller
             'topCountries',
             'topCampaigns',
             'realtimeVisitors',
+            'sessions',
             'dateFrom',
             'dateTo',
             'isSuperAdmin',
@@ -393,9 +401,8 @@ class BackendAnalyticsController extends Controller
     /**
      * Get tracking code for a site
      */
-    public function trackingCode($siteId)
+    public function trackingCode(AnalyticsSite $site)
     {
-        $site = AnalyticsSite::findOrFail($siteId);
         
         // Superadmin can access any site, others need ownership or membership
         if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
@@ -419,9 +426,8 @@ HTML;
     /**
      * Send invitation to user
      */
-    public function sendInvitation(Request $request, $siteId)
+    public function sendInvitation(Request $request, AnalyticsSite $site)
     {
-        $site = AnalyticsSite::findOrFail($siteId);
         
         // Only owner or superadmin can send invitations
         if (!$this->isSuperAdmin() && $site->user_id != auth()->id()) {
@@ -521,9 +527,8 @@ HTML;
     /**
      * Show site members and invitations
      */
-    public function members($siteId)
+    public function members(AnalyticsSite $site)
     {
-        $site = AnalyticsSite::findOrFail($siteId);
         
         // Only owner or superadmin can manage members
         if (!$this->isSuperAdmin() && $site->user_id != auth()->id()) {
@@ -541,9 +546,8 @@ HTML;
     /**
      * Remove member from site
      */
-    public function removeMember(Request $request, $siteId)
+    public function removeMember(Request $request, AnalyticsSite $site)
     {
-        $site = AnalyticsSite::findOrFail($siteId);
         
         // Only owner or superadmin can remove members
         if (!$this->isSuperAdmin() && $site->user_id != auth()->id()) {

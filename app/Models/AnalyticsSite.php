@@ -14,6 +14,14 @@ class AnalyticsSite extends Model
         'domain',
     ];
     
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName()
+    {
+        return 'site_key';
+    }
+    
     public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');
