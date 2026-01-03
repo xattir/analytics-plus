@@ -29,6 +29,7 @@ use App\Http\Controllers\Backend\BackendRoleController;
 use App\Http\Controllers\Backend\BackendTagController;
 use App\Http\Controllers\Backend\BackendBuilderController;
 use App\Http\Controllers\Backend\BackendPluginController;
+use App\Http\Controllers\Backend\BackendAnalyticsController;
 
 
 # Frontend Controllers
