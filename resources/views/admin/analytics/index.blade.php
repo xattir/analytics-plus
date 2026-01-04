@@ -115,6 +115,17 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        line-height: 1.3;
+    }
+    
+    .site-card-domain {
+        display: block;
+        font-size: 11px;
+        color: var(--analytics-text-muted, #6b7280);
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     
     .site-online-indicator {
@@ -278,7 +289,10 @@
                              alt="" 
                              class="site-card-favicon"
                              onerror="this.style.display='none'">
-                        <h3 class="site-card-title">{{ $site->domain }}</h3>
+                        <h3 class="site-card-title">{{ $site->title ?? $site->domain }}</h3>
+                        @if($site->title && $site->title !== $site->domain)
+                        <small class="site-card-domain" style="display: block; font-size: 11px; color: var(--analytics-text-muted, #6b7280); margin-top: 2px;">{{ $site->domain }}</small>
+                        @endif
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         @if($activeUsers > 0)
@@ -296,8 +310,8 @@
                         <span class="site-card-stat-value">{{ number_format($activeUsers) }}</span>
                     </div>
                     <div class="site-card-stat">
-                        <span class="site-card-stat-label">الجلسات</span>
-                        <span class="site-card-stat-value">{{ number_format($site->sessions_count ?? 0) }}</span>
+                        <span class="site-card-stat-label">المستخدمون اليوم</span>
+                        <span class="site-card-stat-value">{{ number_format($site->today_users_count ?? 0) }}</span>
                     </div>
                 </div>
                 
@@ -457,11 +471,7 @@ if (sitesGrid) {
         new Chart(ctx{{ $site->id }}, {
             type: 'bar',
             data: {
-                labels: [
-                    @foreach($last24hData as $point)
-                    "{{ $point['hour'] }}",
-                    @endforeach
-                ],
+                labels: Array(24).fill(''),
                 datasets: [{
                     label: 'زيارات آخر 24 ساعة',
                     data: [
@@ -492,8 +502,7 @@ if (sitesGrid) {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            precision: 0,
-                            stepSize: 1
+                            display: false
                         },
                         grid: {
                             display: false
@@ -504,9 +513,7 @@ if (sitesGrid) {
                             display: false
                         },
                         ticks: {
-                            maxRotation: 0,
-                            autoSkip: true,
-                            maxTicksLimit: 12
+                            display: false
                         }
                     }
                 }

@@ -90,6 +90,20 @@ class BackendAnalyticsController extends Controller
             $site->active_users_chart_data = $this->getActiveUsersChartData($site->id, $activeUsersStart);
             // Get last 24 hours data for bars chart
             $site->last_24h_chart_data = $this->getLast24HoursChartData($site->id);
+            
+            // Get today's unique users count
+            $todayStart = Carbon::today()->startOfDay();
+            $todayEnd = Carbon::today()->endOfDay();
+            $site->today_users_count = AnalyticsSession::where('site_id', $site->id)
+                ->whereBetween('first_seen', [$todayStart->toDateTimeString(), $todayEnd->toDateTimeString()])
+                ->where('is_bot', false)
+                ->distinct()
+                ->count('device_fingerprint');
+            
+            // Fetch title from website if not set
+            if (empty($site->title)) {
+                $this->fetchSiteTitle($site);
+            }
         }
         
         // Get pending invitations for current user

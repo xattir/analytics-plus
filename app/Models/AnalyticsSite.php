@@ -12,6 +12,7 @@ class AnalyticsSite extends Model
         'user_id',
         'site_key',
         'domain',
+        'title',
         'order',
     ];
     
