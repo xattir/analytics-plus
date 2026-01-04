@@ -10,32 +10,46 @@
         min-height: 100%;
     }
     
+    .analytics-sites-grid.sortable-drag {
+        gap: 24px;
+    }
+    
     .site-card {
         background: var(--background-1, #ffffff);
         border: 1px solid var(--border-color, #e5e7eb);
         border-radius: 12px;
         padding: 20px;
-        transition: all 0.2s;
+        transition: box-shadow 0.2s, border-color 0.2s;
         cursor: grab;
         position: relative;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        will-change: transform;
     }
     
-    .site-card:hover {
+    .site-card:hover:not(.sortable-ghost):not(.sortable-chosen) {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
         border-color: var(--analytics-primary, #7b60fb);
     }
     
     .site-card.sortable-ghost {
-        opacity: 0.4;
-        cursor: grabbing;
+        opacity: 0.5;
+        cursor: grabbing !important;
+        background: var(--background-1, #ffffff);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+        transform: scale(1.02);
+        z-index: 1000;
     }
     
     .site-card.sortable-chosen {
-        cursor: grabbing;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        cursor: grabbing !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
         transform: scale(1.02);
+        z-index: 999;
+        opacity: 0.9;
+    }
+    
+    .site-card.sortable-drag {
+        opacity: 0;
     }
     
     .site-card-header {
@@ -265,17 +279,37 @@ if (sitesGrid) {
         }
     });
     
-    // Initialize Sortable
+    // Initialize Sortable - Desktop optimized
     new Sortable(sitesGrid, {
-        animation: 150,
-        fallbackTolerance: 3,
+        animation: 200,
+        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        forceFallback: false,
+        fallbackTolerance: 0,
         filter: '.site-card-actions, .site-card-actions *',
         preventOnFilter: true,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        handle: null,
+        swapThreshold: 0.65,
+        invertSwap: false,
+        preventClickFallback: true,
         onStart: function(evt) {
             isDragging = true;
+            evt.item.style.width = evt.item.offsetWidth + 'px';
+            evt.item.style.height = evt.item.offsetHeight + 'px';
         },
-        onEnd: function(/**Event*/evt) {
+        onMove: function(evt, originalEvent) {
+            return true;
+        },
+        onEnd: function(evt) {
             isDragging = false;
+            
+            // Reset styles
+            if (evt.item) {
+                evt.item.style.width = '';
+                evt.item.style.height = '';
+            }
             
             // Get new order from DOM
             var items = sitesGrid.children;
