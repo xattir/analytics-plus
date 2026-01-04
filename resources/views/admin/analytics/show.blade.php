@@ -1,6 +1,5 @@
-@extends('layouts.admin', ['page_title' => 'التحليلات - ' . $site->domain])
-
-@section('styles')
+@extends('layouts.admin')
+@section('content')
 <style>
     .analytics-dashboard {
         --analytics-bg: var(--background-1, #ffffff);
@@ -299,9 +298,6 @@
         opacity: 0.4;
     }
 </style>
-@endsection
-
-@section('content')
 <div class="analytics-dashboard">
     <!-- Header -->
     <div class="analytics-header">
@@ -444,16 +440,37 @@
                         @foreach($topTrafficSources as $source)
                             <div class="source-item">
                                 <span class="source-name">
-                                    @if($source['type'] == 'direct')
+                                    @php
+                                        $sourceName = strtolower($source['name'] ?? '');
+                                    @endphp
+                                    @if($source['type'] == 'direct' || $sourceName == 'direct')
                                         🔗 مباشر
-                                    @elseif(strtolower($source['name']) == 'instagram')
-                                        📷 Instagram
-                                    @elseif(strtolower($source['name']) == 'facebook')
-                                        📘 Facebook
-                                    @elseif(strtolower($source['name']) == 'google')
+                                    @elseif($sourceName == 'google')
                                         🔍 Google
+                                    @elseif($sourceName == 'facebook' || $sourceName == 'fb.com')
+                                        📘 Facebook
+                                    @elseif($sourceName == 'instagram')
+                                        📷 Instagram
+                                    @elseif($sourceName == 'twitter' || $sourceName == 'x.com')
+                                        🐦 Twitter
+                                    @elseif($sourceName == 'youtube')
+                                        📺 YouTube
+                                    @elseif($sourceName == 'linkedin')
+                                        💼 LinkedIn
+                                    @elseif($sourceName == 'pinterest')
+                                        📌 Pinterest
+                                    @elseif($sourceName == 'reddit')
+                                        🤖 Reddit
+                                    @elseif($sourceName == 'tiktok')
+                                        🎵 TikTok
+                                    @elseif($sourceName == 'bing')
+                                        🔎 Bing
+                                    @elseif($sourceName == 'yahoo')
+                                        📧 Yahoo
+                                    @elseif($sourceName == 'duckduckgo')
+                                        🦆 DuckDuckGo
                                     @else
-                                        {{ $source['name'] }}
+                                        🔗 {{ $source['name'] }}
                                     @endif
                                 </span>
                                 <span class="source-count">{{ number_format($source['count']) }}</span>
@@ -497,7 +514,7 @@
         @endif
     </div>
 </div>
-
+@endsection
 @section('scripts')
 <script src="/js/chartjs.min.js"></script>
 <script>

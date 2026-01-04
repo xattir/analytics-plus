@@ -66,6 +66,10 @@ class AnalyticsController extends Controller
             // Parse UTM parameters
             $utmParams = $this->parseUtmParams($request);
             
+            // Get referrer and extract source
+            $referrer = $request->input('referrer');
+            $referrerSource = $this->extractReferrerSource($referrer);
+            
             // Get network info
             $networkInfo = $this->getNetworkInfo($request);
             
@@ -80,6 +84,13 @@ class AnalyticsController extends Controller
                 $session->first_seen = $now;
                 $session->entry_path = $path;
                 $session->pages_count = 1;
+                // Save referrer only for new sessions (entry point)
+                $session->referrer = $referrer;
+                $session->referrer_source = $referrerSource;
+                $session->utm_source = $utmParams['utm_source'];
+                $session->utm_medium = $utmParams['utm_medium'];
+                $session->utm_campaign = $utmParams['utm_campaign'];
+                $session->is_returning = $isReturning;
             } else {
                 $session->pages_count = ($session->pages_count ?? 0) + 1;
             }
@@ -106,10 +117,6 @@ class AnalyticsController extends Controller
             $session->country = $geoInfo['country_code'];
             $session->city = $geoInfo['city'];
             $session->isp = $geoInfo['isp'];
-            $session->utm_source = $utmParams['utm_source'];
-            $session->utm_medium = $utmParams['utm_medium'];
-            $session->utm_campaign = $utmParams['utm_campaign'];
-            $session->is_returning = $isReturning;
             $session->is_bounce = $request->input('is_bounce', false);
             $session->is_bot = $isBot;
             $session->max_scroll_percent = max($session->max_scroll_percent ?? 0, $engagement['scroll_percent']);
@@ -340,5 +347,108 @@ class AnalyticsController extends Controller
             'active_time_ms' => $request->input('active_time_ms', 0),
             'idle_time_ms' => $request->input('idle_time_ms', 0),
         ];
+    }
+    
+    /**
+     * Extract referrer source from referrer URL
+     * Examples:
+     * - https://www.google.com/search?q=... -> Google
+     * - https://www.facebook.com/... -> Facebook
+     * - https://twitter.com/... -> Twitter
+     * - (empty) -> Direct
+     */
+    private function extractReferrerSource(?string $referrer): ?string
+    {
+        if (empty($referrer)) {
+            return 'Direct';
+        }
+        
+        try {
+            $parsedUrl = parse_url($referrer);
+            if (!isset($parsedUrl['host'])) {
+                return 'Direct';
+            }
+            
+            $host = strtolower($parsedUrl['host']);
+            
+            // Remove www. prefix
+            $host = preg_replace('/^www\./', '', $host);
+            
+            // Known search engines and social media platforms
+            $sources = [
+                // Search Engines
+                'google.com' => 'Google',
+                'google.ae' => 'Google',
+                'google.co.uk' => 'Google',
+                'google.ca' => 'Google',
+                'google.fr' => 'Google',
+                'google.de' => 'Google',
+                'google.it' => 'Google',
+                'google.es' => 'Google',
+                'google.com.br' => 'Google',
+                'google.com.mx' => 'Google',
+                'google.co.jp' => 'Google',
+                'google.com.au' => 'Google',
+                'google.co.in' => 'Google',
+                'google.ru' => 'Google',
+                'google.co.za' => 'Google',
+                'google.com.tr' => 'Google',
+                'google.com.sa' => 'Google',
+                'google.com.eg' => 'Google',
+                'bing.com' => 'Bing',
+                'yahoo.com' => 'Yahoo',
+                'duckduckgo.com' => 'DuckDuckGo',
+                'yandex.com' => 'Yandex',
+                'yandex.ru' => 'Yandex',
+                'baidu.com' => 'Baidu',
+                'ask.com' => 'Ask',
+                
+                // Social Media
+                'facebook.com' => 'Facebook',
+                'fb.com' => 'Facebook',
+                'm.facebook.com' => 'Facebook',
+                'twitter.com' => 'Twitter',
+                'x.com' => 'Twitter',
+                'instagram.com' => 'Instagram',
+                'linkedin.com' => 'LinkedIn',
+                'pinterest.com' => 'Pinterest',
+                'reddit.com' => 'Reddit',
+                'tiktok.com' => 'TikTok',
+                'youtube.com' => 'YouTube',
+                'snapchat.com' => 'Snapchat',
+                'whatsapp.com' => 'WhatsApp',
+                'telegram.org' => 'Telegram',
+                'telegram.me' => 'Telegram',
+                
+                // Other common sources
+                't.co' => 'Twitter',
+                'bit.ly' => 'Bitly',
+                'tinyurl.com' => 'TinyURL',
+            ];
+            
+            // Check exact match first
+            if (isset($sources[$host])) {
+                return $sources[$host];
+            }
+            
+            // Check if host contains any known domain
+            foreach ($sources as $domain => $source) {
+                if (strpos($host, $domain) !== false) {
+                    return $source;
+                }
+            }
+            
+            // If no match, return the domain name (capitalized)
+            $parts = explode('.', $host);
+            if (count($parts) >= 2) {
+                $domainName = $parts[count($parts) - 2];
+                return ucfirst($domainName);
+            }
+            
+            return $host;
+            
+        } catch (\Exception $e) {
+            return 'Direct';
+        }
     }
 }

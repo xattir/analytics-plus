@@ -1,5 +1,4 @@
-@extends('layouts.admin', ['page_title' => 'إدارة الفريق - ' . $site->domain])
-
+@extends('layouts.admin')
 @section('content')
 <div class="col-12 p-3">
     <div class="d-flex justify-content-between align-items-center mb-3">

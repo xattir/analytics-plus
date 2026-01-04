@@ -672,7 +672,17 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopTrafficSources($siteId, $dateFrom, $dateTo)
     {
-        // Get UTM sources
+        // Get referrer sources (this is the main source of traffic data)
+        $referrerSources = AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->whereNotNull('referrer_source')
+            ->where('is_bot', false)
+            ->select('referrer_source', DB::raw('COUNT(*) as count'))
+            ->groupBy('referrer_source')
+            ->orderByDesc('count')
+            ->get();
+        
+        // Get UTM sources (for campaigns)
         $utmSources = AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->whereNotNull('utm_source')
@@ -683,30 +693,47 @@ class BackendAnalyticsController extends Controller
             ->limit(10)
             ->get();
         
-        // Get direct traffic count
+        // Get direct traffic count (no referrer)
         $directCount = AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
-            ->whereNull('utm_source')
+            ->where(function($q) {
+                $q->whereNull('referrer_source')
+                  ->orWhere('referrer_source', 'Direct');
+            })
             ->where('is_bot', false)
             ->count();
         
-        $sources = collect($utmSources)->map(function($source) {
+        // Combine referrer sources
+        $sources = collect($referrerSources)->map(function($source) {
             return [
-                'name' => $source->utm_source,
+                'name' => $source->referrer_source,
                 'count' => $source->count,
-                'type' => 'utm',
+                'type' => 'referrer',
             ];
         });
         
+        // Add UTM sources that aren't already in referrer sources
+        foreach ($utmSources as $utmSource) {
+            $exists = $sources->firstWhere('name', $utmSource->utm_source);
+            if (!$exists) {
+                $sources->push([
+                    'name' => $utmSource->utm_source,
+                    'count' => $utmSource->count,
+                    'type' => 'utm',
+                ]);
+            }
+        }
+        
+        // Add direct traffic
         if ($directCount > 0) {
-            $sources->prepend([
+            $sources->push([
                 'name' => 'Direct',
                 'count' => $directCount,
                 'type' => 'direct',
             ]);
         }
         
-        return $sources->sortByDesc('count')->values();
+        return $sources->sortByDesc('count')->values()->take(10);
     }
 
     /**

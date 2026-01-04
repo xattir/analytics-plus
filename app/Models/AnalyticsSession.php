@@ -44,6 +44,8 @@ class AnalyticsSession extends Model
         'utm_source',
         'utm_medium',
         'utm_campaign',
+        'referrer',
+        'referrer_source',
         'is_returning',
         'is_bounce',
         'is_bot',
