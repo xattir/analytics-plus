@@ -157,10 +157,10 @@
                 $activeUsers = $site->active_users ?? 0;
                 $chartData = $site->active_users_chart_data ?? [];
             @endphp
-            <div class="site-card" data-site-id="{{ $site->id }}" onclick="window.location.href='{{ route($routeName, ['site' => $site->site_key]) }}'">
+            <div class="site-card" data-site-id="{{ $site->id }}" data-site-url="{{ route($routeName, ['site' => $site->site_key]) }}">
                 <div class="site-card-header">
                     <h3 class="site-card-title">{{ $site->domain }}</h3>
-                    <span class="site-card-drag-handle" onclick="event.stopPropagation();">☰</span>
+                    <span class="site-card-drag-handle">☰</span>
                 </div>
                 
                 <div class="site-card-stats">
@@ -180,7 +180,7 @@
                 </div>
                 @endif
                 
-                <div class="site-card-actions" onclick="event.stopPropagation();">
+                <div class="site-card-actions">
                     <a href="{{ route($routeName, ['site' => $site->site_key]) }}" class="site-card-action-btn">عرض لوحة التحكم</a>
                     @php
                         $trackingCodeRoute = isset($isSuperAdmin) && $isSuperAdmin 
@@ -215,9 +215,24 @@
 // Initialize Sortable for drag and drop
 const sitesGrid = document.getElementById('sitesGrid');
 if (sitesGrid) {
+    // Handle card clicks (except drag handle)
+    sitesGrid.addEventListener('click', function(e) {
+        const card = e.target.closest('.site-card');
+        const dragHandle = e.target.closest('.site-card-drag-handle');
+        const actions = e.target.closest('.site-card-actions');
+        
+        if (card && !dragHandle && !actions) {
+            const url = card.dataset.siteUrl;
+            if (url) {
+                window.location.href = url;
+            }
+        }
+    });
+    
     const sortable = Sortable.create(sitesGrid, {
         handle: '.site-card-drag-handle',
         animation: 150,
+        forceFallback: false,
         onEnd: function(evt) {
             const items = Array.from(sitesGrid.children);
             const sites = items.map((item, index) => ({
@@ -230,10 +245,24 @@ if (sitesGrid) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({ sites: sites })
-            }).catch(function(error) {
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    // Reload page to show new order
+                    window.location.reload();
+                }
+            })
+            .catch(function(error) {
                 console.error('Reorder error:', error);
             });
         }
