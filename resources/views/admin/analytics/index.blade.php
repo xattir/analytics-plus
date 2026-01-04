@@ -131,18 +131,19 @@
         height: 8px;
         border-radius: 50%;
         background-color: #10b981;
-        animation: pulse-online 2s ease-in-out infinite;
+        animation: spinner-fade 1.5s linear infinite;
         flex-shrink: 0;
     }
     
-    @keyframes pulse-online {
-        0%, 100% {
+    @keyframes spinner-fade {
+        0% {
             opacity: 1;
-            transform: scale(1);
         }
         50% {
-            opacity: 0.7;
-            transform: scale(1.2);
+            opacity: 0.3;
+        }
+        100% {
+            opacity: 1;
         }
     }
     
@@ -300,7 +301,10 @@
                     </div>
                 </div>
                 
-                @if(count($chartData) > 0)
+                @php
+                    $last24hData = $site->last_24h_chart_data ?? [];
+                @endphp
+                @if(count($last24hData) > 0)
                 <div class="site-card-chart">
                     <canvas id="chart-{{ $site->id }}"></canvas>
                 </div>
@@ -444,34 +448,32 @@ if (sitesGrid) {
 
 // Initialize charts for each site
 @foreach($sites as $site)
-    @if(isset($site->active_users_chart_data) && count($site->active_users_chart_data) > 0)
+    @php
+        $last24hData = $site->last_24h_chart_data ?? [];
+    @endphp
+    @if(count($last24hData) > 0)
     const ctx{{ $site->id }} = document.getElementById('chart-{{ $site->id }}');
     if (ctx{{ $site->id }}) {
         new Chart(ctx{{ $site->id }}, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: [
-                    @foreach($site->active_users_chart_data as $point)
-                    "{{ $point['time'] }}",
+                    @foreach($last24hData as $point)
+                    "{{ $point['hour'] }}",
                     @endforeach
                 ],
                 datasets: [{
-                    label: 'مستخدمون نشطون',
+                    label: 'زيارات آخر 24 ساعة',
                     data: [
-                        @foreach($site->active_users_chart_data as $point)
+                        @foreach($last24hData as $point)
                         {{ $point['count'] }},
                         @endforeach
                     ],
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderColor: '#10b981',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 2,
-                    pointHoverRadius: 4,
-                    pointBackgroundColor: '#10b981',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 1
+                    backgroundColor: 'rgba(123, 96, 251, 0.6)',
+                    borderColor: 'rgb(123, 96, 251)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
                 }]
             },
             options: {
@@ -480,15 +482,20 @@ if (sitesGrid) {
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: {
-                            display: false
-                        },
                         ticks: {
+                            precision: 0,
+                            stepSize: 1
+                        },
+                        grid: {
                             display: false
                         }
                     },
@@ -497,7 +504,9 @@ if (sitesGrid) {
                             display: false
                         },
                         ticks: {
-                            display: false
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 12
                         }
                     }
                 }

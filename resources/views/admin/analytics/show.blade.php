@@ -79,15 +79,35 @@
     }
     
     .hero-card-active {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, rgba(16, 185, 129, 0.01) 100%);
         border-color: var(--analytics-active);
-        box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(16, 185, 129, 0.15);
-        animation: subtlePulse 3s ease-in-out infinite;
+        box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.08), 0 2px 8px rgba(16, 185, 129, 0.08);
+        opacity: 0.95;
     }
     
-    @keyframes subtlePulse {
-        0%, 100% { box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(16, 185, 129, 0.15); }
-        50% { box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.15), 0 4px 20px rgba(16, 185, 129, 0.2); }
+    .hero-card-active .metric-icon::after {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #10b981;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: spinner-fade 1.5s linear infinite;
+    }
+    
+    @keyframes spinner-fade {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.3;
+        }
+        100% {
+            opacity: 1;
+        }
     }
     
     .metric-icon {
@@ -98,6 +118,7 @@
         align-items: center;
         justify-content: center;
         font-size: 20px;
+        position: relative;
         background: rgba(123, 96, 251, 0.1);
         color: var(--analytics-primary);
         margin-bottom: 16px;

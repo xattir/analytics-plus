@@ -88,6 +88,8 @@ class BackendAnalyticsController extends Controller
             
             $site->active_users = $activeUsers;
             $site->active_users_chart_data = $this->getActiveUsersChartData($site->id, $activeUsersStart);
+            // Get last 24 hours data for bars chart
+            $site->last_24h_chart_data = $this->getLast24HoursChartData($site->id);
         }
         
         // Get pending invitations for current user
