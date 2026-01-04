@@ -68,7 +68,7 @@ class AnalyticsController extends Controller
             
             // Get referrer and extract source
             $referrer = $request->input('referrer');
-            $referrerSource = $this->extractReferrerSource($referrer);
+            $referrerSource = $this->extractReferrerSource($referrer, $site->domain);
             
             // Get network info
             $networkInfo = $this->getNetworkInfo($request);
@@ -356,8 +356,9 @@ class AnalyticsController extends Controller
      * - https://www.facebook.com/... -> Facebook
      * - https://twitter.com/... -> Twitter
      * - (empty) -> Direct
+     * - Same domain as site -> Direct (internal)
      */
-    private function extractReferrerSource(?string $referrer): ?string
+    private function extractReferrerSource(?string $referrer, ?string $siteDomain = null): ?string
     {
         if (empty($referrer)) {
             return 'Direct';
@@ -373,6 +374,17 @@ class AnalyticsController extends Controller
             
             // Remove www. prefix
             $host = preg_replace('/^www\./', '', $host);
+            
+            // Check if referrer is from the same domain (internal traffic)
+            if ($siteDomain) {
+                $siteHost = strtolower($siteDomain);
+                $siteHost = preg_replace('/^www\./', '', $siteHost);
+                
+                // Compare domains (exact match or subdomain)
+                if ($host === $siteHost || substr($host, -strlen('.' . $siteHost)) === '.' . $siteHost) {
+                    return 'Direct'; // Internal traffic is treated as Direct
+                }
+            }
             
             // Known search engines and social media platforms
             $sources = [

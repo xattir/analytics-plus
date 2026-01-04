@@ -727,21 +727,34 @@ class BackendAnalyticsController extends Controller
             ->where('is_bot', false);
         
         // Apply referrer filter
+        $siteDomain = strtolower($site->domain);
+        $siteDomainClean = preg_replace('/^www\./', '', $siteDomain);
+        
         if ($referrerFilter === 'external') {
-            // External only: referrer_source is not 'Direct' and not null
-            // This means traffic came from external websites (Google, Facebook, etc.)
-            $query->where(function($q) {
+            // External only: referrer is from different domain (not the site's domain)
+            $query->where(function($q) use ($siteDomainClean) {
                 $q->whereNotNull('referrer')
                   ->where('referrer_source', '!=', 'Direct')
-                  ->whereNotNull('referrer_source');
+                  ->whereNotNull('referrer_source')
+                  ->where(function($subQ) use ($siteDomainClean) {
+                      // Also exclude if referrer URL contains the site's domain
+                      $subQ->where('referrer', 'NOT LIKE', '%://' . $siteDomainClean)
+                           ->where('referrer', 'NOT LIKE', '%://www.' . $siteDomainClean)
+                           ->where('referrer', 'NOT LIKE', '%://' . $siteDomainClean . '/%')
+                           ->where('referrer', 'NOT LIKE', '%://www.' . $siteDomainClean . '/%');
+                  });
             });
         } elseif ($referrerFilter === 'internal') {
-            // Internal only: referrer_source is 'Direct' or null
-            // This means direct traffic or traffic from same domain
-            $query->where(function($q) {
+            // Internal only: referrer_source is 'Direct' OR referrer is from same domain
+            $query->where(function($q) use ($siteDomainClean) {
                 $q->where('referrer_source', 'Direct')
                   ->orWhereNull('referrer_source')
-                  ->orWhereNull('referrer');
+                  ->orWhereNull('referrer')
+                  ->orWhere(function($subQ) use ($siteDomainClean) {
+                      // Referrer URL contains the site's domain
+                      $subQ->where('referrer', 'LIKE', '%://' . $siteDomainClean . '%')
+                           ->orWhere('referrer', 'LIKE', '%://www.' . $siteDomainClean . '%');
+                  });
             });
         }
         // If 'all', no additional filter is applied

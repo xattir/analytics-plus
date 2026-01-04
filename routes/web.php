@@ -129,6 +129,7 @@ Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->gr
         // Analytics routes for admin dashboard
         Route::resource('analytics', BackendAnalyticsController::class, ['parameters' => ['analytics' => 'site']])->only(['index', 'create', 'store', 'show']);
         Route::post('analytics/reorder', [BackendAnalyticsController::class, 'reorder'])->name('analytics.reorder');
+        Route::post('analytics/{site}/update-title', [BackendAnalyticsController::class, 'updateTitle'])->name('analytics.update-title');
         Route::get('analytics/{site}/tracking-code', [BackendAnalyticsController::class, 'trackingCode'])->name('analytics.tracking-code');
         Route::get('analytics/{site}/members', [BackendAnalyticsController::class, 'members'])->name('analytics.members');
         Route::get('analytics/{site}/visits/{sessionId}', [BackendAnalyticsController::class, 'visitDetails'])->name('analytics.visit-details');
