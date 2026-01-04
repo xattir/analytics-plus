@@ -320,36 +320,15 @@
     }
     
     // Initialize Sortable
-    const sortable = Sortable.create(sitesGrid, {
+    new Sortable(sitesGrid, {
         animation: 150,
         filter: '.site-card-actions, .site-card-actions *',
         preventOnFilter: true,
-        onStart: function(evt) {
+        onStart: function() {
             isDragging = true;
-            console.log('Drag started');
         },
-        onMove: function(evt) {
-            console.log('Moving');
-        },
-        onUpdate: function(evt) {
-            console.log('Update event - new order:', evt.newIndex, 'old order:', evt.oldIndex);
-            if (reorderTimeout) {
-                clearTimeout(reorderTimeout);
-            }
-            reorderTimeout = setTimeout(saveReorder, 200);
-        },
-        onAdd: function(evt) {
-            console.log('Add event');
-        },
-        onRemove: function(evt) {
-            console.log('Remove event');
-        },
-        onEnd: function(evt) {
-            console.log('Drag ended');
+        onEnd: function(/**Event*/evt) {
             isDragging = false;
-            if (reorderTimeout) {
-                clearTimeout(reorderTimeout);
-            }
             saveReorder();
         }
     });
