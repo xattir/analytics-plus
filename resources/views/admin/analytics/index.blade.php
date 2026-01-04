@@ -267,11 +267,12 @@
     
     // Function to save reorder
     function saveReorder() {
-        const items = Array.from(sitesGrid.children);
+        const items = sitesGrid.children;
         const sites = [];
         
         for (let i = 0; i < items.length; i++) {
-            const siteId = items[i].getAttribute('data-site-id');
+            const item = items[i];
+            const siteId = item.getAttribute('data-site-id');
             if (siteId) {
                 sites.push({
                     id: parseInt(siteId),
@@ -281,8 +282,11 @@
         }
         
         if (sites.length === 0) {
+            console.log('No sites to reorder');
             return;
         }
+        
+        console.log('Saving reorder:', sites);
         
         const url = '{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}';
         const token = '{{ csrf_token() }}';
@@ -297,10 +301,16 @@
             body: JSON.stringify({ sites: sites })
         })
         .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
             return response.json();
         })
         .then(function(data) {
-            if (!data.success) {
+            console.log('Reorder response:', data);
+            if (data.success) {
+                console.log('Reorder saved successfully');
+            } else {
                 console.error('Reorder failed:', data);
             }
         })
@@ -314,16 +324,28 @@
         animation: 150,
         filter: '.site-card-actions, .site-card-actions *',
         preventOnFilter: true,
-        onStart: function() {
+        onStart: function(evt) {
             isDragging = true;
+            console.log('Drag started');
         },
-        onUpdate: function() {
+        onMove: function(evt) {
+            console.log('Moving');
+        },
+        onUpdate: function(evt) {
+            console.log('Update event - new order:', evt.newIndex, 'old order:', evt.oldIndex);
             if (reorderTimeout) {
                 clearTimeout(reorderTimeout);
             }
-            reorderTimeout = setTimeout(saveReorder, 300);
+            reorderTimeout = setTimeout(saveReorder, 200);
         },
-        onEnd: function() {
+        onAdd: function(evt) {
+            console.log('Add event');
+        },
+        onRemove: function(evt) {
+            console.log('Remove event');
+        },
+        onEnd: function(evt) {
+            console.log('Drag ended');
             isDragging = false;
             if (reorderTimeout) {
                 clearTimeout(reorderTimeout);
