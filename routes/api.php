@@ -19,5 +19,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Analytics API routes
+// Analytics API routes - Allow CORS for cross-origin requests
+Route::options('/analytics/track', function() {
+    return response('', 200)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+        ->header('Access-Control-Max-Age', '86400');
+});
+
 Route::post('/analytics/track', [AnalyticsController::class, 'track']);

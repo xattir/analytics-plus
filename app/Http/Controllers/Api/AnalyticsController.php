@@ -19,10 +19,20 @@ class AnalyticsController extends Controller
      */
     public function track(Request $request)
     {
+        // Handle preflight OPTIONS request
+        if ($request->isMethod('OPTIONS')) {
+            return response('', 200)
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                ->header('Access-Control-Max-Age', '86400');
+        }
+        
         try {
             $siteKey = $request->input('site_key');
             if (!$siteKey) {
-                return response()->json(['error' => 'site_key is required'], 400);
+                return response()->json(['error' => 'site_key is required'], 400)
+                    ->header('Access-Control-Allow-Origin', '*');
             }
 
             // Get or create site
@@ -136,11 +146,14 @@ class AnalyticsController extends Controller
             return response()->json([
                 'success' => true,
                 'session_id' => $sessionId,
-            ]);
+            ])->header('Access-Control-Allow-Origin', '*')
+              ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+              ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
             
         } catch (\Exception $e) {
             Log::error('Analytics tracking error: ' . $e->getMessage());
-            return response()->json(['error' => 'Tracking failed'], 500);
+            return response()->json(['error' => 'Tracking failed'], 500)
+                ->header('Access-Control-Allow-Origin', '*');
         }
     }
     
