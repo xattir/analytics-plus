@@ -249,57 +249,81 @@ if (sitesGrid) {
         }
     });
     
+    let reorderTimeout = null;
+    
     const sortable = Sortable.create(sitesGrid, {
         handle: '.site-card-drag-handle, .site-card-header',
         animation: 150,
+        forceFallback: false,
         filter: '.site-card-actions, .site-card-actions *, a, button',
         preventOnFilter: true,
-        onEnd: function(evt) {
-            const items = Array.from(sitesGrid.children);
-            const sites = [];
-            
-            items.forEach(function(item, index) {
-                const siteId = item.getAttribute('data-site-id');
-                if (siteId) {
-                    sites.push({
-                        id: parseInt(siteId),
-                        order: index + 1
-                    });
-                }
-            });
-            
-            if (sites.length === 0) {
-                return;
+        onUpdate: function(evt) {
+            // Clear previous timeout
+            if (reorderTimeout) {
+                clearTimeout(reorderTimeout);
             }
             
-            // Send reorder request
-            const url = '{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}';
-            const token = '{{ csrf_token() }}';
+            // Save reorder after a small delay (debounce)
+            reorderTimeout = setTimeout(function() {
+                saveReorder();
+            }, 300);
+        },
+        onEnd: function(evt) {
+            // Clear timeout
+            if (reorderTimeout) {
+                clearTimeout(reorderTimeout);
+            }
             
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ sites: sites })
-            })
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(data) {
-                if (data.success) {
-                    // Success - no reload needed, order is already updated in DOM
-                } else {
-                    console.error('Reorder failed:', data);
-                }
-            })
-            .catch(function(error) {
-                console.error('Reorder error:', error);
-            });
+            // Save reorder immediately on end
+            saveReorder();
         }
     });
+    
+    function saveReorder() {
+        const items = Array.from(sitesGrid.children);
+        const sites = [];
+        
+        items.forEach(function(item, index) {
+            const siteId = item.getAttribute('data-site-id');
+            if (siteId) {
+                sites.push({
+                    id: parseInt(siteId),
+                    order: index + 1
+                });
+            }
+        });
+        
+        if (sites.length === 0) {
+            return;
+        }
+        
+        // Send reorder request
+        const url = '{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}';
+        const token = '{{ csrf_token() }}';
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ sites: sites })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                // Success - order is already updated in DOM
+            } else {
+                console.error('Reorder failed:', data);
+            }
+        })
+        .catch(function(error) {
+            console.error('Reorder error:', error);
+        });
+    }
 }
 
 // Initialize charts for each site
