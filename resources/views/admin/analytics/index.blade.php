@@ -49,12 +49,32 @@
     .site-card-drag-handle {
         cursor: grab;
         color: var(--analytics-text-muted, #6b7280);
-        font-size: 18px;
-        padding: 4px;
+        font-size: 20px;
+        padding: 8px;
         margin-left: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        min-height: 32px;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    
+    .site-card-drag-handle:hover {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 6px;
     }
     
     .site-card-drag-handle:active {
+        cursor: grabbing;
+    }
+    
+    .site-card.sortable-ghost {
+        opacity: 0.4;
+    }
+    
+    .site-card.sortable-chosen {
         cursor: grabbing;
     }
     
@@ -230,8 +250,10 @@ if (sitesGrid) {
     });
     
     const sortable = Sortable.create(sitesGrid, {
-        handle: '.site-card-drag-handle',
+        handle: '.site-card-drag-handle, .site-card-header',
         animation: 150,
+        filter: '.site-card-actions, .site-card-actions *, a, button',
+        preventOnFilter: true,
         onEnd: function(evt) {
             const items = Array.from(sitesGrid.children);
             const sites = [];
