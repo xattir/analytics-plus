@@ -744,48 +744,59 @@
                                     }
                                     
                                     // Source to display: if same domain show entry_path, else show referrer_source
-                                    $sourceIcon = '';
+                                    $sourceIconUrl = '';
+                                    $sourceIconDomain = '';
                                     if ($isSameDomain || $referrerSource === 'Direct') {
                                         // Same domain or direct: show entry path
                                         $sourceDisplay = $decodedEntryPath;
                                         $sourceUrl = 'https://' . $site->domain . $decodedEntryPath;
-                                        $sourceIcon = '🔗';
+                                        $sourceIconDomain = $site->domain;
                                     } else {
                                         // External source: show referrer source name
                                         $sourceDisplay = $referrerSource;
                                         $sourceUrl = $referrerUrl;
                                         
-                                        // Add icon based on source
+                                        // Get icon domain based on source
                                         $sourceName = strtolower($referrerSource);
                                         if ($sourceName == 'direct') {
-                                            $sourceIcon = '🔗';
+                                            $sourceIconDomain = $site->domain;
                                         } elseif ($sourceName == 'google') {
-                                            $sourceIcon = '🔍';
+                                            $sourceIconDomain = 'google.com';
                                         } elseif ($sourceName == 'facebook' || $sourceName == 'fb.com') {
-                                            $sourceIcon = '📘';
+                                            $sourceIconDomain = 'facebook.com';
                                         } elseif ($sourceName == 'instagram') {
-                                            $sourceIcon = '📷';
+                                            $sourceIconDomain = 'instagram.com';
                                         } elseif ($sourceName == 'twitter' || $sourceName == 'x.com') {
-                                            $sourceIcon = '🐦';
+                                            $sourceIconDomain = 'x.com';
                                         } elseif ($sourceName == 'youtube') {
-                                            $sourceIcon = '📺';
+                                            $sourceIconDomain = 'youtube.com';
                                         } elseif ($sourceName == 'linkedin') {
-                                            $sourceIcon = '💼';
+                                            $sourceIconDomain = 'linkedin.com';
                                         } elseif ($sourceName == 'pinterest') {
-                                            $sourceIcon = '📌';
+                                            $sourceIconDomain = 'pinterest.com';
                                         } elseif ($sourceName == 'reddit') {
-                                            $sourceIcon = '🤖';
+                                            $sourceIconDomain = 'reddit.com';
                                         } elseif ($sourceName == 'tiktok') {
-                                            $sourceIcon = '🎵';
+                                            $sourceIconDomain = 'tiktok.com';
                                         } elseif ($sourceName == 'bing') {
-                                            $sourceIcon = '🔎';
+                                            $sourceIconDomain = 'bing.com';
                                         } elseif ($sourceName == 'yahoo') {
-                                            $sourceIcon = '📧';
+                                            $sourceIconDomain = 'yahoo.com';
                                         } elseif ($sourceName == 'duckduckgo') {
-                                            $sourceIcon = '🦆';
+                                            $sourceIconDomain = 'duckduckgo.com';
                                         } else {
-                                            $sourceIcon = '🔗';
+                                            // Extract domain from referrer URL if available
+                                            if ($referrerUrl) {
+                                                $parsed = parse_url($referrerUrl);
+                                                $sourceIconDomain = $parsed['host'] ?? $site->domain;
+                                            } else {
+                                                $sourceIconDomain = $site->domain;
+                                            }
                                         }
+                                    }
+                                    
+                                    if ($sourceIconDomain) {
+                                        $sourceIconUrl = 'https://icons.duckduckgo.com/ip3/' . $sourceIconDomain . '.ico';
                                     }
                                     
                                     // Build full URLs for clickable links
@@ -795,13 +806,17 @@
                                 <tr class="visits-table-row">
                                     <td class="visits-table-path">
                                         @if($sourceUrl)
-                                            <a href="{{ $sourceUrl }}" target="_blank" class="path-link-clickable" title="{{ $sourceDisplay }}">
-                                                <span style="margin-left: 4px;">{{ $sourceIcon }}</span>
+                                            <a href="{{ $sourceUrl }}" target="_blank" class="path-link-clickable" title="{{ $sourceDisplay }}" style="display: flex; align-items: center; gap: 6px;">
+                                                @if($sourceIconUrl)
+                                                <img src="{{ $sourceIconUrl }}" alt="" style="width: 16px; height: 16px; flex-shrink: 0;" onerror="this.style.display='none'">
+                                                @endif
                                                 <code>{{ Str::limit($sourceDisplay, 40) }}</code>
                                             </a>
                                         @else
-                                            <code class="path-link" title="{{ $sourceDisplay }}">
-                                                <span style="margin-left: 4px;">{{ $sourceIcon }}</span>
+                                            <code class="path-link" title="{{ $sourceDisplay }}" style="display: flex; align-items: center; gap: 6px;">
+                                                @if($sourceIconUrl)
+                                                <img src="{{ $sourceIconUrl }}" alt="" style="width: 16px; height: 16px; flex-shrink: 0;" onerror="this.style.display='none'">
+                                                @endif
                                                 {{ Str::limit($sourceDisplay, 40) }}
                                             </code>
                                         @endif
@@ -817,29 +832,16 @@
                                     <td class="visits-table-country">
                                         @php
                                             $countryCode = $visit['country'] ?? null;
-                                            if ($countryCode && class_exists('CountryHelper')) {
-                                                $countryNameAr = CountryHelper::getCountryNameArabic($countryCode);
-                                                $countryFlag = CountryHelper::getCountryFlag($countryCode);
-                                            } else {
-                                                // Fallback: basic country names
-                                                $countryNames = [
-                                                    'SA' => 'السعودية', 'AE' => 'الإمارات', 'EG' => 'مصر',
-                                                    'US' => 'الولايات المتحدة', 'GB' => 'المملكة المتحدة',
-                                                    'DE' => 'ألمانيا', 'FR' => 'فرنسا', 'IT' => 'إيطاليا',
-                                                    'ES' => 'إسبانيا', 'CA' => 'كندا', 'AU' => 'أستراليا',
-                                                    'JP' => 'اليابان', 'CN' => 'الصين', 'IN' => 'الهند',
-                                                    'BR' => 'البرازيل', 'TR' => 'تركيا', 'RU' => 'روسيا',
-                                                ];
-                                                $countryFlags = [
-                                                    'SA' => '🇸🇦', 'AE' => '🇦🇪', 'EG' => '🇪🇬',
-                                                    'US' => '🇺🇸', 'GB' => '🇬🇧', 'DE' => '🇩🇪',
-                                                    'FR' => '🇫🇷', 'IT' => '🇮🇹', 'ES' => '🇪🇸',
-                                                    'CA' => '🇨🇦', 'AU' => '🇦🇺', 'JP' => '🇯🇵',
-                                                    'CN' => '🇨🇳', 'IN' => '🇮🇳', 'BR' => '🇧🇷',
-                                                    'TR' => '🇹🇷', 'RU' => '🇷🇺',
-                                                ];
-                                                $countryNameAr = $countryNames[$countryCode] ?? $countryCode;
-                                                $countryFlag = $countryFlags[$countryCode] ?? '🌍';
+                                            $countryNameAr = $countryCode;
+                                            $countryFlag = '🌍';
+                                            
+                                            if ($countryCode) {
+                                                $countries = collect(config('countries'));
+                                                $country = $countries->firstWhere('iso2', strtoupper($countryCode));
+                                                if ($country) {
+                                                    $countryNameAr = $country['name_ar'] ?? $countryCode;
+                                                    $countryFlag = $country['flag'] ?? '🌍';
+                                                }
                                             }
                                         @endphp
                                         <span title="{{ $countryNameAr }}">
