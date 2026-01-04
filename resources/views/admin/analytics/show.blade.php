@@ -513,7 +513,7 @@
         </div>
         
         <!-- TOP PAGES -->
-        <div class="row">
+   
             <div class="col-lg-4">
                 <div class="section-card">
                     <h2 class="section-title">أفضل الصفحات</h2>
@@ -544,10 +544,9 @@
                     @endif
                 </div>
             </div>
-        </div>
+      
         
-        <!-- VISITS & PATHS -->
-        <div class="row">
+    
             <div class="col-lg-8">
                 <div class="section-card">
                     <h2 class="section-title">الزيارات والمسارات الأخيرة</h2>
@@ -692,7 +691,6 @@
             @endif
                 </div>
             </div>
-        </div>
         
         <!-- VISITORS OVER TIME (HERO) -->
         <div class="row mb-5">
