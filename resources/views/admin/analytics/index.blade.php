@@ -128,6 +128,40 @@
         white-space: nowrap;
     }
     
+    .site-card-edit-title {
+        background: none;
+        border: none;
+        color: var(--analytics-text-muted, #6b7280);
+        cursor: pointer;
+        padding: 4px;
+        font-size: 14px;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+        flex-shrink: 0;
+    }
+    
+    .site-card-edit-title:hover {
+        opacity: 1;
+        color: var(--analytics-primary, #7b60fb);
+    }
+    
+    .site-title-edit-input {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--color-2, #1f2937);
+        background: var(--background-1, #ffffff);
+    }
+    
+    .site-title-edit-input:focus {
+        outline: none;
+        border-color: var(--analytics-primary, #7b60fb);
+        box-shadow: 0 0 0 3px rgba(123, 96, 251, 0.1);
+    }
+    
     .site-online-indicator {
         display: inline-flex;
         align-items: center;
@@ -529,6 +563,100 @@ if (sitesGrid) {
     }
     @endif
 @endforeach
+</script>
+
+<script>
+function editSiteTitle(siteId, currentTitle, domain, updateUrl) {
+    var titleElement = document.getElementById('site-title-' + siteId);
+    var domainElement = document.getElementById('site-domain-' + siteId);
+    var currentText = currentTitle || domain;
+    
+    // Create input
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'site-title-edit-input';
+    input.value = currentTitle || '';
+    input.placeholder = domain;
+    input.style.width = '100%';
+    input.style.maxWidth = '200px';
+    
+    // Replace title with input
+    var parent = titleElement.parentElement;
+    var titleText = titleElement.textContent;
+    titleElement.style.display = 'none';
+    parent.insertBefore(input, titleElement);
+    input.focus();
+    input.select();
+    
+    // Save on Enter or blur
+    function saveTitle() {
+        var newTitle = input.value.trim();
+        if (newTitle === currentTitle) {
+            // No change, just cancel
+            input.remove();
+            titleElement.style.display = '';
+            return;
+        }
+        
+        // Save via AJAX
+        fetch(updateUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ title: newTitle })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                // Update title
+                if (data.title && data.title !== data.domain) {
+                    titleElement.textContent = data.title;
+                    if (domainElement) {
+                        domainElement.textContent = data.domain;
+                    } else {
+                        // Create domain element
+                        var domainEl = document.createElement('small');
+                        domainEl.className = 'site-card-domain';
+                        domainEl.id = 'site-domain-' + siteId;
+                        domainEl.textContent = data.domain;
+                        titleElement.parentElement.appendChild(domainEl);
+                    }
+                } else {
+                    titleElement.textContent = data.domain;
+                    if (domainElement) {
+                        domainElement.remove();
+                    }
+                }
+            }
+            input.remove();
+            titleElement.style.display = '';
+        })
+        .catch(function(error) {
+            console.error('Error updating title:', error);
+            input.remove();
+            titleElement.style.display = '';
+        });
+    }
+    
+    // Cancel on Escape
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveTitle();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            input.remove();
+            titleElement.style.display = '';
+        }
+    });
+    
+    input.addEventListener('blur', saveTitle);
+}
 </script>
 @endif
 @endsection

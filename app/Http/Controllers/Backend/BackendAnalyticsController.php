@@ -1113,6 +1113,30 @@ HTML;
     }
     
     /**
+     * Update site title
+     */
+    public function updateTitle(Request $request, AnalyticsSite $site)
+    {
+        // Check authorization
+        if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
+            abort(403, 'You do not have access to this site.');
+        }
+        
+        $request->validate([
+            'title' => 'nullable|string|max:255',
+        ]);
+        
+        $site->title = $request->input('title') ?: null;
+        $site->save();
+        
+        return response()->json([
+            'success' => true,
+            'title' => $site->title,
+            'domain' => $site->domain,
+        ]);
+    }
+    
+    /**
      * Fetch site title from website HTML
      */
     private function fetchSiteTitle($site)
