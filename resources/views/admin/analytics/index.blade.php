@@ -17,8 +17,8 @@
     }
     
     .site-card {
-        flex: 0 0 calc(33.333% - 16px); /* 3 columns, accounting for gap */
-        min-width: 320px; /* Minimum card width */
+        flex: 0 0 calc(25% - 18px); /* 4 columns, accounting for gap */
+        min-width: 280px; /* Minimum card width */
         max-width: 100%;
         background: var(--background-1, #ffffff);
         border: 1px solid var(--border-color, #e5e7eb);
@@ -29,6 +29,12 @@
         position: relative;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         will-change: transform;
+    }
+    
+    @media (max-width: 1200px) {
+        .site-card {
+            flex: 0 0 calc(33.333% - 16px); /* 3 columns on smaller desktop */
+        }
     }
     
     @media (max-width: 992px) {
@@ -81,6 +87,23 @@
         justify-content: space-between;
         align-items: flex-start;
         margin-bottom: 16px;
+        gap: 12px;
+    }
+    
+    .site-card-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .site-card-favicon {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        object-fit: contain;
     }
     
     .site-card-title {
@@ -89,6 +112,38 @@
         color: var(--color-2, #1f2937);
         margin: 0;
         flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .site-online-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--analytics-text-muted, #6b7280);
+        flex-shrink: 0;
+    }
+    
+    .site-online-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #10b981;
+        animation: pulse-online 2s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+    
+    @keyframes pulse-online {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.7;
+            transform: scale(1.2);
+        }
     }
     
     .site-card-drag-handle {
@@ -206,7 +261,7 @@
     @endif
     
     @if($sites->count() > 0)
-    <div class="analytics-sites-grid" id="sitesGrid" style="display: flex;flex-direction: row-reverse;justify-content: flex-end;">
+    <div class="analytics-sites-grid" id="sitesGrid">
         @foreach($sites as $site)
             @php
                 $routeName = isset($isSuperAdmin) && $isSuperAdmin 
@@ -217,8 +272,21 @@
             @endphp
             <div class="site-card" data-site-id="{{ $site->id }}" data-site-url="{{ route($routeName, ['site' => $site->site_key]) }}">
                 <div class="site-card-header">
-                    <h3 class="site-card-title">{{ $site->domain }}</h3>
-                    <span class="site-card-drag-handle">☰</span>
+                    <div class="site-card-title-wrapper">
+                        <img src="https://icons.duckduckgo.com/ip3/{{ $site->domain }}.ico" 
+                             alt="" 
+                             class="site-card-favicon"
+                             onerror="this.style.display='none'">
+                        <h3 class="site-card-title">{{ $site->domain }}</h3>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        @if($activeUsers > 0)
+                        <span class="site-online-indicator">
+                            <span class="site-online-dot"></span>
+                        </span>
+                        @endif
+                        <span class="site-card-drag-handle">☰</span>
+                    </div>
                 </div>
                 
                 <div class="site-card-stats">
