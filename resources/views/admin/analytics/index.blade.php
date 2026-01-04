@@ -495,7 +495,14 @@ if (sitesGrid) {
                     },
                     tooltip: {
                         mode: 'index',
-                        intersect: false
+                        intersect: false,
+                        callbacks: {
+                            title: function(context) {
+                                var index = context[0].dataIndex;
+                                var hourData = @json($last24hData);
+                                return hourData[index] ? hourData[index].hour : '';
+                            }
+                        }
                     }
                 },
                 scales: {

@@ -1111,4 +1111,54 @@ HTML;
         
         return back()->with('success', 'Invitation cancelled.');
     }
+    
+    /**
+     * Fetch site title from website HTML
+     */
+    private function fetchSiteTitle($site)
+    {
+        try {
+            $url = 'https://' . $site->domain;
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 5,
+                    'user_agent' => 'Mozilla/5.0 (compatible; AnalyticsBot/1.0)',
+                    'follow_location' => 1,
+                    'max_redirects' => 3
+                ]
+            ]);
+            
+            $html = @file_get_contents($url, false, $context);
+            if ($html === false) {
+                return;
+            }
+            
+            // Extract title from HTML
+            if (preg_match('/<title[^>]*>([^<]+)<\/title>/i', $html, $matches)) {
+                $title = trim($matches[1]);
+                
+                // Clean title: take first 2 words or until first special character
+                $title = html_entity_decode($title, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                
+                // Split by special characters or take first 2 words
+                $words = preg_split('/[\s\-_|:;.,!?]+/', $title, 3);
+                if (count($words) >= 2) {
+                    $title = $words[0] . ' ' . $words[1];
+                } else {
+                    // If less than 2 words, take until first special character
+                    $title = preg_split('/[^\w\s]/', $title)[0];
+                }
+                
+                // Limit length
+                $title = mb_substr(trim($title), 0, 100);
+                
+                if (!empty($title)) {
+                    $site->title = $title;
+                    $site->save();
+                }
+            }
+        } catch (\Exception $e) {
+            // Silently fail - don't block page load
+        }
+    }
 }
