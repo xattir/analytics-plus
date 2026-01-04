@@ -236,16 +236,15 @@
 </div>
 
 @if($sites->count() > 0)
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js" integrity="sha512-zYXldzJsDrNKV+odAwFYiDXV2Cy37cwizT+NkuiPGsa9X1dOz04eHvUWVuxaJ299GvcJT31ug2zO4itXBjFx4w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="/js/chartjs.min.js"></script>
-<script>
-(function() {
-    'use strict';
-    
-    const sitesGrid = document.getElementById('sitesGrid');
-    if (!sitesGrid) return;
-    
-    var isDragging = false;
+<script type="text/javascript">
+var isDragging = false;
+
+var sitesGrid = document.getElementById('sitesGrid');
+if (!sitesGrid) {
+    console.error('sitesGrid not found');
+}
     
     // Handle card clicks
     sitesGrid.addEventListener('click', function(e) {
@@ -265,15 +264,12 @@
         }
     });
     
-    // Initialize Sortable with swap mode
+    // Initialize Sortable
     new Sortable(sitesGrid, {
         animation: 150,
         fallbackTolerance: 3,
         filter: '.site-card-actions, .site-card-actions *',
         preventOnFilter: true,
-        forceFallback: false,
-        swap: true,
-        swapThreshold: 0.5
         onStart: function(evt) {
             isDragging = true;
         },
