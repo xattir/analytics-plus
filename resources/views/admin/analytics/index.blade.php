@@ -8,7 +8,7 @@
         gap: 24px;
         margin-top: 24px;
         min-height: 100%;
-        direction: ltr; /* Force LTR for drag & drop - CSS Grid visual order is unchanged */
+        direction: ltr; /* LTR for drag & drop logic - CSS Grid layout is independent of direction */
     }
     
     .analytics-sites-grid.sortable-drag {
@@ -280,15 +280,12 @@ if (sitesGrid) {
         }
     });
     
-    // Force LTR direction on grid container for drag operations (SortableJS doesn't handle RTL)
-    // This fixes the "jump to first item" bug in RTL layouts
-    var originalDirection = window.getComputedStyle(sitesGrid).direction;
-    if (originalDirection === 'rtl') {
-        sitesGrid.style.direction = 'ltr';
-    }
+    // Grid container is LTR for drag logic (CSS handles this via direction: ltr in CSS)
+    // Visual layout remains the same - CSS Grid layout is independent of text direction
+    // This ensures SortableJS collision detection works correctly
     
     // Initialize Sortable - Using forceFallback for consistent behavior
-    // forceFallback: true uses element-based collision (works in both LTR/RTL when container is LTR)
+    // forceFallback: true uses element-based collision (works correctly with LTR container)
     new Sortable(sitesGrid, {
         animation: 200,
         forceFallback: true,
