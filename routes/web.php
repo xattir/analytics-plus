@@ -84,7 +84,7 @@ Route::prefix('dashboard')->middleware(['auth','ActiveAccount','verified'])->nam
 
 Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->group(function () {
 
-    Route::get('/',[BackendAdminController::class,'index'])->name('index');
+    Route::get('/',[BackendAnalyticsController::class,'index'])->name('index');
     Route::middleware('auth')->group(function () {
 
         Route::get('plugins/{plugin}/builder',[BackendPluginController::class,'builder_edit'])->name('plugins.builder-edit');
