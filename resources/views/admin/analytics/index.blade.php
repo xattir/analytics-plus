@@ -244,8 +244,7 @@
     const sitesGrid = document.getElementById('sitesGrid');
     if (!sitesGrid) return;
     
-    let reorderTimeout = null;
-    let isDragging = false;
+    var isDragging = false;
     
     // Handle card clicks
     sitesGrid.addEventListener('click', function(e) {
@@ -267,12 +266,11 @@
     
     // Function to save reorder
     function saveReorder() {
-        const items = sitesGrid.children;
-        const sites = [];
+        var items = sitesGrid.children;
+        var sites = [];
         
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            const siteId = item.getAttribute('data-site-id');
+        for (var i = 0; i < items.length; i++) {
+            var siteId = items[i].getAttribute('data-site-id');
             if (siteId) {
                 sites.push({
                     id: parseInt(siteId),
@@ -282,14 +280,11 @@
         }
         
         if (sites.length === 0) {
-            console.log('No sites to reorder');
             return;
         }
         
-        console.log('Saving reorder:', sites);
-        
-        const url = '{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}';
-        const token = '{{ csrf_token() }}';
+        var url = '{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}';
+        var token = '{{ csrf_token() }}';
         
         fetch(url, {
             method: 'POST',
@@ -301,16 +296,10 @@
             body: JSON.stringify({ sites: sites })
         })
         .then(function(response) {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
             return response.json();
         })
         .then(function(data) {
-            console.log('Reorder response:', data);
-            if (data.success) {
-                console.log('Reorder saved successfully');
-            } else {
+            if (!data.success) {
                 console.error('Reorder failed:', data);
             }
         })
