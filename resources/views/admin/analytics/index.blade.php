@@ -206,7 +206,7 @@
     @endif
     
     @if($sites->count() > 0)
-    <div class="analytics-sites-grid" id="sitesGrid">
+    <div class="analytics-sites-grid" id="sitesGrid" style="display: flex;flex-direction: row-reverse;justify-content: flex-end;">
         @foreach($sites as $site)
             @php
                 $routeName = isset($isSuperAdmin) && $isSuperAdmin 
