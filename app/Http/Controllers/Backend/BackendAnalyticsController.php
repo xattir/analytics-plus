@@ -157,6 +157,39 @@ class BackendAnalyticsController extends Controller
             ->orderBy('first_seen', 'desc')
             ->paginate(20);
         
+        // Traffic Quality Metrics
+        $trafficQuality = [
+            'total_sessions' => (clone $query)->count(),
+            'bot_sessions' => (clone $query)->where('is_bot', true)->count(),
+            'real_sessions' => (clone $query)->where('is_bot', false)->count(),
+            'high_quality' => (clone $query)->where('is_bot', false)
+                ->where('pages_count', '>', 1)
+                ->where('duration_ms', '>', 30000)
+                ->where('max_scroll_percent', '>', 50)
+                ->count(),
+            'low_quality' => (clone $query)->where('is_bot', false)
+                ->where(function($q) {
+                    $q->where('pages_count', 1)
+                      ->orWhere('duration_ms', '<', 5000)
+                      ->orWhere('max_scroll_percent', '<', 10);
+                })
+                ->count(),
+        ];
+        
+        // Page Performance with detailed stats
+        $pagePerformance = $this->getPagePerformance($siteId, $dateFromCarbon, $dateToCarbon);
+        
+        // User Flow (entry -> next -> exit)
+        $userFlow = $this->getUserFlow($siteId, $dateFromCarbon, $dateToCarbon);
+        
+        // Source Quality
+        $sourceQuality = $this->getSourceQuality($siteId, $dateFromCarbon, $dateToCarbon);
+        
+        // Calculate returning sessions percentage
+        $stats['returning_sessions_pct'] = $stats['total_sessions'] > 0 
+            ? round(($stats['returning_visitors'] / $stats['total_sessions']) * 100, 1)
+            : 0;
+        
         $isSuperAdmin = $this->isSuperAdmin();
         $isAdminRoute = request()->routeIs('admin.*');
         
@@ -174,6 +207,10 @@ class BackendAnalyticsController extends Controller
             'topCampaigns',
             'realtimeVisitors',
             'sessions',
+            'trafficQuality',
+            'pagePerformance',
+            'userFlow',
+            'sourceQuality',
             'dateFrom',
             'dateTo',
             'isSuperAdmin',
@@ -396,6 +433,117 @@ class BackendAnalyticsController extends Controller
             ->orderByDesc('last_seen')
             ->limit(50)
             ->get();
+    }
+    
+    /**
+     * Get page performance with detailed metrics
+     */
+    private function getPagePerformance($siteId, $dateFrom, $dateTo)
+    {
+        return AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
+            ->whereBetween('analytics_session_paths.created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->join('analytics_sessions', function($join) {
+                $join->on('analytics_sessions.session_id', '=', 'analytics_session_paths.session_id')
+                     ->on('analytics_sessions.site_id', '=', 'analytics_session_paths.site_id');
+            })
+            ->select(
+                'analytics_session_paths.path',
+                DB::raw('COUNT(DISTINCT analytics_session_paths.session_id) as sessions'),
+                DB::raw('SUM(CASE WHEN analytics_session_paths.position = 1 THEN 1 ELSE 0 END) as entrances'),
+                DB::raw('SUM(CASE WHEN analytics_sessions.exit_path = analytics_session_paths.path THEN 1 ELSE 0 END) as exits'),
+                DB::raw('AVG(analytics_session_paths.time_spent_ms) as avg_time_on_page'),
+                DB::raw('AVG(analytics_session_paths.scroll_percent) as avg_scroll_percent'),
+                DB::raw('SUM(CASE WHEN analytics_sessions.pages_count = 1 AND analytics_sessions.exit_path = analytics_session_paths.path THEN 1 ELSE 0 END) as bounces'),
+                DB::raw('COUNT(DISTINCT analytics_session_paths.session_id) as total_sessions_for_bounce')
+            )
+            ->groupBy('analytics_session_paths.path')
+            ->havingRaw('COUNT(DISTINCT analytics_session_paths.session_id) > 0')
+            ->orderByDesc('sessions')
+            ->limit(50)
+            ->get()
+            ->map(function($page) {
+                $page->bounce_rate = $page->total_sessions_for_bounce > 0 
+                    ? round(($page->bounces / $page->total_sessions_for_bounce) * 100, 1)
+                    : 0;
+                $page->avg_time_on_page = $page->avg_time_on_page ? round($page->avg_time_on_page / 1000, 1) : 0;
+                $page->avg_scroll_percent = $page->avg_scroll_percent ? round($page->avg_scroll_percent, 1) : 0;
+                return $page;
+            });
+    }
+    
+    /**
+     * Get user flow data (entry -> next paths -> exit)
+     */
+    private function getUserFlow($siteId, $dateFrom, $dateTo)
+    {
+        // Get entry paths and their next paths
+        $entryPaths = AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->select('entry_path', DB::raw('COUNT(*) as count'))
+            ->groupBy('entry_path')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+        
+        $flow = [];
+        foreach ($entryPaths as $entry) {
+            // Get next paths after entry
+            $nextPaths = AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
+                ->whereBetween('analytics_session_paths.created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+                ->join('analytics_sessions', function($join) {
+                    $join->on('analytics_sessions.session_id', '=', 'analytics_session_paths.session_id')
+                         ->on('analytics_sessions.site_id', '=', 'analytics_session_paths.site_id');
+                })
+                ->where('analytics_sessions.entry_path', $entry->entry_path)
+                ->where('analytics_session_paths.position', 2)
+                ->select('analytics_session_paths.path', DB::raw('COUNT(*) as count'))
+                ->groupBy('analytics_session_paths.path')
+                ->orderByDesc('count')
+                ->limit(5)
+                ->get();
+            
+            $flow[] = [
+                'entry' => $entry->entry_path,
+                'entry_count' => $entry->count,
+                'next_paths' => $nextPaths,
+            ];
+        }
+        
+        return $flow;
+    }
+    
+    /**
+     * Get source quality metrics
+     */
+    private function getSourceQuality($siteId, $dateFrom, $dateTo)
+    {
+        return AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->whereNotNull('utm_source')
+            ->select(
+                'utm_source',
+                'utm_medium',
+                'utm_campaign',
+                DB::raw('COUNT(*) as sessions'),
+                DB::raw('AVG(duration_ms) as avg_duration'),
+                DB::raw('AVG(pages_count) as avg_pages'),
+                DB::raw('SUM(CASE WHEN is_bounce = 1 THEN 1 ELSE 0 END) as bounces'),
+                DB::raw('SUM(CASE WHEN is_bot = 1 THEN 1 ELSE 0 END) as bots')
+            )
+            ->groupBy('utm_source', 'utm_medium', 'utm_campaign')
+            ->orderByDesc('sessions')
+            ->get()
+            ->map(function($source) {
+                $source->avg_duration = $source->avg_duration ? round($source->avg_duration / 1000, 1) : 0;
+                $source->avg_pages = $source->avg_pages ? round($source->avg_pages, 2) : 0;
+                $source->bounce_rate = $source->sessions > 0 
+                    ? round(($source->bounces / $source->sessions) * 100, 1)
+                    : 0;
+                $source->bot_rate = $source->sessions > 0
+                    ? round(($source->bots / $source->sessions) * 100, 1)
+                    : 0;
+                return $source;
+            });
     }
 
     /**
