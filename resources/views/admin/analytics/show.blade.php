@@ -147,6 +147,31 @@
         border-bottom: 2px solid var(--analytics-border);
     }
     
+    .visits-filter-form {
+        display: inline-block;
+    }
+    
+    .visits-filter-form select {
+        font-size: 13px;
+        padding: 6px 12px;
+        border: 1px solid var(--analytics-border);
+        border-radius: 6px;
+        background: var(--analytics-bg);
+        color: var(--analytics-text);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .visits-filter-form select:hover {
+        border-color: var(--analytics-primary);
+    }
+    
+    .visits-filter-form select:focus {
+        outline: none;
+        border-color: var(--analytics-primary);
+        box-shadow: 0 0 0 3px rgba(123, 96, 251, 0.1);
+    }
+    
     .page-row {
         display: flex;
         align-items: center;

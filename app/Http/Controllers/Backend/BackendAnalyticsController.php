@@ -255,7 +255,8 @@ class BackendAnalyticsController extends Controller
             'dateFrom',
             'dateTo',
             'isSuperAdmin',
-            'isAdminRoute'
+            'isAdminRoute',
+            'referrerFilter'
         ));
     }
 
@@ -628,16 +629,17 @@ class BackendAnalyticsController extends Controller
             ->where('is_bot', false);
         
         // Apply referrer filter
-        $siteDomain = $site->domain;
         if ($referrerFilter === 'external') {
             // External only: referrer_source is not 'Direct' and not null
+            // This means traffic came from external websites (Google, Facebook, etc.)
             $query->where(function($q) {
                 $q->whereNotNull('referrer')
                   ->where('referrer_source', '!=', 'Direct')
-                  ->where('referrer_source', '!=', null);
+                  ->whereNotNull('referrer_source');
             });
         } elseif ($referrerFilter === 'internal') {
-            // Internal only: referrer_source is 'Direct' or null (same domain or direct)
+            // Internal only: referrer_source is 'Direct' or null
+            // This means direct traffic or traffic from same domain
             $query->where(function($q) {
                 $q->where('referrer_source', 'Direct')
                   ->orWhereNull('referrer_source')

@@ -7,13 +7,6 @@
     
     // State
     let sessionId = null;
-    let lastActivity = Date.now();
-    let pageStartTime = Date.now();
-    let maxScroll = 0;
-    let activeTime = 0;
-    let idleTime = 0;
-    let lastActiveTime = Date.now();
-    let isPageVisible = true;
     let deviceFingerprint = null;
     
     // Initialize
@@ -26,21 +19,6 @@
         
         // Track page view
         trackPageView();
-        
-        // Set up event listeners
-        setupEventListeners();
-        
-        // Set up visibility change tracking
-        setupVisibilityTracking();
-        
-        // Set up scroll tracking
-        setupScrollTracking();
-        
-        // Set up activity tracking
-        setupActivityTracking();
-        
-        // Send periodic updates
-        setInterval(sendPeriodicUpdate, 30000); // Every 30 seconds
     }
     
     // Get or create session ID
@@ -127,153 +105,9 @@
             utm_source: getUrlParameter('utm_source'),
             utm_medium: getUrlParameter('utm_medium'),
             utm_campaign: getUrlParameter('utm_campaign'),
-            scroll_percent: 0,
-            time_spent_ms: 0,
-            active_time_ms: 0,
-            idle_time_ms: 0,
-            is_bounce: false,
         };
         
         sendTracking(data);
-    }
-    
-    // Set up event listeners
-    function setupEventListeners() {
-        // Track page unload
-        window.addEventListener('beforeunload', function() {
-            sendFinalUpdate();
-        });
-        
-        // Track visibility change
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                isPageVisible = false;
-                updateIdleTime();
-            } else {
-                isPageVisible = true;
-                lastActiveTime = Date.now();
-            }
-        });
-    }
-    
-    // Set up visibility tracking
-    function setupVisibilityTracking() {
-        if (typeof document.hidden !== 'undefined') {
-            isPageVisible = !document.hidden;
-        }
-    }
-    
-    // Set up scroll tracking
-    function setupScrollTracking() {
-        let scrollTimeout;
-        window.addEventListener('scroll', function() {
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(function() {
-                const scrollPercent = Math.round(
-                    ((window.scrollY + window.innerHeight) / document.documentElement.scrollHeight) * 100
-                );
-                maxScroll = Math.max(maxScroll, scrollPercent);
-            }, 100);
-        }, { passive: true });
-    }
-    
-    // Set up activity tracking
-    function setupActivityTracking() {
-        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-        events.forEach(function(event) {
-            document.addEventListener(event, function() {
-                if (isPageVisible) {
-                    updateActiveTime();
-                    lastActiveTime = Date.now();
-                }
-            }, { passive: true });
-        });
-    }
-    
-    // Update active time
-    function updateActiveTime() {
-        const now = Date.now();
-        if (isPageVisible && lastActiveTime) {
-            activeTime += now - lastActiveTime;
-        }
-        lastActiveTime = now;
-    }
-    
-    // Update idle time
-    function updateIdleTime() {
-        const now = Date.now();
-        if (!isPageVisible && lastActiveTime) {
-            idleTime += now - lastActiveTime;
-        }
-    }
-    
-    // Send periodic update
-    function sendPeriodicUpdate() {
-        updateActiveTime();
-        updateIdleTime();
-        
-        const data = {
-            site_key: window.ANALYTICS_SITE_KEY,
-            session_id: sessionId,
-            path: window.location.pathname + window.location.search,
-            scroll_percent: maxScroll,
-            time_spent_ms: Date.now() - pageStartTime,
-            active_time_ms: activeTime,
-            idle_time_ms: idleTime,
-            duration_ms: Date.now() - pageStartTime,
-        };
-        
-        sendTracking(data, true);
-    }
-    
-    // Send final update before page unload
-    function sendFinalUpdate() {
-        updateActiveTime();
-        updateIdleTime();
-        
-        const data = {
-            site_key: window.ANALYTICS_SITE_KEY,
-            session_id: sessionId,
-            path: window.location.pathname + window.location.search,
-            scroll_percent: maxScroll,
-            time_spent_ms: Date.now() - pageStartTime,
-            active_time_ms: activeTime,
-            idle_time_ms: idleTime,
-            duration_ms: Date.now() - pageStartTime,
-            is_bounce: maxScroll < 10 && (Date.now() - pageStartTime) < 5000,
-        };
-        
-        // Use sendBeacon for reliable delivery
-        if (navigator.sendBeacon) {
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            navigator.sendBeacon(API_URL, blob);
-        } else {
-            sendTracking(data);
-        }
-    }
-    
-    // Send tracking data (always async)
-    function sendTracking(data, async = false) {
-        if (!window.ANALYTICS_SITE_KEY) {
-            console.warn('Analytics: ANALYTICS_SITE_KEY is not set');
-            return;
-        }
-        
-        // Always use async fetch with keepalive for non-blocking requests
-        fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-            keepalive: true,
-            // Don't wait for response - fire and forget
-        }).catch(function(error) {
-            // Silently fail - don't block page rendering
-            if (window.console && console.error) {
-                console.error('Analytics tracking error:', error);
-            }
-        });
     }
     
     // Get URL parameter
@@ -306,6 +140,30 @@
         return null;
     }
     
+    // Send tracking data (always async)
+    function sendTracking(data) {
+        if (!window.ANALYTICS_SITE_KEY) {
+            console.warn('Analytics: ANALYTICS_SITE_KEY is not set');
+            return;
+        }
+        
+        // Always use async fetch with keepalive for non-blocking requests
+        fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            keepalive: true,
+            // Don't wait for response - fire and forget
+        }).catch(function(error) {
+            // Silently fail - don't block page rendering
+            if (window.console && console.error) {
+                console.error('Analytics tracking error:', error);
+            }
+        });
+    }
+    
     // Initialize when DOM is ready (async-safe)
     function initializeAnalytics() {
         if (document.readyState === 'loading') {
@@ -330,4 +188,3 @@
         getSessionId: function() { return sessionId; },
     };
 })();
-
