@@ -796,10 +796,12 @@
                                     <td class="visits-table-path">
                                         @if($sourceUrl)
                                             <a href="{{ $sourceUrl }}" target="_blank" class="path-link-clickable" title="{{ $sourceDisplay }}">
+                                                <span style="margin-left: 4px;">{{ $sourceIcon }}</span>
                                                 <code>{{ Str::limit($sourceDisplay, 40) }}</code>
                                             </a>
                                         @else
                                             <code class="path-link" title="{{ $sourceDisplay }}">
+                                                <span style="margin-left: 4px;">{{ $sourceIcon }}</span>
                                                 {{ Str::limit($sourceDisplay, 40) }}
                                             </code>
                                         @endif
