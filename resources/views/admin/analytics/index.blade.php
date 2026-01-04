@@ -3,12 +3,13 @@
 @section('content')
 <style>
     .analytics-sites-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        display: flex;
+        flex-direction: row-reverse; /* Visual RTL: cards appear right-to-left */
+        flex-wrap: wrap;
         gap: 24px;
         margin-top: 24px;
         min-height: 100%;
-        direction: ltr; /* LTR for drag & drop logic - CSS Grid layout is independent of direction */
+        direction: ltr; /* LTR for drag logic - keeps getBoundingClientRect() measurements correct */
     }
     
     .analytics-sites-grid.sortable-drag {
@@ -16,6 +17,9 @@
     }
     
     .site-card {
+        flex: 0 0 calc(33.333% - 16px); /* 3 columns, accounting for gap */
+        min-width: 320px; /* Minimum card width */
+        max-width: 100%;
         background: var(--background-1, #ffffff);
         border: 1px solid var(--border-color, #e5e7eb);
         border-radius: 12px;
@@ -25,6 +29,18 @@
         position: relative;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         will-change: transform;
+    }
+    
+    @media (max-width: 992px) {
+        .site-card {
+            flex: 0 0 calc(50% - 12px); /* 2 columns on medium screens */
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .site-card {
+            flex: 0 0 100%; /* 1 column on small screens */
+        }
     }
     
     .site-card:hover:not(.sortable-ghost):not(.sortable-chosen) {
