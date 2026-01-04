@@ -7,6 +7,7 @@
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         gap: 24px;
         margin-top: 24px;
+        min-height: 100%;
     }
     
     .site-card {
@@ -264,61 +265,61 @@
         }
     });
     
-    // Function to save reorder
-    function saveReorder() {
-        var items = sitesGrid.children;
-        var sites = [];
-        
-        for (var i = 0; i < items.length; i++) {
-            var siteId = items[i].getAttribute('data-site-id');
-            if (siteId) {
-                sites.push({
-                    id: parseInt(siteId),
-                    order: i + 1
-                });
-            }
-        }
-        
-        if (sites.length === 0) {
-            return;
-        }
-        
-        var url = '{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}';
-        var token = '{{ csrf_token() }}';
-        
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': token,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ sites: sites })
-        })
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(data) {
-            if (!data.success) {
-                console.error('Reorder failed:', data);
-            }
-        })
-        .catch(function(error) {
-            console.error('Reorder error:', error);
-        });
-    }
-    
     // Initialize Sortable
     new Sortable(sitesGrid, {
         animation: 150,
+        fallbackTolerance: 3,
         filter: '.site-card-actions, .site-card-actions *',
         preventOnFilter: true,
-        onStart: function() {
+        forceFallback: false,
+        onStart: function(evt) {
             isDragging = true;
         },
         onEnd: function(/**Event*/evt) {
             isDragging = false;
-            saveReorder();
+            
+            // Get new order from DOM
+            var items = sitesGrid.children;
+            var sites = [];
+            
+            for (var i = 0; i < items.length; i++) {
+                var siteId = items[i].getAttribute('data-site-id');
+                if (siteId) {
+                    sites.push({
+                        id: parseInt(siteId),
+                        order: i + 1
+                    });
+                }
+            }
+            
+            if (sites.length === 0) {
+                return;
+            }
+            
+            // Save reorder
+            var url = '{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}';
+            var token = '{{ csrf_token() }}';
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ sites: sites })
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (!data.success) {
+                    console.error('Reorder failed:', data);
+                }
+            })
+            .catch(function(error) {
+                console.error('Reorder error:', error);
+            });
         }
     });
 })();
