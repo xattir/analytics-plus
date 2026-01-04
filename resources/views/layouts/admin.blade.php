@@ -303,6 +303,11 @@
                                 'icon'=>"fal fa-puzzle-piece-simple"
                             ],
                             [
+                                'text'=>"التحليلات",
+                                'url'=>route('admin.analytics.index'),
+                                'icon'=>"fal fa-chart-line"
+                            ],
+                            [
                                 'can'=>"settings-update",
                                 'text'=>"الاعدادات",
                                 'url'=>route('admin.settings.index'),

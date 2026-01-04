@@ -97,16 +97,32 @@ class BackendAnalyticsController extends Controller
             abort(403, 'You do not have access to this site.');
         }
         
-        // Get date range
+        // Get date range (default to last 7 days)
         $dateFrom = $request->get('date_from', Carbon::now()->subDays(7)->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
         
         $dateFromCarbon = Carbon::parse($dateFrom);
         $dateToCarbon = Carbon::parse($dateTo);
         
-        // Build query
+        // Today's date range
+        $todayStart = Carbon::today()->startOfDay();
+        $todayEnd = Carbon::today()->endOfDay();
+        
+        // Last 30 minutes for active users
+        $activeUsersStart = Carbon::now()->subMinutes(30);
+        
+        // Build query for date range
         $query = AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()]);
+        
+        // Build query for today
+        $todayQuery = AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$todayStart, $todayEnd]);
+        
+        // Build query for active users (last 30 minutes)
+        $activeUsersQuery = AnalyticsSession::where('site_id', $siteId)
+            ->where('last_seen', '>=', $activeUsersStart)
+            ->where('is_bot', false);
         
         // Get statistics
         $stats = [
@@ -190,14 +206,39 @@ class BackendAnalyticsController extends Controller
             ? round(($stats['returning_visitors'] / $stats['total_sessions']) * 100, 1)
             : 0;
         
+        // TODAY'S METRICS (for hero section)
+        $todayStats = [
+            'visitors' => (clone $todayQuery)->distinct('device_fingerprint')->count('device_fingerprint'),
+            'pageviews' => (clone $todayQuery)->sum('pages_count'),
+        ];
+        
+        // ACTIVE USERS (last 30 minutes) - Hero metric
+        $activeUsersCount = (clone $activeUsersQuery)->distinct('session_id')->count('session_id');
+        $activeUsersData = $this->getActiveUsersChartData($siteId, $activeUsersStart);
+        
+        // Visits & Paths (for expandable paths section)
+        $visitsWithPaths = $this->getVisitsWithPaths($siteId, $dateFromCarbon, $dateToCarbon);
+        
+        // Last 7 days visitors chart
+        $visitorsLast7Days = $this->getVisitorsLast7Days($siteId);
+        
+        // Top traffic sources
+        $topTrafficSources = $this->getTopTrafficSources($siteId, $dateFromCarbon, $dateToCarbon);
+        
         $isSuperAdmin = $this->isSuperAdmin();
         $isAdminRoute = request()->routeIs('admin.*');
         
         return view('admin.analytics.show', compact(
             'site',
             'stats',
+            'todayStats',
+            'activeUsersCount',
+            'activeUsersData',
             'timeSeries',
             'topPages',
+            'visitsWithPaths',
+            'visitorsLast7Days',
+            'topTrafficSources',
             'topEntryPages',
             'topExitPages',
             'topBrowsers',
@@ -206,7 +247,6 @@ class BackendAnalyticsController extends Controller
             'topCountries',
             'topCampaigns',
             'realtimeVisitors',
-            'sessions',
             'trafficQuality',
             'pagePerformance',
             'userFlow',
@@ -544,6 +584,129 @@ class BackendAnalyticsController extends Controller
                     : 0;
                 return $source;
             });
+    }
+    
+    /**
+     * Get active users chart data (last 30 minutes, 6 data points)
+     */
+    private function getActiveUsersChartData($siteId, $startTime)
+    {
+        $data = [];
+        $interval = 5; // 5-minute intervals (6 points for 30 minutes)
+        
+        for ($i = 0; $i < 6; $i++) {
+            $pointStart = $startTime->copy()->addMinutes($i * $interval);
+            $pointEnd = $pointStart->copy()->addMinutes($interval);
+            
+            $count = AnalyticsSession::where('site_id', $siteId)
+                ->where('last_seen', '>=', $pointStart)
+                ->where('last_seen', '<', $pointEnd)
+                ->where('is_bot', false)
+                ->distinct('session_id')
+                ->count('session_id');
+            
+            $data[] = [
+                'time' => $pointStart->format('H:i'),
+                'count' => $count,
+            ];
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Get visits with paths for expandable paths section
+     */
+    private function getVisitsWithPaths($siteId, $dateFrom, $dateTo)
+    {
+        return AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->withCount('paths')
+            ->with(['paths' => function($query) {
+                $query->orderBy('position');
+            }])
+            ->orderBy('first_seen', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(function($session) {
+                return [
+                    'session_id' => $session->session_id,
+                    'entry_path' => $session->entry_path,
+                    'exit_path' => $session->exit_path,
+                    'paths_count' => $session->paths_count,
+                    'paths' => $session->paths->pluck('path')->toArray(),
+                    'first_seen' => $session->first_seen,
+                ];
+            });
+    }
+    
+    /**
+     * Get visitors last 7 days data
+     */
+    private function getVisitorsLast7Days($siteId)
+    {
+        $data = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $start = $date->copy()->startOfDay();
+            $end = $date->copy()->endOfDay();
+            
+            $count = AnalyticsSession::where('site_id', $siteId)
+                ->whereBetween('first_seen', [$start, $end])
+                ->where('is_bot', false)
+                ->distinct('device_fingerprint')
+                ->count('device_fingerprint');
+            
+            $data[] = [
+                'date' => $date->format('Y-m-d'),
+                'label' => $date->format('D'),
+                'count' => $count,
+            ];
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Get top traffic sources
+     */
+    private function getTopTrafficSources($siteId, $dateFrom, $dateTo)
+    {
+        // Get UTM sources
+        $utmSources = AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->whereNotNull('utm_source')
+            ->where('is_bot', false)
+            ->select('utm_source', DB::raw('COUNT(*) as count'))
+            ->groupBy('utm_source')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+        
+        // Get direct traffic count
+        $directCount = AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->whereNull('utm_source')
+            ->where('is_bot', false)
+            ->count();
+        
+        $sources = collect($utmSources)->map(function($source) {
+            return [
+                'name' => $source->utm_source,
+                'count' => $source->count,
+                'type' => 'utm',
+            ];
+        });
+        
+        if ($directCount > 0) {
+            $sources->prepend([
+                'name' => 'Direct',
+                'count' => $directCount,
+                'type' => 'direct',
+            ]);
+        }
+        
+        return $sources->sortByDesc('count')->values();
     }
 
     /**
