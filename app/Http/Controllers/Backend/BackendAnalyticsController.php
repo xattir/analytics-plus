@@ -257,6 +257,7 @@ class BackendAnalyticsController extends Controller
             'todayStats',
             'activeUsersCount',
             'activeUsersData',
+            'hasTrafficLast24h',
             'timeSeries',
             'topPages',
             'visitsWithPaths',
