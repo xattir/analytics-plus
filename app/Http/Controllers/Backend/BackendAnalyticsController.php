@@ -49,10 +49,8 @@ class BackendAnalyticsController extends Controller
         
         if ($isSuperAdmin) {
             // Superadmin sees all sites
-            $sites = AnalyticsSite::withCount('sessions')
-                ->with('owner')
-                ->orderBy('created_at', 'desc')
-                ->paginate(20);
+            $sitesQuery = AnalyticsSite::withCount('sessions')
+                ->with('owner');
         } else {
             // Regular users and admins see only their sites
             // Get sites user owns
@@ -65,15 +63,31 @@ class BackendAnalyticsController extends Controller
                 $query->where('user_id', $userId);
             })->withCount('sessions')->get();
             
-            // Merge and paginate
+            // Merge
             $allSites = $ownedSites->merge($memberSites)->unique('id');
-            $sites = new \Illuminate\Pagination\LengthAwarePaginator(
-                $allSites->forPage(\Illuminate\Pagination\Paginator::resolveCurrentPage(), 20),
-                $allSites->count(),
-                20,
-                \Illuminate\Pagination\Paginator::resolveCurrentPage(),
-                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
-            );
+            $siteIds = $allSites->pluck('id')->toArray();
+            
+            $sitesQuery = AnalyticsSite::whereIn('id', $siteIds)
+                ->withCount('sessions')
+                ->with('owner');
+        }
+        
+        // Order by user's order preference, then by created_at
+        $sites = $sitesQuery->orderBy('order', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // Get active users data for each site (last 30 minutes)
+        $activeUsersStart = Carbon::now()->subMinutes(30);
+        foreach ($sites as $site) {
+            $activeUsers = AnalyticsSession::where('site_id', $site->id)
+                ->where('last_seen', '>=', $activeUsersStart)
+                ->where('is_bot', false)
+                ->distinct()
+                ->count('session_id');
+            
+            $site->active_users = $activeUsers;
+            $site->active_users_chart_data = $this->getActiveUsersChartData($site->id, $activeUsersStart);
         }
         
         // Get pending invitations for current user
@@ -277,10 +291,14 @@ class BackendAnalyticsController extends Controller
             'domain' => 'required|string|max:255',
         ]);
         
+        // Get max order for user's sites
+        $maxOrder = AnalyticsSite::where('user_id', auth()->id())->max('order') ?? 0;
+        
         $site = AnalyticsSite::create([
             'user_id' => auth()->id(),
             'site_key' => $this->generateSiteKey(),
             'domain' => $request->domain,
+            'order' => $maxOrder + 1,
         ]);
         
         $redirectRoute = request()->routeIs('admin.*') 
@@ -289,6 +307,35 @@ class BackendAnalyticsController extends Controller
         
         return redirect($redirectRoute)
             ->with('success', 'Analytics site created successfully. Use the tracking code below.');
+    }
+    
+    /**
+     * Reorder sites
+     */
+    public function reorder(Request $request)
+    {
+        $request->validate([
+            'sites' => 'required|array',
+            'sites.*.id' => 'required|exists:analytics_sites,id',
+            'sites.*.order' => 'required|integer',
+        ]);
+        
+        $userId = auth()->id();
+        $isSuperAdmin = $this->isSuperAdmin();
+        
+        foreach ($request->sites as $siteData) {
+            $site = AnalyticsSite::find($siteData['id']);
+            
+            // Check access
+            if (!$isSuperAdmin && !$site->canAccess($userId)) {
+                continue; // Skip sites user can't access
+            }
+            
+            $site->order = $siteData['order'];
+            $site->save();
+        }
+        
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -604,7 +651,7 @@ class BackendAnalyticsController extends Controller
                 ->where('last_seen', '>=', $pointStart)
                 ->where('last_seen', '<', $pointEnd)
                 ->where('is_bot', false)
-                ->distinct('session_id')
+                ->distinct()
                 ->count('session_id');
             
             $data[] = [
