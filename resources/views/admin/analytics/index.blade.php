@@ -246,18 +246,19 @@ if (!sitesGrid) {
     console.error('sitesGrid not found');
 }
     
-    // Handle card clicks
+// Handle card clicks
+if (sitesGrid) {
     sitesGrid.addEventListener('click', function(e) {
         if (isDragging) {
             return;
         }
         
-        const card = e.target.closest('.site-card');
-        const actions = e.target.closest('.site-card-actions');
-        const isLink = e.target.tagName === 'A' || e.target.closest('a');
+        var card = e.target.closest('.site-card');
+        var actions = e.target.closest('.site-card-actions');
+        var isLink = e.target.tagName === 'A' || e.target.closest('a');
         
         if (card && !actions && !isLink) {
-            const url = card.getAttribute('data-site-url');
+            var url = card.getAttribute('data-site-url');
             if (url) {
                 window.location.href = url;
             }
@@ -320,7 +321,7 @@ if (!sitesGrid) {
             });
         }
     });
-})();
+}
 
 // Initialize charts for each site
 @foreach($sites as $site)
