@@ -217,7 +217,7 @@ class BackendAnalyticsController extends Controller
         $activeUsersData = $this->getActiveUsersChartData($siteId, $activeUsersStart);
         
         // Visits & Paths (for expandable paths section)
-        $visitsWithPaths = $this->getVisitsWithPaths($siteId, $dateFromCarbon, $dateToCarbon);
+        $visitsWithPaths = $this->getVisitsWithPaths($siteId, $dateFromCarbon, $dateToCarbon, $site);
         
         // Last 7 days visitors chart
         $visitorsLast7Days = $this->getVisitorsLast7Days($siteId);
@@ -357,7 +357,7 @@ class BackendAnalyticsController extends Controller
             ->select('path', DB::raw('COUNT(*) as views'))
             ->groupBy('path')
             ->orderByDesc('views')
-            ->limit(10)
+            ->limit(30)
             ->get();
     }
 
@@ -617,7 +617,7 @@ class BackendAnalyticsController extends Controller
     /**
      * Get visits with paths for expandable paths section
      */
-    private function getVisitsWithPaths($siteId, $dateFrom, $dateTo, $perPage = 20)
+    private function getVisitsWithPaths($siteId, $dateFrom, $dateTo, $site, $perPage = 20)
     {
         $startDate = $dateFrom->copy()->startOfDay()->toDateTimeString();
         $endDate = $dateTo->copy()->endOfDay()->toDateTimeString();
@@ -629,7 +629,7 @@ class BackendAnalyticsController extends Controller
             ->orderBy('first_seen', 'desc')
             ->paginate($perPage);
         
-        return $sessions->through(function($session) {
+        return $sessions->through(function($session) use ($site) {
             return [
                 'session_id' => $session->session_id,
                 'entry_path' => $session->entry_path,
@@ -644,6 +644,8 @@ class BackendAnalyticsController extends Controller
                 'browser' => $session->browser,
                 'browser_version' => $session->browser_version,
                 'referrer_source' => $session->referrer_source,
+                'referrer' => $session->referrer,
+                'site_domain' => $site->domain,
             ];
         });
     }

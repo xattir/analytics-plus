@@ -159,14 +159,24 @@
         gap: 12px;
     }
     
+    .page-path-link {
+        text-decoration: none;
+        flex: 1;
+        margin-left: 8px;
+    }
+    
     .page-path {
         font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
         font-size: 12px;
         color: var(--analytics-text);
-        flex: 1;
-        margin-left: 8px;
         word-break: break-all;
         line-height: 1.4;
+        display: block;
+        transition: color 0.2s;
+    }
+    
+    .page-path-link:hover .page-path {
+        color: var(--analytics-primary);
     }
     
     .page-visits {
@@ -236,6 +246,35 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         cursor: help;
+    }
+    
+    .path-link-clickable {
+        text-decoration: none;
+        display: inline-block;
+        max-width: 100%;
+    }
+    
+    .path-link-clickable code {
+        font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+        font-size: 12px;
+        color: var(--analytics-primary);
+        background: rgba(123, 96, 251, 0.08);
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .path-link-clickable:hover code {
+        background: rgba(123, 96, 251, 0.15);
+        color: var(--analytics-primary);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(123, 96, 251, 0.2);
     }
     
     .visits-table-time {
@@ -341,63 +380,60 @@
         font-size: 14px;
     }
     
-    .source-item {
+    .source-row {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        margin-bottom: 4px;
+        border-radius: 6px;
+        background: var(--analytics-bg);
+        border: 1px solid var(--analytics-border);
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .source-row:hover {
+        border-color: var(--analytics-primary);
+        box-shadow: 0 1px 4px rgba(123, 96, 251, 0.1);
+    }
+    
+    .source-row::before {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: var(--progress-width, 0%);
+        background: rgba(123, 96, 251, 0.08);
+        z-index: 0;
+    }
+    
+    .source-row-content {
+        position: relative;
+        z-index: 1;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 0;
-        border-bottom: 1px solid var(--analytics-border);
+        width: 100%;
+        gap: 12px;
     }
     
-    .source-item:last-child {
-        border-bottom: none;
-    }
-    
-    .source-name {
+    .source-icon-name {
+        font-size: 13px;
         font-weight: 500;
         color: var(--analytics-text);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
     }
     
     .source-count {
-        font-weight: 600;
-        color: var(--analytics-text);
-    }
-    
-    .browser-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 16px;
-    }
-    
-    .browser-item {
-        text-align: center;
-        padding: 16px;
-        background: var(--analytics-bg);
-        border: 1px solid var(--analytics-border);
-        border-radius: 8px;
-        transition: all 0.2s;
-    }
-    
-    .browser-item:hover {
-        border-color: var(--analytics-primary);
-        box-shadow: 0 2px 8px rgba(123, 96, 251, 0.1);
-    }
-    
-    .browser-icon {
-        font-size: 32px;
-        margin-bottom: 8px;
-    }
-    
-    .browser-name {
         font-size: 13px;
-        color: var(--analytics-text-muted);
-        margin-bottom: 4px;
-    }
-    
-    .browser-percent {
-        font-size: 18px;
         font-weight: 600;
         color: var(--analytics-text);
+        white-space: nowrap;
     }
     
     .chart-container {
@@ -489,10 +525,13 @@
                             @php
                                 // Decode URL-encoded paths
                                 $decodedPath = urldecode($page->path);
+                                $pageUrl = 'https://' . $site->domain . $decodedPath;
                             @endphp
                             <div class="page-row" style="--progress-width: {{ ($page->views / $maxVisits) * 100 }}%;">
                                 <div class="page-row-content">
-                                    <code class="page-path" title="{{ $decodedPath }}">{{ Str::limit($decodedPath, 50) }}</code>
+                                    <a href="{{ $pageUrl }}" target="_blank" class="page-path-link" title="{{ $decodedPath }}">
+                                        <code class="page-path">{{ Str::limit($decodedPath, 50) }}</code>
+                                    </a>
                                     <span class="page-visits">{{ number_format($page->views) }}</span>
                                 </div>
                             </div>
@@ -508,8 +547,10 @@
         </div>
         
         <!-- VISITS & PATHS -->
-        <div class="section-card">
-            <h2 class="section-title">الزيارات والمسارات الأخيرة</h2>
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="section-card">
+                    <h2 class="section-title">الزيارات والمسارات الأخيرة</h2>
             @if(isset($visitsWithPaths) && $visitsWithPaths->count() > 0)
                 <div class="visits-table-container">
                     <table class="visits-table">
@@ -536,17 +577,54 @@
                                     // Decode URL-encoded paths
                                     $decodedEntryPath = urldecode($visit['entry_path']);
                                     $decodedExitPath = urldecode($visit['exit_path']);
+                                    
+                                    // Determine source to display
+                                    $referrerUrl = $visit['referrer'] ?? null;
+                                    $siteDomain = $visit['site_domain'] ?? $site->domain;
+                                    $referrerSource = $visit['referrer_source'] ?? 'Direct';
+                                    
+                                    // Check if referrer is from same domain
+                                    $isSameDomain = false;
+                                    if ($referrerUrl) {
+                                        $referrerHost = parse_url($referrerUrl, PHP_URL_HOST);
+                                        $isSameDomain = $referrerHost && (
+                                            $referrerHost === $siteDomain || 
+                                            $referrerHost === 'www.' . $siteDomain ||
+                                            'www.' . $referrerHost === $siteDomain
+                                        );
+                                    }
+                                    
+                                    // Source to display: if same domain show entry_path, else show referrer_source
+                                    if ($isSameDomain || $referrerSource === 'Direct') {
+                                        // Same domain or direct: show entry path
+                                        $sourceDisplay = $decodedEntryPath;
+                                        $sourceUrl = 'https://' . $site->domain . $decodedEntryPath;
+                                    } else {
+                                        // External source: show referrer source name
+                                        $sourceDisplay = $referrerSource;
+                                        $sourceUrl = $referrerUrl;
+                                    }
+                                    
+                                    // Build full URLs for clickable links
+                                    $entryUrl = $site->domain . $decodedEntryPath;
+                                    $exitUrl = $site->domain . $decodedExitPath;
                                 @endphp
                                 <tr class="visits-table-row">
                                     <td class="visits-table-path">
-                                        <code class="path-link" title="{{ $decodedEntryPath }}">
-                                            {{ Str::limit($decodedEntryPath, 40) }}
-                                        </code>
+                                        @if($sourceUrl)
+                                            <a href="{{ $sourceUrl }}" target="_blank" class="path-link-clickable" title="{{ $sourceDisplay }}">
+                                                <code>{{ Str::limit($sourceDisplay, 40) }}</code>
+                                            </a>
+                                        @else
+                                            <code class="path-link" title="{{ $sourceDisplay }}">
+                                                {{ Str::limit($sourceDisplay, 40) }}
+                                            </code>
+                                        @endif
                                     </td>
                                     <td class="visits-table-path">
-                                        <code class="path-link" title="{{ $decodedExitPath }}">
-                                            {{ Str::limit($decodedExitPath, 40) }}
-                                        </code>
+                                        <a href="https://{{ $exitUrl }}" target="_blank" class="path-link-clickable" title="{{ $decodedExitPath }}">
+                                            <code>{{ Str::limit($decodedExitPath, 40) }}</code>
+                                        </a>
                                     </td>
                                     <td class="visits-table-time">
                                         <span>{{ \Carbon\Carbon::parse($visit['first_seen'])->diffForHumans() }}</span>
@@ -612,61 +690,73 @@
                     <div>لا توجد بيانات للزيارات</div>
                 </div>
             @endif
+                </div>
+            </div>
         </div>
         
-        <div class="row">
-            <!-- VISITORS OVER TIME -->
-            <div class="col-md-8 mb-4">
-                <div class="section-card">
-                    <h2 class="section-title">الزوار - آخر 7 أيام</h2>
-                    <div class="chart-container" style="height: 250px;">
+        <!-- VISITORS OVER TIME (HERO) -->
+        <div class="row mb-5">
+            <div class="col-md-12 mb-4">
+                <div class="hero-card">
+                    <div class="metric-icon">📊</div>
+                    <div class="metric-label">الزوار - آخر 7 أيام</div>
+                    <div class="chart-container" style="height: 200px; margin-top: 16px;">
                         <canvas id="visitorsChart"></canvas>
                     </div>
                 </div>
             </div>
-            
+        </div>
+        
+        <div class="row">
             <!-- TOP TRAFFIC SOURCES -->
-            <div class="col-md-4 mb-4">
+            <div class="col-lg-4 mb-4">
                 <div class="section-card">
                     <h2 class="section-title">أفضل المصادر</h2>
                     @if(isset($topTrafficSources) && $topTrafficSources->count() > 0)
+                        @php
+                            $maxSourceCount = $topTrafficSources->first()['count'] ?? 1;
+                        @endphp
                         @foreach($topTrafficSources as $source)
-                            <div class="source-item">
-                                <span class="source-name">
-                                    @php
-                                        $sourceName = strtolower($source['name'] ?? '');
-                                    @endphp
-                                    @if($source['type'] == 'direct' || $sourceName == 'direct')
-                                        🔗 مباشر
-                                    @elseif($sourceName == 'google')
-                                        🔍 Google
-                                    @elseif($sourceName == 'facebook' || $sourceName == 'fb.com')
-                                        📘 Facebook
-                                    @elseif($sourceName == 'instagram')
-                                        📷 Instagram
-                                    @elseif($sourceName == 'twitter' || $sourceName == 'x.com')
-                                        🐦 Twitter
-                                    @elseif($sourceName == 'youtube')
-                                        📺 YouTube
-                                    @elseif($sourceName == 'linkedin')
-                                        💼 LinkedIn
-                                    @elseif($sourceName == 'pinterest')
-                                        📌 Pinterest
-                                    @elseif($sourceName == 'reddit')
-                                        🤖 Reddit
-                                    @elseif($sourceName == 'tiktok')
-                                        🎵 TikTok
-                                    @elseif($sourceName == 'bing')
-                                        🔎 Bing
-                                    @elseif($sourceName == 'yahoo')
-                                        📧 Yahoo
-                                    @elseif($sourceName == 'duckduckgo')
-                                        🦆 DuckDuckGo
-                                    @else
-                                        🔗 {{ $source['name'] }}
-                                    @endif
-                                </span>
-                                <span class="source-count">{{ number_format($source['count']) }}</span>
+                            @php
+                                $sourceName = strtolower($source['name'] ?? '');
+                                $sourceCount = $source['count'] ?? 0;
+                                $sourcePercent = $maxSourceCount > 0 ? ($sourceCount / $maxSourceCount) * 100 : 0;
+                            @endphp
+                            <div class="source-row" style="--progress-width: {{ $sourcePercent }}%;">
+                                <div class="source-row-content">
+                                    <span class="source-icon-name">
+                                        @if($source['type'] == 'direct' || $sourceName == 'direct')
+                                            🔗 <span>مباشر</span>
+                                        @elseif($sourceName == 'google')
+                                            🔍 <span>Google</span>
+                                        @elseif($sourceName == 'facebook' || $sourceName == 'fb.com')
+                                            📘 <span>Facebook</span>
+                                        @elseif($sourceName == 'instagram')
+                                            📷 <span>Instagram</span>
+                                        @elseif($sourceName == 'twitter' || $sourceName == 'x.com')
+                                            🐦 <span>Twitter</span>
+                                        @elseif($sourceName == 'youtube')
+                                            📺 <span>YouTube</span>
+                                        @elseif($sourceName == 'linkedin')
+                                            💼 <span>LinkedIn</span>
+                                        @elseif($sourceName == 'pinterest')
+                                            📌 <span>Pinterest</span>
+                                        @elseif($sourceName == 'reddit')
+                                            🤖 <span>Reddit</span>
+                                        @elseif($sourceName == 'tiktok')
+                                            🎵 <span>TikTok</span>
+                                        @elseif($sourceName == 'bing')
+                                            🔎 <span>Bing</span>
+                                        @elseif($sourceName == 'yahoo')
+                                            📧 <span>Yahoo</span>
+                                        @elseif($sourceName == 'duckduckgo')
+                                            🦆 <span>DuckDuckGo</span>
+                                        @else
+                                            🔗 <span>{{ $source['name'] }}</span>
+                                        @endif
+                                    </span>
+                                    <span class="source-count">{{ number_format($sourceCount) }}</span>
+                                </div>
                             </div>
                         @endforeach
                     @else
@@ -676,35 +766,19 @@
                     @endif
                 </div>
             </div>
-        </div>
-        
-        <!-- BROWSERS -->
-        @if($topBrowsers->count() > 0)
-        <div class="section-card">
-            <h2 class="section-title">المتصفحات</h2>
-            <div class="browser-grid">
-                @foreach($topBrowsers as $browser)
-                    @php
-                        $browserIcons = [
-                            'Chrome' => '🌐',
-                            'Safari' => '🧭',
-                            'Firefox' => '🦊',
-                            'Edge' => '🔷',
-                            'Opera' => '🎭',
-                        ];
-                        $icon = $browserIcons[$browser->browser] ?? '🌐';
-                        $totalBrowsers = $topBrowsers->sum('count');
-                        $percent = $totalBrowsers > 0 ? round(($browser->count / $totalBrowsers) * 100, 1) : 0;
-                    @endphp
-                    <div class="browser-item" title="{{ $browser->browser }}: {{ number_format($browser->count) }} جلسة">
-                        <div class="browser-icon">{{ $icon }}</div>
-                        <div class="browser-name">{{ $browser->browser }}</div>
-                        <div class="browser-percent">{{ $percent }}%</div>
+            
+            <!-- BROWSERS -->
+            <div class="col-lg-4 mb-4">
+                @if($topBrowsers->count() > 0)
+                <div class="section-card">
+                    <h2 class="section-title">المتصفحات</h2>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="browsersChart"></canvas>
                     </div>
-                @endforeach
+                </div>
+                @endif
             </div>
         </div>
-        @endif
     </div>
 </div>
 @endsection
@@ -779,12 +853,12 @@ if (activeUsersCtx) {
 }
 @endif
 
-// Visitors Last 7 Days Chart
+// Visitors Last 7 Days Chart (Hero - Line Chart)
 @if(isset($visitorsLast7Days) && count($visitorsLast7Days) > 0)
 const visitorsCtx = document.getElementById('visitorsChart');
 if (visitorsCtx) {
     new Chart(visitorsCtx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: [
                 @foreach($visitorsLast7Days as $day)
@@ -801,8 +875,13 @@ if (visitorsCtx) {
                 backgroundColor: 'rgba(123, 96, 251, 0.1)',
                 borderColor: '#7b60fb',
                 borderWidth: 2,
-                borderRadius: 6,
-                borderSkipped: false,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#7b60fb',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
             }]
         },
         options: {
@@ -833,6 +912,104 @@ if (visitorsCtx) {
                     ticks: {
                         font: {
                             size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+@endif
+
+// Browsers Chart (Doughnut Chart with Percentage)
+@if(isset($topBrowsers) && $topBrowsers->count() > 0)
+const browsersCtx = document.getElementById('browsersChart');
+if (browsersCtx) {
+    @php
+        $browserColors = [
+            'Chrome' => 'rgba(66, 133, 244, 0.8)',
+            'Safari' => 'rgba(0, 122, 255, 0.8)',
+            'Firefox' => 'rgba(255, 102, 0, 0.8)',
+            'Edge' => 'rgba(0, 120, 212, 0.8)',
+            'Opera' => 'rgba(255, 0, 0, 0.8)',
+        ];
+        $browserBorderColors = [
+            'Chrome' => 'rgba(66, 133, 244, 1)',
+            'Safari' => 'rgba(0, 122, 255, 1)',
+            'Firefox' => 'rgba(255, 102, 0, 1)',
+            'Edge' => 'rgba(0, 120, 212, 1)',
+            'Opera' => 'rgba(255, 0, 0, 1)',
+        ];
+        $totalBrowsers = $topBrowsers->sum('count');
+    @endphp
+    new Chart(browsersCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                @foreach($topBrowsers as $browser)
+                "{{ $browser->browser }}",
+                @endforeach
+            ],
+            datasets: [{
+                data: [
+                    @foreach($topBrowsers as $browser)
+                    {{ $browser->count }},
+                    @endforeach
+                ],
+                backgroundColor: [
+                    @foreach($topBrowsers as $browser)
+                    '{{ $browserColors[$browser->browser] ?? 'rgba(123, 96, 251, 0.8)' }}',
+                    @endforeach
+                ],
+                borderColor: [
+                    @foreach($topBrowsers as $browser)
+                    '{{ $browserBorderColors[$browser->browser] ?? '#7b60fb' }}',
+                    @endforeach
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12
+                        },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                const dataset = data.datasets[0];
+                                const total = dataset.data.reduce((a, b) => a + b, 0);
+                                return data.labels.map((label, i) => {
+                                    const value = dataset.data[i];
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return {
+                                        text: label + ' (' + percentage + '%)',
+                                        fillStyle: dataset.backgroundColor[i],
+                                        strokeStyle: dataset.borderColor[i],
+                                        lineWidth: dataset.borderWidth,
+                                        hidden: false,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return label + ': ' + value + ' (' + percentage + '%)';
                         }
                     }
                 }
