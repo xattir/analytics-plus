@@ -222,7 +222,7 @@ if (sitesGrid) {
         const actions = e.target.closest('.site-card-actions');
         
         if (card && !dragHandle && !actions) {
-            const url = card.dataset.siteUrl;
+            const url = card.getAttribute('data-site-url');
             if (url) {
                 window.location.href = url;
             }
@@ -232,34 +232,45 @@ if (sitesGrid) {
     const sortable = Sortable.create(sitesGrid, {
         handle: '.site-card-drag-handle',
         animation: 150,
-        forceFallback: false,
         onEnd: function(evt) {
             const items = Array.from(sitesGrid.children);
-            const sites = items.map((item, index) => ({
-                id: parseInt(item.dataset.siteId),
-                order: index + 1
-            }));
+            const sites = [];
+            
+            items.forEach(function(item, index) {
+                const siteId = item.getAttribute('data-site-id');
+                if (siteId) {
+                    sites.push({
+                        id: parseInt(siteId),
+                        order: index + 1
+                    });
+                }
+            });
+            
+            if (sites.length === 0) {
+                return;
+            }
             
             // Send reorder request
-            fetch('{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}', {
+            const url = '{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}';
+            const token = '{{ csrf_token() }}';
+            
+            fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': token,
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({ sites: sites })
             })
             .then(function(response) {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
                 return response.json();
             })
             .then(function(data) {
                 if (data.success) {
-                    // Reload page to show new order
-                    window.location.reload();
+                    // Success - no reload needed, order is already updated in DOM
+                } else {
+                    console.error('Reorder failed:', data);
                 }
             })
             .catch(function(error) {
