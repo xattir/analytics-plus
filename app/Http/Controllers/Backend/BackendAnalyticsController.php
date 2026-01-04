@@ -673,6 +673,34 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
+     * Get last 24 hours chart data (grouped by hour)
+     */
+    private function getLast24HoursChartData($siteId)
+    {
+        $data = [];
+        $startTime = Carbon::now()->subHours(24);
+        
+        // Group by hour (24 points)
+        for ($i = 0; $i < 24; $i++) {
+            $hourStart = $startTime->copy()->addHours($i)->startOfHour();
+            $hourEnd = $hourStart->copy()->endOfHour();
+            
+            $count = AnalyticsSession::where('site_id', $siteId)
+                ->whereBetween('first_seen', [$hourStart->toDateTimeString(), $hourEnd->toDateTimeString()])
+                ->where('is_bot', false)
+                ->distinct()
+                ->count('session_id');
+            
+            $data[] = [
+                'hour' => $hourStart->format('H:i'),
+                'count' => $count,
+            ];
+        }
+        
+        return $data;
+    }
+    
+    /**
      * Get visits with paths for expandable paths section
      */
     private function getVisitsWithPaths($siteId, $dateFrom, $dateTo, $site, $perPage = 20, $referrerFilter = 'external')

@@ -569,8 +569,8 @@
         <div class="row mb-5">
             <!-- ACTIVE USERS (HERO) - ثلث الشاشة -->
             <div class="col-lg-4 mb-4">
-                <div class="hero-card hero-card-active">
-                    <div class="metric-icon">⚡</div>
+                <div class="hero-card @if(isset($hasTrafficLast24h) && $hasTrafficLast24h) hero-card-active @endif">
+                    <div class="metric-icon">⚡@if(isset($hasTrafficLast24h) && $hasTrafficLast24h)<span class="metric-icon-indicator"></span>@endif</div>
                     <div class="metric-label">المستخدمون النشطون (آخر 30 دقيقة)</div>
                     <div class="metric-value">{{ number_format($activeUsersCount ?? 0) }}</div>
                     <div class="chart-container">
