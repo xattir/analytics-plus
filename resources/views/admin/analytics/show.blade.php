@@ -122,9 +122,9 @@
     .page-row {
         display: flex;
         align-items: center;
-        padding: 16px;
-        margin-bottom: 8px;
-        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 4px;
+        border-radius: 6px;
         background: var(--analytics-bg);
         border: 1px solid var(--analytics-border);
         cursor: pointer;
@@ -135,7 +135,7 @@
     
     .page-row:hover {
         border-color: var(--analytics-primary);
-        box-shadow: 0 2px 8px rgba(123, 96, 251, 0.1);
+        box-shadow: 0 1px 4px rgba(123, 96, 251, 0.1);
     }
     
     .page-row::before {
@@ -156,47 +156,167 @@
         justify-content: space-between;
         align-items: center;
         width: 100%;
+        gap: 12px;
     }
     
     .page-path {
         font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-        font-size: 14px;
+        font-size: 12px;
         color: var(--analytics-text);
         flex: 1;
-        margin-left: 16px;
+        margin-left: 8px;
+        word-break: break-all;
+        line-height: 1.4;
     }
     
     .page-visits {
-        font-size: 16px;
+        font-size: 13px;
         font-weight: 600;
         color: var(--analytics-text);
+        white-space: nowrap;
     }
     
-    .visit-item {
-        background: var(--analytics-bg);
-        border: 1px solid var(--analytics-border);
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 12px;
+    /* Visits Table Styles */
+    .visits-table-container {
+        overflow-x: auto;
+        margin-top: 16px;
+    }
+    
+    .visits-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    
+    .visits-table thead {
+        background: rgba(123, 96, 251, 0.05);
+        border-bottom: 2px solid var(--analytics-border);
+    }
+    
+    .visits-table th {
+        padding: 12px 16px;
+        text-align: right;
+        font-weight: 600;
+        font-size: 12px;
+        color: var(--analytics-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+    
+    .visits-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--analytics-border);
+        vertical-align: middle;
+    }
+    
+    .visits-table-row {
+        transition: background-color 0.15s ease;
+        cursor: default;
+    }
+    
+    .visits-table-row:hover {
+        background-color: rgba(123, 96, 251, 0.03);
+    }
+    
+    .visits-table-path {
+        max-width: 200px;
+    }
+    
+    .path-link {
+        font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+        font-size: 12px;
+        color: var(--analytics-primary);
+        background: rgba(123, 96, 251, 0.08);
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: help;
+    }
+    
+    .visits-table-time {
+        color: var(--analytics-text-muted);
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    
+    .visits-table-country {
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    
+    .visits-table-ip {
+        font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    }
+    
+    .ip-address {
+        font-size: 12px;
+        color: var(--analytics-text-muted);
+        background: rgba(0, 0, 0, 0.03);
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+    
+    .visits-table-device,
+    .visits-table-browser {
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    
+    .visits-table-paths-count {
+        text-align: center;
+    }
+    
+    .paths-count-link {
+        display: inline-block;
+        font-weight: 600;
+        color: var(--analytics-primary);
+        background: rgba(123, 96, 251, 0.1);
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
         transition: all 0.2s;
+        min-width: 40px;
+        text-align: center;
     }
     
-    .visit-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
+    .paths-count-link:hover {
+        background: var(--analytics-primary);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(123, 96, 251, 0.3);
     }
     
-    .visit-paths {
-        margin-top: 12px;
-        padding-top: 12px;
+    .visits-pagination {
+        margin-top: 24px;
+        padding-top: 16px;
         border-top: 1px solid var(--analytics-border);
-        display: none;
+        display: flex;
+        justify-content: center;
     }
     
-    .visit-paths.expanded {
-        display: block;
+    .visits-pagination .pagination {
+        margin: 0;
+    }
+    
+    .visits-pagination .page-link {
+        color: var(--analytics-primary);
+        border-color: var(--analytics-border);
+        padding: 8px 16px;
+    }
+    
+    .visits-pagination .page-link:hover {
+        background-color: rgba(123, 96, 251, 0.1);
+        border-color: var(--analytics-border);
+    }
+    
+    .visits-pagination .page-item.active .page-link {
+        background-color: var(--analytics-primary);
+        border-color: var(--analytics-primary);
     }
     
     .path-sequence {
@@ -357,62 +477,135 @@
         </div>
         
         <!-- TOP PAGES -->
-        <div class="section-card">
-            <h2 class="section-title">أفضل الصفحات</h2>
-            @if($topPages->count() > 0)
-                @php
-                    $maxVisits = $topPages->first()->views ?? 1;
-                @endphp
-                @foreach($topPages as $page)
-                    <div class="page-row" style="--progress-width: {{ ($page->views / $maxVisits) * 100 }}%;">
-                        <div class="page-row-content">
-                            <code class="page-path">{{ Str::limit($page->path, 80) }}</code>
-                            <span class="page-visits">{{ number_format($page->views) }}</span>
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="section-card">
+                    <h2 class="section-title">أفضل الصفحات</h2>
+                    @if($topPages->count() > 0)
+                        @php
+                            $maxVisits = $topPages->first()->views ?? 1;
+                        @endphp
+                        @foreach($topPages as $page)
+                            @php
+                                // Decode URL-encoded paths
+                                $decodedPath = urldecode($page->path);
+                            @endphp
+                            <div class="page-row" style="--progress-width: {{ ($page->views / $maxVisits) * 100 }}%;">
+                                <div class="page-row-content">
+                                    <code class="page-path" title="{{ $decodedPath }}">{{ Str::limit($decodedPath, 50) }}</code>
+                                    <span class="page-visits">{{ number_format($page->views) }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📄</div>
+                            <div>لا توجد بيانات للصفحات</div>
                         </div>
-                    </div>
-                @endforeach
-            @else
-                <div class="empty-state">
-                    <div class="empty-state-icon">📄</div>
-                    <div>لا توجد بيانات للصفحات</div>
+                    @endif
                 </div>
-            @endif
+            </div>
         </div>
         
         <!-- VISITS & PATHS -->
         <div class="section-card">
-            <h2 class="section-title">الزيارات والمسارات</h2>
+            <h2 class="section-title">الزيارات والمسارات الأخيرة</h2>
             @if(isset($visitsWithPaths) && $visitsWithPaths->count() > 0)
-                @foreach($visitsWithPaths as $visit)
-                    <div class="visit-item">
-                        <div class="visit-header" onclick="togglePaths('{{ $visit['session_id'] }}')">
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 4px;">
-                                    <code style="color: var(--analytics-primary);">{{ Str::limit($visit['entry_path'], 60) }}</code>
-                                </div>
-                                <div style="font-size: 13px; color: var(--analytics-text-muted);">
-                                    خروج: <code>{{ Str::limit($visit['exit_path'], 60) }}</code>
-                                </div>
-                            </div>
-                            <div style="text-align: left;">
-                                <span style="font-weight: 600; color: var(--analytics-primary); cursor: pointer;">
-                                    {{ $visit['paths_count'] }} مسار
-                                    <span id="arrow-{{ $visit['session_id'] }}">▼</span>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="visit-paths" id="paths-{{ $visit['session_id'] }}">
-                            <div class="path-sequence">
-                                @foreach($visit['paths'] as $index => $path)
-                                    <span class="path-badge">{{ Str::limit($path, 50) }}</span>
-                                    @if(!$loop->last)
-                                        <span class="path-arrow">→</span>
-                                    @endif
-                                @endforeach
-                            </div>
-                        </div>
+                <div class="visits-table-container">
+                    <table class="visits-table">
+                        <thead>
+                            <tr>
+                                <th>من الصفحة</th>
+                                <th>إلى الصفحة</th>
+                                <th>الوقت</th>
+                                <th>الدولة</th>
+                                <th>عنوان IP</th>
+                                <th>الجهاز</th>
+                                <th>المتصفح</th>
+                                <th>عدد المسارات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($visitsWithPaths as $visit)
+                                @php
+                                    $routeName = isset($isAdminRoute) && $isAdminRoute 
+                                        ? 'admin.analytics.visit-details' 
+                                        : 'user.analytics.visit-details';
+                                @endphp
+                                @php
+                                    // Decode URL-encoded paths
+                                    $decodedEntryPath = urldecode($visit['entry_path']);
+                                    $decodedExitPath = urldecode($visit['exit_path']);
+                                @endphp
+                                <tr class="visits-table-row">
+                                    <td class="visits-table-path">
+                                        <code class="path-link" title="{{ $decodedEntryPath }}">
+                                            {{ Str::limit($decodedEntryPath, 40) }}
+                                        </code>
+                                    </td>
+                                    <td class="visits-table-path">
+                                        <code class="path-link" title="{{ $decodedExitPath }}">
+                                            {{ Str::limit($decodedExitPath, 40) }}
+                                        </code>
+                                    </td>
+                                    <td class="visits-table-time">
+                                        <span>{{ \Carbon\Carbon::parse($visit['first_seen'])->diffForHumans() }}</span>
+                                    </td>
+                                    <td class="visits-table-country">
+                                        <span title="{{ $visit['country'] ?? 'غير معروف' }}">
+                                            {{ $visit['country'] ?? '—' }}
+                                        </span>
+                                    </td>
+                                    <td class="visits-table-ip">
+                                        <code class="ip-address">{{ $visit['ip'] ?? '—' }}</code>
+                                    </td>
+                                    <td class="visits-table-device">
+                                        @if($visit['device_type'] == 'desktop')
+                                            <span title="Desktop">🖥️ Desktop</span>
+                                        @elseif($visit['device_type'] == 'mobile')
+                                            <span title="Mobile">📱 Mobile</span>
+                                        @elseif($visit['device_type'] == 'tablet')
+                                            <span title="Tablet">📱 Tablet</span>
+                                        @else
+                                            <span>—</span>
+                                        @endif
+                                    </td>
+                                    <td class="visits-table-browser">
+                                        @php
+                                            $browser = strtolower($visit['browser'] ?? '');
+                                            $version = $visit['browser_version'] ?? '';
+                                        @endphp
+                                        @if(strpos($browser, 'chrome') !== false)
+                                            <span title="Chrome {{ $version }}">🌐 Chrome</span>
+                                        @elseif(strpos($browser, 'safari') !== false && strpos($browser, 'chrome') === false)
+                                            <span title="Safari {{ $version }}">🧭 Safari</span>
+                                        @elseif(strpos($browser, 'firefox') !== false)
+                                            <span title="Firefox {{ $version }}">🦊 Firefox</span>
+                                        @elseif(strpos($browser, 'edge') !== false)
+                                            <span title="Edge {{ $version }}">🔷 Edge</span>
+                                        @else
+                                            <span title="{{ $visit['browser'] ?? 'Unknown' }}">{{ $visit['browser'] ?? '—' }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="visits-table-paths-count">
+                                        <a href="{{ route($routeName, ['site' => $site->site_key, 'sessionId' => $visit['session_id']]) }}" 
+                                           class="paths-count-link" 
+                                           title="عرض تفاصيل المسار">
+                                            {{ $visit['paths_count'] ?? 0 }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                @if($visitsWithPaths->hasPages())
+                    <div class="visits-pagination">
+                        {{ $visitsWithPaths->links() }}
                     </div>
-                @endforeach
+                @endif
             @else
                 <div class="empty-state">
                     <div class="empty-state-icon">🔄</div>

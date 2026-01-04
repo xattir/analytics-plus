@@ -617,27 +617,35 @@ class BackendAnalyticsController extends Controller
     /**
      * Get visits with paths for expandable paths section
      */
-    private function getVisitsWithPaths($siteId, $dateFrom, $dateTo)
+    private function getVisitsWithPaths($siteId, $dateFrom, $dateTo, $perPage = 20)
     {
-        return AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+        $startDate = $dateFrom->copy()->startOfDay()->toDateTimeString();
+        $endDate = $dateTo->copy()->endOfDay()->toDateTimeString();
+        
+        $sessions = AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$startDate, $endDate])
+            ->where('is_bot', false)
             ->withCount('paths')
-            ->with(['paths' => function($query) {
-                $query->orderBy('position');
-            }])
             ->orderBy('first_seen', 'desc')
-            ->limit(50)
-            ->get()
-            ->map(function($session) {
-                return [
-                    'session_id' => $session->session_id,
-                    'entry_path' => $session->entry_path,
-                    'exit_path' => $session->exit_path,
-                    'paths_count' => $session->paths_count,
-                    'paths' => $session->paths->pluck('path')->toArray(),
-                    'first_seen' => $session->first_seen,
-                ];
-            });
+            ->paginate($perPage);
+        
+        return $sessions->through(function($session) {
+            return [
+                'session_id' => $session->session_id,
+                'entry_path' => $session->entry_path,
+                'exit_path' => $session->exit_path,
+                'paths_count' => $session->paths_count,
+                'first_seen' => $session->first_seen,
+                'last_seen' => $session->last_seen,
+                'duration_ms' => $session->duration_ms,
+                'country' => $session->country,
+                'ip' => $session->ip ? inet_ntop($session->ip) : null,
+                'device_type' => $session->device_type,
+                'browser' => $session->browser,
+                'browser_version' => $session->browser_version,
+                'referrer_source' => $session->referrer_source,
+            ];
+        });
     }
     
     /**
@@ -743,6 +751,49 @@ class BackendAnalyticsController extends Controller
         return $sources->sortByDesc('count')->values()->take(10);
     }
 
+    /**
+     * Show visit path details
+     */
+    public function visitDetails(AnalyticsSite $site, $sessionId)
+    {
+        // Authorization check
+        if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
+            abort(403, 'You do not have access to this site.');
+        }
+        
+        $session = AnalyticsSession::where('site_id', $site->id)
+            ->where('session_id', $sessionId)
+            ->with(['paths' => function($query) {
+                $query->orderBy('position');
+            }])
+            ->firstOrFail();
+        
+        // Format IP
+        $ipAddress = $session->ip ? inet_ntop($session->ip) : 'N/A';
+        
+        // Calculate duration
+        $duration = $session->duration_ms > 0 
+            ? $session->duration_ms 
+            : ($session->last_seen->diffInSeconds($session->first_seen) * 1000);
+        
+        // Format paths with additional info
+        $paths = $session->paths->map(function($path) {
+            return [
+                'position' => $path->position,
+                'path' => $path->path,
+                'time_spent_ms' => $path->time_spent_ms,
+                'scroll_percent' => $path->scroll_percent,
+                'created_at' => $path->created_at,
+            ];
+        });
+        
+        $isAdminRoute = request()->routeIs('admin.*');
+        
+        return view('admin.analytics.visit-details', compact(
+            'site', 'session', 'ipAddress', 'duration', 'paths', 'isAdminRoute'
+        ));
+    }
+    
     /**
      * Get tracking code for a site
      */
