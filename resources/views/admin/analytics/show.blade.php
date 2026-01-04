@@ -481,26 +481,8 @@
     <div style="padding: 0 32px 32px;">
         <!-- HERO SECTION -->
         <div class="row mb-5">
-            <!-- Total Visitors Today -->
-            <div class="col-md-4 mb-4">
-                <div class="hero-card">
-                    <div class="metric-icon">👥</div>
-                    <div class="metric-label">الزوار اليوم</div>
-                    <div class="metric-value">{{ number_format($todayStats['visitors'] ?? 0) }}</div>
-                </div>
-            </div>
-            
-            <!-- Total Page Views Today -->
-            <div class="col-md-4 mb-4">
-                <div class="hero-card">
-                    <div class="metric-icon">📄</div>
-                    <div class="metric-label">مشاهدات الصفحة اليوم</div>
-                    <div class="metric-value">{{ number_format($todayStats['pageviews'] ?? 0) }}</div>
-                </div>
-            </div>
-            
-            <!-- ACTIVE USERS (HERO) -->
-            <div class="col-md-4 mb-4">
+            <!-- ACTIVE USERS (HERO) - نصف الشاشة -->
+            <div class="col-lg-6 mb-4">
                 <div class="hero-card hero-card-active">
                     <div class="metric-icon">⚡</div>
                     <div class="metric-label">المستخدمون النشطون (آخر 30 دقيقة)</div>
@@ -510,11 +492,108 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- TOP TRAFFIC SOURCES & VISITORS CHART - نصف الشاشة -->
+            <div class="col-lg-6 mb-4">
+                <div class="row">
+                    <!-- TOP TRAFFIC SOURCES -->
+                    <div class="col-12 mb-4">
+                        <div class="section-card">
+                            <h2 class="section-title">أفضل المصادر</h2>
+                            @if(isset($topTrafficSources) && $topTrafficSources->count() > 0)
+                                @php
+                                    $maxSourceCount = $topTrafficSources->first()['count'] ?? 1;
+                                @endphp
+                                @foreach($topTrafficSources->take(5) as $source)
+                                    @php
+                                        $sourceName = strtolower($source['name'] ?? '');
+                                        $sourceCount = $source['count'] ?? 0;
+                                        $sourcePercent = $maxSourceCount > 0 ? ($sourceCount / $maxSourceCount) * 100 : 0;
+                                    @endphp
+                                    <div class="source-row" style="--progress-width: {{ $sourcePercent }}%;">
+                                        <div class="source-row-content">
+                                            <span class="source-icon-name">
+                                                @if($source['type'] == 'direct' || $sourceName == 'direct')
+                                                    🔗 <span>مباشر</span>
+                                                @elseif($sourceName == 'google')
+                                                    🔍 <span>Google</span>
+                                                @elseif($sourceName == 'facebook' || $sourceName == 'fb.com')
+                                                    📘 <span>Facebook</span>
+                                                @elseif($sourceName == 'instagram')
+                                                    📷 <span>Instagram</span>
+                                                @elseif($sourceName == 'twitter' || $sourceName == 'x.com')
+                                                    🐦 <span>Twitter</span>
+                                                @elseif($sourceName == 'youtube')
+                                                    📺 <span>YouTube</span>
+                                                @elseif($sourceName == 'linkedin')
+                                                    💼 <span>LinkedIn</span>
+                                                @elseif($sourceName == 'pinterest')
+                                                    📌 <span>Pinterest</span>
+                                                @elseif($sourceName == 'reddit')
+                                                    🤖 <span>Reddit</span>
+                                                @elseif($sourceName == 'tiktok')
+                                                    🎵 <span>TikTok</span>
+                                                @elseif($sourceName == 'bing')
+                                                    🔎 <span>Bing</span>
+                                                @elseif($sourceName == 'yahoo')
+                                                    📧 <span>Yahoo</span>
+                                                @elseif($sourceName == 'duckduckgo')
+                                                    🦆 <span>DuckDuckGo</span>
+                                                @else
+                                                    🔗 <span>{{ $source['name'] }}</span>
+                                                @endif
+                                            </span>
+                                            <span class="source-count">{{ number_format($sourceCount) }}</span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="empty-state" style="padding: 40px 20px;">
+                                    <div>لا توجد بيانات</div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    
+                    <!-- VISITORS OVER TIME -->
+                    <div class="col-12">
+                        <div class="hero-card">
+                            <div class="metric-icon">📊</div>
+                            <div class="metric-label">الزوار - آخر 7 أيام</div>
+                            <div class="chart-container" style="height: 200px; margin-top: 16px;">
+                                <canvas id="visitorsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <!-- TOP PAGES -->
-   
-            <div class="col-lg-4">
+        <!-- TODAY'S STATS -->
+        <div class="row mb-5">
+            <!-- Total Visitors Today -->
+            <div class="col-md-6 mb-4">
+                <div class="hero-card">
+                    <div class="metric-icon">👥</div>
+                    <div class="metric-label">الزوار اليوم</div>
+                    <div class="metric-value">{{ number_format($todayStats['visitors'] ?? 0) }}</div>
+                </div>
+            </div>
+            
+            <!-- Total Page Views Today -->
+            <div class="col-md-6 mb-4">
+                <div class="hero-card">
+                    <div class="metric-icon">📄</div>
+                    <div class="metric-label">مشاهدات الصفحة اليوم</div>
+                    <div class="metric-value">{{ number_format($todayStats['pageviews'] ?? 0) }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TOP PAGES & VISITS -->
+        <div class="row">
+            <!-- TOP PAGES -->
+            <div class="col-lg-4 mb-4">
                 <div class="section-card">
                     <h2 class="section-title">أفضل الصفحات</h2>
                     @if($topPages->count() > 0)
