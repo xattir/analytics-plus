@@ -271,10 +271,9 @@ if (sitesGrid) {
         }
     });
     
-    // Initialize Sortable - Desktop optimized
+    // Initialize Sortable - Desktop optimized for CSS Grid
     new Sortable(sitesGrid, {
         animation: 200,
-        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
         forceFallback: false,
         fallbackTolerance: 0,
         filter: '.site-card-actions, .site-card-actions *',
@@ -282,10 +281,7 @@ if (sitesGrid) {
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
         dragClass: 'sortable-drag',
-        handle: null,
         swapThreshold: 0.65,
-        invertSwap: false,
-        preventClickFallback: true,
         onStart: function(evt) {
             isDragging = true;
             evt.item.style.width = evt.item.offsetWidth + 'px';
