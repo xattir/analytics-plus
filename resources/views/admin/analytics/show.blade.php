@@ -744,14 +744,48 @@
                                     }
                                     
                                     // Source to display: if same domain show entry_path, else show referrer_source
+                                    $sourceIcon = '';
                                     if ($isSameDomain || $referrerSource === 'Direct') {
                                         // Same domain or direct: show entry path
                                         $sourceDisplay = $decodedEntryPath;
                                         $sourceUrl = 'https://' . $site->domain . $decodedEntryPath;
+                                        $sourceIcon = '🔗';
                                     } else {
                                         // External source: show referrer source name
                                         $sourceDisplay = $referrerSource;
                                         $sourceUrl = $referrerUrl;
+                                        
+                                        // Add icon based on source
+                                        $sourceName = strtolower($referrerSource);
+                                        if ($sourceName == 'direct') {
+                                            $sourceIcon = '🔗';
+                                        } elseif ($sourceName == 'google') {
+                                            $sourceIcon = '🔍';
+                                        } elseif ($sourceName == 'facebook' || $sourceName == 'fb.com') {
+                                            $sourceIcon = '📘';
+                                        } elseif ($sourceName == 'instagram') {
+                                            $sourceIcon = '📷';
+                                        } elseif ($sourceName == 'twitter' || $sourceName == 'x.com') {
+                                            $sourceIcon = '🐦';
+                                        } elseif ($sourceName == 'youtube') {
+                                            $sourceIcon = '📺';
+                                        } elseif ($sourceName == 'linkedin') {
+                                            $sourceIcon = '💼';
+                                        } elseif ($sourceName == 'pinterest') {
+                                            $sourceIcon = '📌';
+                                        } elseif ($sourceName == 'reddit') {
+                                            $sourceIcon = '🤖';
+                                        } elseif ($sourceName == 'tiktok') {
+                                            $sourceIcon = '🎵';
+                                        } elseif ($sourceName == 'bing') {
+                                            $sourceIcon = '🔎';
+                                        } elseif ($sourceName == 'yahoo') {
+                                            $sourceIcon = '📧';
+                                        } elseif ($sourceName == 'duckduckgo') {
+                                            $sourceIcon = '🦆';
+                                        } else {
+                                            $sourceIcon = '🔗';
+                                        }
                                     }
                                     
                                     // Build full URLs for clickable links
@@ -779,8 +813,35 @@
                                         <span>{{ \Carbon\Carbon::parse($visit['first_seen'])->diffForHumans() }}</span>
                                     </td>
                                     <td class="visits-table-country">
-                                        <span title="{{ $visit['country'] ?? 'غير معروف' }}">
-                                            {{ $visit['country'] ?? '—' }}
+                                        @php
+                                            $countryCode = $visit['country'] ?? null;
+                                            if ($countryCode && class_exists('CountryHelper')) {
+                                                $countryNameAr = CountryHelper::getCountryNameArabic($countryCode);
+                                                $countryFlag = CountryHelper::getCountryFlag($countryCode);
+                                            } else {
+                                                // Fallback: basic country names
+                                                $countryNames = [
+                                                    'SA' => 'السعودية', 'AE' => 'الإمارات', 'EG' => 'مصر',
+                                                    'US' => 'الولايات المتحدة', 'GB' => 'المملكة المتحدة',
+                                                    'DE' => 'ألمانيا', 'FR' => 'فرنسا', 'IT' => 'إيطاليا',
+                                                    'ES' => 'إسبانيا', 'CA' => 'كندا', 'AU' => 'أستراليا',
+                                                    'JP' => 'اليابان', 'CN' => 'الصين', 'IN' => 'الهند',
+                                                    'BR' => 'البرازيل', 'TR' => 'تركيا', 'RU' => 'روسيا',
+                                                ];
+                                                $countryFlags = [
+                                                    'SA' => '🇸🇦', 'AE' => '🇦🇪', 'EG' => '🇪🇬',
+                                                    'US' => '🇺🇸', 'GB' => '🇬🇧', 'DE' => '🇩🇪',
+                                                    'FR' => '🇫🇷', 'IT' => '🇮🇹', 'ES' => '🇪🇸',
+                                                    'CA' => '🇨🇦', 'AU' => '🇦🇺', 'JP' => '🇯🇵',
+                                                    'CN' => '🇨🇳', 'IN' => '🇮🇳', 'BR' => '🇧🇷',
+                                                    'TR' => '🇹🇷', 'RU' => '🇷🇺',
+                                                ];
+                                                $countryNameAr = $countryNames[$countryCode] ?? $countryCode;
+                                                $countryFlag = $countryFlags[$countryCode] ?? '🌍';
+                                            }
+                                        @endphp
+                                        <span title="{{ $countryNameAr }}">
+                                            {{ $countryFlag }} {{ $countryNameAr }}
                                         </span>
                                     </td>
                                     <td class="visits-table-ip">

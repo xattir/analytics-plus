@@ -51,6 +51,19 @@ class AnalyticsController extends Controller
             // Parse user agent
             $deviceInfo = $this->parseDeviceInfo($userAgent, $request);
             
+            // Get screen info to override device type if needed
+            $screenInfo = $this->getScreenInfo($request);
+            // Override device type based on screen width if available
+            if (isset($screenInfo['screen_width']) && $screenInfo['screen_width'] > 0) {
+                if ($screenInfo['screen_width'] < 768) {
+                    $deviceInfo['device_type'] = 'mobile';
+                } elseif ($screenInfo['screen_width'] < 1024) {
+                    $deviceInfo['device_type'] = 'tablet';
+                } else {
+                    $deviceInfo['device_type'] = 'desktop';
+                }
+            }
+            
             // Get geo location
             $geoInfo = $this->getGeoInfo($ip);
             
