@@ -217,7 +217,8 @@ class BackendAnalyticsController extends Controller
         $activeUsersData = $this->getActiveUsersChartData($siteId, $activeUsersStart);
         
         // Visits & Paths (for expandable paths section)
-        $visitsWithPaths = $this->getVisitsWithPaths($siteId, $dateFromCarbon, $dateToCarbon, $site);
+        $referrerFilter = $request->get('referrer_filter', 'external'); // Default: external only
+        $visitsWithPaths = $this->getVisitsWithPaths($siteId, $dateFromCarbon, $dateToCarbon, $site, 20, $referrerFilter);
         
         // Last 7 days visitors chart
         $visitorsLast7Days = $this->getVisitorsLast7Days($siteId);
@@ -617,15 +618,35 @@ class BackendAnalyticsController extends Controller
     /**
      * Get visits with paths for expandable paths section
      */
-    private function getVisitsWithPaths($siteId, $dateFrom, $dateTo, $site, $perPage = 20)
+    private function getVisitsWithPaths($siteId, $dateFrom, $dateTo, $site, $perPage = 20, $referrerFilter = 'external')
     {
         $startDate = $dateFrom->copy()->startOfDay()->toDateTimeString();
         $endDate = $dateTo->copy()->endOfDay()->toDateTimeString();
         
-        $sessions = AnalyticsSession::where('site_id', $siteId)
+        $query = AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$startDate, $endDate])
-            ->where('is_bot', false)
-            ->withCount('paths')
+            ->where('is_bot', false);
+        
+        // Apply referrer filter
+        $siteDomain = $site->domain;
+        if ($referrerFilter === 'external') {
+            // External only: referrer_source is not 'Direct' and not null
+            $query->where(function($q) {
+                $q->whereNotNull('referrer')
+                  ->where('referrer_source', '!=', 'Direct')
+                  ->where('referrer_source', '!=', null);
+            });
+        } elseif ($referrerFilter === 'internal') {
+            // Internal only: referrer_source is 'Direct' or null (same domain or direct)
+            $query->where(function($q) {
+                $q->where('referrer_source', 'Direct')
+                  ->orWhereNull('referrer_source')
+                  ->orWhereNull('referrer');
+            });
+        }
+        // If 'all', no additional filter is applied
+        
+        $sessions = $query->withCount('paths')
             ->orderBy('first_seen', 'desc')
             ->paginate($perPage);
         
