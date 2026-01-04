@@ -15,7 +15,7 @@
         border-radius: 12px;
         padding: 20px;
         transition: all 0.2s;
-        cursor: pointer;
+        cursor: grab;
         position: relative;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
@@ -26,9 +26,15 @@
         border-color: var(--analytics-primary, #7b60fb);
     }
     
-    .site-card.dragging {
-        opacity: 0.5;
+    .site-card.sortable-ghost {
+        opacity: 0.4;
         cursor: grabbing;
+    }
+    
+    .site-card.sortable-chosen {
+        cursor: grabbing;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        transform: scale(1.02);
     }
     
     .site-card-header {
@@ -232,16 +238,26 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="/js/chartjs.min.js"></script>
 <script>
-// Initialize Sortable for drag and drop
-const sitesGrid = document.getElementById('sitesGrid');
-if (sitesGrid) {
-    // Handle card clicks (except drag handle)
+(function() {
+    'use strict';
+    
+    const sitesGrid = document.getElementById('sitesGrid');
+    if (!sitesGrid) return;
+    
+    let reorderTimeout = null;
+    let isDragging = false;
+    
+    // Handle card clicks
     sitesGrid.addEventListener('click', function(e) {
-        const card = e.target.closest('.site-card');
-        const dragHandle = e.target.closest('.site-card-drag-handle');
-        const actions = e.target.closest('.site-card-actions');
+        if (isDragging) {
+            return;
+        }
         
-        if (card && !dragHandle && !actions) {
+        const card = e.target.closest('.site-card');
+        const actions = e.target.closest('.site-card-actions');
+        const isLink = e.target.tagName === 'A' || e.target.closest('a');
+        
+        if (card && !actions && !isLink) {
             const url = card.getAttribute('data-site-url');
             if (url) {
                 window.location.href = url;
@@ -249,55 +265,25 @@ if (sitesGrid) {
         }
     });
     
-    let reorderTimeout = null;
-    
-    const sortable = Sortable.create(sitesGrid, {
-        handle: '.site-card-drag-handle, .site-card-header',
-        animation: 150,
-        forceFallback: false,
-        filter: '.site-card-actions, .site-card-actions *, a, button',
-        preventOnFilter: true,
-        onUpdate: function(evt) {
-            // Clear previous timeout
-            if (reorderTimeout) {
-                clearTimeout(reorderTimeout);
-            }
-            
-            // Save reorder after a small delay (debounce)
-            reorderTimeout = setTimeout(function() {
-                saveReorder();
-            }, 300);
-        },
-        onEnd: function(evt) {
-            // Clear timeout
-            if (reorderTimeout) {
-                clearTimeout(reorderTimeout);
-            }
-            
-            // Save reorder immediately on end
-            saveReorder();
-        }
-    });
-    
+    // Function to save reorder
     function saveReorder() {
         const items = Array.from(sitesGrid.children);
         const sites = [];
         
-        items.forEach(function(item, index) {
-            const siteId = item.getAttribute('data-site-id');
+        for (let i = 0; i < items.length; i++) {
+            const siteId = items[i].getAttribute('data-site-id');
             if (siteId) {
                 sites.push({
                     id: parseInt(siteId),
-                    order: index + 1
+                    order: i + 1
                 });
             }
-        });
+        }
         
         if (sites.length === 0) {
             return;
         }
         
-        // Send reorder request
         const url = '{{ request()->routeIs("admin.*") ? route("admin.analytics.reorder") : route("user.analytics.reorder") }}';
         const token = '{{ csrf_token() }}';
         
@@ -314,9 +300,7 @@ if (sitesGrid) {
             return response.json();
         })
         .then(function(data) {
-            if (data.success) {
-                // Success - order is already updated in DOM
-            } else {
+            if (!data.success) {
                 console.error('Reorder failed:', data);
             }
         })
@@ -324,7 +308,30 @@ if (sitesGrid) {
             console.error('Reorder error:', error);
         });
     }
-}
+    
+    // Initialize Sortable
+    const sortable = Sortable.create(sitesGrid, {
+        animation: 150,
+        filter: '.site-card-actions, .site-card-actions *',
+        preventOnFilter: true,
+        onStart: function() {
+            isDragging = true;
+        },
+        onUpdate: function() {
+            if (reorderTimeout) {
+                clearTimeout(reorderTimeout);
+            }
+            reorderTimeout = setTimeout(saveReorder, 300);
+        },
+        onEnd: function() {
+            isDragging = false;
+            if (reorderTimeout) {
+                clearTimeout(reorderTimeout);
+            }
+            saveReorder();
+        }
+    });
+})();
 
 // Initialize charts for each site
 @foreach($sites as $site)
