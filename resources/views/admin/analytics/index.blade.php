@@ -236,7 +236,7 @@
 </div>
 
 @if($sites->count() > 0)
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js" integrity="sha512-zYXldzJsDrNKV+odAwFYiDXV2Cy37cwizT+NkuiPGsa9X1dOz04eHvUWVuxaJ299GvcJT31ug2zO4itXBjFx4w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="/js/chartjs.min.js"></script>
 <script>
 (function() {
@@ -265,13 +265,15 @@
         }
     });
     
-    // Initialize Sortable
+    // Initialize Sortable with swap mode
     new Sortable(sitesGrid, {
         animation: 150,
         fallbackTolerance: 3,
         filter: '.site-card-actions, .site-card-actions *',
         preventOnFilter: true,
         forceFallback: false,
+        swap: true,
+        swapThreshold: 0.5
         onStart: function(evt) {
             isDragging = true;
         },
