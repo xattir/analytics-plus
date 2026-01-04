@@ -279,7 +279,8 @@ if (sitesGrid) {
         }
     });
     
-    // Initialize Sortable - Desktop optimized with element-based collision detection
+    // Initialize Sortable - Unified pointer/mouse/touch handling for desktop & mobile
+    // forceFallback: true ensures same collision detection for both touch and mouse
     new Sortable(sitesGrid, {
         animation: 200,
         forceFallback: true,
