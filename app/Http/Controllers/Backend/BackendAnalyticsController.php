@@ -672,9 +672,16 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopTrafficSources($siteId, $dateFrom, $dateTo)
     {
+        // Ensure we have Carbon instances
+        $dateFrom = $dateFrom instanceof \Carbon\Carbon ? $dateFrom : \Carbon\Carbon::parse($dateFrom);
+        $dateTo = $dateTo instanceof \Carbon\Carbon ? $dateTo : \Carbon\Carbon::parse($dateTo);
+        
+        $startDate = $dateFrom->copy()->startOfDay()->toDateTimeString();
+        $endDate = $dateTo->copy()->endOfDay()->toDateTimeString();
+        
         // Get referrer sources (this is the main source of traffic data)
         $referrerSources = AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->whereBetween('first_seen', [$startDate, $endDate])
             ->whereNotNull('referrer_source')
             ->where('is_bot', false)
             ->select('referrer_source', DB::raw('COUNT(*) as count'))
@@ -684,7 +691,7 @@ class BackendAnalyticsController extends Controller
         
         // Get UTM sources (for campaigns)
         $utmSources = AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->whereBetween('first_seen', [$startDate, $endDate])
             ->whereNotNull('utm_source')
             ->where('is_bot', false)
             ->select('utm_source', DB::raw('COUNT(*) as count'))
@@ -695,7 +702,7 @@ class BackendAnalyticsController extends Controller
         
         // Get direct traffic count (no referrer)
         $directCount = AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->whereBetween('first_seen', [$startDate, $endDate])
             ->where(function($q) {
                 $q->whereNull('referrer_source')
                   ->orWhere('referrer_source', 'Direct');
