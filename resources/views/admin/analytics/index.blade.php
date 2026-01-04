@@ -91,13 +91,6 @@
         cursor: grabbing;
     }
     
-    .site-card.sortable-ghost {
-        opacity: 0.4;
-    }
-    
-    .site-card.sortable-chosen {
-        cursor: grabbing;
-    }
     
     .site-card-stats {
         display: flex;
