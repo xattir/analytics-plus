@@ -232,6 +232,12 @@ class BackendAnalyticsController extends Controller
         $activeUsersCount = (clone $activeUsersQuery)->distinct('session_id')->count('session_id');
         $activeUsersData = $this->getActiveUsersChartData($siteId, $activeUsersStart);
         
+        // Check if site has traffic in last 24 hours
+        $hasTrafficLast24h = AnalyticsSession::where('site_id', $siteId)
+            ->where('first_seen', '>=', Carbon::now()->subHours(24)->toDateTimeString())
+            ->where('is_bot', false)
+            ->exists();
+        
         // Visits & Paths (for expandable paths section)
         $referrerFilter = $request->get('referrer_filter', 'external'); // Default: external only
         $visitsWithPaths = $this->getVisitsWithPaths($siteId, $dateFromCarbon, $dateToCarbon, $site, 20, $referrerFilter);
