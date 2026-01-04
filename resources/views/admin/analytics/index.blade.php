@@ -38,6 +38,7 @@
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
         z-index: 1000;
         border: 2px dashed var(--analytics-primary, #7b60fb);
+        pointer-events: none;
     }
     
     .site-card.sortable-chosen {
@@ -49,6 +50,13 @@
     
     .site-card.sortable-drag {
         opacity: 0;
+    }
+    
+    .sortable-fallback {
+        opacity: 0.8 !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+        transform: rotate(2deg);
+        pointer-events: none;
     }
     
     .site-card-header {
@@ -242,7 +250,7 @@
 </div>
 
 @if($sites->count() > 0)
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js" integrity="sha512-zYXldzJsDrNKV+odAwFYiDXV2Cy37cwizT+NkuiPGsa9X1dOz04eHvUWVuxaJ299GvcJT31ug2zO4itXBjFx4w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="/js/chartjs.min.js"></script>
 <script type="text/javascript">
 var isDragging = false;
@@ -271,24 +279,23 @@ if (sitesGrid) {
         }
     });
     
-    // Initialize Sortable - Desktop optimized for CSS Grid
+    // Initialize Sortable - Desktop optimized with element-based collision detection
     new Sortable(sitesGrid, {
         animation: 200,
-        forceFallback: false,
-        fallbackTolerance: 0,
+        forceFallback: true,
+        fallbackTolerance: 5,
+        fallbackOnBody: true,
         filter: '.site-card-actions, .site-card-actions *',
         preventOnFilter: true,
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
         dragClass: 'sortable-drag',
-        swapThreshold: 0.65,
         onStart: function(evt) {
             isDragging = true;
-            evt.item.style.width = evt.item.offsetWidth + 'px';
-            evt.item.style.height = evt.item.offsetHeight + 'px';
-        },
-        onMove: function(evt, originalEvent) {
-            return true;
+            // Lock dimensions to prevent layout shifts
+            var rect = evt.item.getBoundingClientRect();
+            evt.item.style.width = rect.width + 'px';
+            evt.item.style.height = rect.height + 'px';
         },
         onEnd: function(evt) {
             isDragging = false;
