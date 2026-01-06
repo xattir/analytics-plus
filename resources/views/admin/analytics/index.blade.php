@@ -530,7 +530,7 @@ if (sitesGrid) {
     });
 }
 
-// Initialize charts for each site - Active Users Last 30 Minutes
+// Initialize charts for each site - Active Users Last 30 Minutes (Bar Chart)
 @foreach($sites as $site)
     @php
         $activeUsersChartData = $site->active_users_chart_data ?? [];
@@ -539,7 +539,7 @@ if (sitesGrid) {
     const ctx{{ $site->id }} = document.getElementById('chart-{{ $site->id }}');
     if (ctx{{ $site->id }}) {
         new Chart(ctx{{ $site->id }}, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: [
                     @foreach($activeUsersChartData as $point)
@@ -553,16 +553,11 @@ if (sitesGrid) {
                         {{ $point['count'] }},
                         @endforeach
                     ],
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
                     borderColor: '#10b981',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    pointBackgroundColor: '#10b981',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
                 }]
             },
             options: {
@@ -594,7 +589,7 @@ if (sitesGrid) {
                             display: false
                         },
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
+                            display: false
                         }
                     },
                     x: {

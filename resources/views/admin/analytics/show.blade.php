@@ -763,11 +763,11 @@
                         : route('user.analytics.destroy', ['site' => $site->site_key]);
                 @endphp
                 
-                <div class="dropdown" style="display: inline-block;">
+                <div class="dropdown" style="display: inline-block; position: relative; z-index: 1050;">
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%); border: 1px solid rgba(123, 96, 251, 0.2); border-radius: 10px; padding: 10px 20px; font-weight: 600; color: var(--analytics-primary); transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(123, 96, 251, 0.1);">
                         الإجراءات
                     </button>
-                    <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown">
+                    <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown" style="z-index: 1051;">
                         <a class="dropdown-item" href="{{ $trackingCodeRoute }}">
                             <i class="fa fa-code"></i> كود التتبع
                         </a>
