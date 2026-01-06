@@ -1,11 +1,22 @@
-// Hide loading image immediately when DOM is ready
+// Hide loading image after 2 seconds with animation
 (function() {
     'use strict';
     
     function hideLoadingImage() {
         var loadingContainer = document.getElementById('loading-image-container');
         if (loadingContainer) {
-            loadingContainer.style.display = 'none';
+            // Wait 2 seconds, then fade out
+            setTimeout(function() {
+                if (loadingContainer) {
+                    loadingContainer.style.transition = 'opacity 0.5s ease-out';
+                    loadingContainer.style.opacity = '0';
+                    setTimeout(function() {
+                        if (loadingContainer) {
+                            loadingContainer.style.display = 'none';
+                        }
+                    }, 500); // Wait for transition to complete
+                }
+            }, 2000); // 2 seconds delay
         }
     }
     
