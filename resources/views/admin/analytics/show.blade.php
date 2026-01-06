@@ -111,6 +111,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
         position: relative;
         overflow: hidden;
+        z-index: 1;
     }
     
     .hero-card::before {
@@ -790,9 +791,9 @@
             </div>
             
             <!-- Modal for Edit Title -->
-            <div class="modal fade" id="editTitleModal" tabindex="-1" aria-labelledby="editTitleModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
+            <div class="modal fade" id="editTitleModal" tabindex="-1" aria-labelledby="editTitleModalLabel" aria-hidden="true" style="z-index: 1060;">
+                <div class="modal-dialog" style="z-index: 1061;">
+                    <div class="modal-content" style="z-index: 1062;">
                         <div class="modal-header">
                             <h5 class="modal-title" id="editTitleModalLabel">تعديل عنوان الموقع</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
