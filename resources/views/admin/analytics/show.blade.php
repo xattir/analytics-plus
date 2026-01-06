@@ -1,6 +1,14 @@
 @extends('layouts.admin')
 @section('content')
 <style>
+    /* Hide navbar on analytics show page */
+    .top-nav {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-top: 0 !important;
+    }
     .analytics-dashboard {
         --analytics-bg: var(--background-1, #ffffff);
         --analytics-border: var(--border-color, #e5e7eb);
