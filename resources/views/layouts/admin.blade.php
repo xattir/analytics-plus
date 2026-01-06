@@ -18,7 +18,214 @@
             --color-2: #575f66;
             --border-color: #f1f1f1;
             --bs-table-hover-color: #f7f7f7!important; 
-        } 
+        }
+        
+        /* Modern Aside Styles */
+        .aside {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+            border-left: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.08) !important;
+        }
+        
+        .aside-menu {
+            padding: 8px 12px !important;
+        }
+        
+        .aside-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .aside-menu::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .aside-menu::-webkit-scrollbar-thumb {
+            background: rgba(123, 96, 251, 0.2);
+            border-radius: 10px;
+        }
+        
+        .aside-menu::-webkit-scrollbar-thumb:hover {
+            background: rgba(123, 96, 251, 0.4);
+        }
+        
+        .aside .user-profile-section {
+            padding: 24px 16px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.05) 0%, rgba(123, 96, 251, 0.02) 100%);
+            border-bottom: 1px solid rgba(123, 96, 251, 0.1);
+            margin-bottom: 8px;
+        }
+        
+        .aside .user-profile-section img {
+            width: 72px !important;
+            height: 72px !important;
+            border-radius: 50% !important;
+            border: 3px solid rgba(123, 96, 251, 0.15);
+            box-shadow: 0 4px 12px rgba(123, 96, 251, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .aside .user-profile-section img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(123, 96, 251, 0.25);
+        }
+        
+        .aside .user-profile-section .user-name {
+            color: #1f2937 !important;
+            font-weight: 600;
+            font-size: 15px;
+            margin-top: 12px;
+            margin-bottom: 0;
+        }
+        
+        .aside .item-container {
+            padding: 10px 12px !important;
+            margin: 4px 0;
+            border-radius: 10px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .aside .item-container::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #7b60fb 0%, #667eea 100%);
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        
+        .aside .item-container:hover {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.08) 0%, rgba(123, 96, 251, 0.04) 100%) !important;
+            transform: translateX(-2px);
+            border-color: rgba(123, 96, 251, 0.15);
+            box-shadow: 0 2px 8px rgba(123, 96, 251, 0.1);
+        }
+        
+        .aside .item-container:hover::before {
+            opacity: 1;
+        }
+        
+        .aside .item-container.active {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.12) 0%, rgba(123, 96, 251, 0.06) 100%) !important;
+            border-color: rgba(123, 96, 251, 0.2);
+            box-shadow: 0 4px 12px rgba(123, 96, 251, 0.15);
+        }
+        
+        .aside .item-container.active::before {
+            opacity: 1;
+        }
+        
+        .aside .item-container.active * {
+            color: #7b60fb !important;
+            font-weight: 600;
+        }
+        
+        .aside .item-container .item-container-title {
+            font-size: 14px !important;
+            font-weight: 500;
+            color: #374151;
+            transition: color 0.2s ease;
+        }
+        
+        .aside .item-container:hover .item-container-title {
+            color: #7b60fb;
+        }
+        
+        .aside .item-container span[class*="fa"] {
+            font-size: 18px;
+            color: #6b7280;
+            transition: all 0.25s ease;
+        }
+        
+        .aside .item-container:hover span[class*="fa"] {
+            color: #7b60fb;
+            transform: scale(1.1);
+        }
+        
+        .aside .item-container.active span[class*="fa"] {
+            color: #7b60fb !important;
+        }
+        
+        .aside .sites-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        
+        .aside .sites-section-title {
+            color: #6b7280 !important;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 16px 12px;
+            margin-bottom: 8px;
+        }
+        
+        .aside .site-item {
+            padding: 10px 12px !important;
+            margin: 3px 0;
+            border-radius: 10px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+        
+        .aside .site-item:hover {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.08) 0%, rgba(123, 96, 251, 0.04) 100%) !important;
+            transform: translateX(-2px);
+            border-color: rgba(123, 96, 251, 0.15);
+        }
+        
+        .aside .site-item.active {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.12) 0%, rgba(123, 96, 251, 0.06) 100%) !important;
+            border-color: rgba(123, 96, 251, 0.2);
+        }
+        
+        .aside .site-item img {
+            width: 22px !important;
+            height: 22px !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .aside .site-item-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .aside .site-item-domain {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        
+        .aside .add-site-button {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
+            border: 2px dashed rgba(123, 96, 251, 0.3) !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
+            margin-top: 8px;
+            transition: all 0.25s ease;
+        }
+        
+        .aside .add-site-button:hover {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.15) 0%, rgba(123, 96, 251, 0.08) 100%) !important;
+            border-color: rgba(123, 96, 251, 0.5) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(123, 96, 251, 0.2);
+        }
+        
+        .aside .add-site-button * {
+            color: #7b60fb !important;
+            font-weight: 600 !important;
+        }
     </style>
     @php
     $page_title="لوحة التحكم";
@@ -192,15 +399,14 @@
                     </div>
                 </div>
             </div>
-        <div class="col-12 px-0 pb-4 text-center justify-content-center align-items-center ">
+        <div class="col-12 px-0 user-profile-section">
             <a href="{{route('admin.profile.edit')}}">
-
-            <img src="{{auth()->user()->getUserAvatar()}}" style="width: 80px;height: 80px;color: var(--background-1);border-radius: 50%" class="d-inline-block">
-                </a>
-                <div class="col-12 px-0 mt-2 text-center" style="color: #232323;">
-                    مرحباً {{auth()->user()->name}}
-                </div> 
-            </div>
+                <img src="{{auth()->user()->getUserAvatar()}}" class="d-inline-block">
+            </a>
+            <div class="user-name">
+                مرحباً {{auth()->user()->name}}
+            </div> 
+        </div>
             <div class="col-12 px-0">
 
 
@@ -245,8 +451,8 @@
                             $analyticsSites = $ownedSites->merge($memberSites)->unique('id')->sortBy('order')->values();
                         }
                     @endphp
-                    <div class="col-12 px-0 mt-3" style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
-                        <div class="col-12 px-3 mb-2" style="color: var(--color-2); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <div class="col-12 px-0 sites-section">
+                        <div class="sites-section-title">
                             المواقع
                         </div>
                         @if($analyticsSites->count() > 0)
@@ -255,30 +461,29 @@
                                     @php
                                         $isActive = request()->routeIs('admin.analytics.show') && request()->route('site') && (is_string(request()->route('site')) ? request()->route('site') == $site->site_key : request()->route('site')->site_key == $site->site_key);
                                     @endphp
-                                    <div class="col-12 item-container px-0 d-flex {{ $isActive ? 'active' : '' }}">
-                                        <div style="width: 50px" class="px-3 text-center">
+                                    <div class="col-12 site-item px-0 d-flex {{ $isActive ? 'active' : '' }}">
+                                        <div style="width: 50px" class="px-3 text-center d-flex align-items-center justify-content-center">
                                             <img src="https://icons.duckduckgo.com/ip3/{{ $site->domain }}.ico" 
                                                  alt="" 
-                                                 style="width: 20px; height: 20px; border-radius: 4px;"
                                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                                            <span class="fal fa-chart-line font-2" style="display: none;"></span>
+                                            <span class="fal fa-chart-line font-2" style="display: none; color: #7b60fb;"></span>
                                         </div>
-                                        <div style="width: calc(100% - 50px)" class="px-2 item-container-title">
-                                            <div style="font-size: 13px; font-weight: 500;">{{ $site->title ?? $site->domain }}</div>
+                                        <div style="width: calc(100% - 50px)" class="px-2">
+                                            <div class="site-item-title">{{ $site->title ?? $site->domain }}</div>
                                             @if($site->title && $site->title !== $site->domain)
-                                            <div style="font-size: 11px; color: rgba(0,0,0,0.5); margin-top: 2px;">{{ $site->domain }}</div>
+                                            <div class="site-item-domain">{{ $site->domain }}</div>
                                             @endif
                                         </div>
                                     </div>
                                 </a>
                             @endforeach
                         @endif
-                        <a href="{{ route('admin.analytics.create') }}" class="col-12 px-0 mt-2">
-                            <div class="col-12 item-container px-0 d-flex" style="background: rgba(123, 96, 251, 0.1); border: 1px dashed rgba(123, 96, 251, 0.3); border-radius: 6px;">
-                                <div style="width: 50px" class="px-3 text-center">
-                                    <span class="fal fa-plus font-2" style="color: #7b60fb;"></span>
+                        <a href="{{ route('admin.analytics.create') }}" class="col-12 px-0">
+                            <div class="col-12 add-site-button px-0 d-flex">
+                                <div style="width: 50px" class="px-3 text-center d-flex align-items-center justify-content-center">
+                                    <span class="fal fa-plus font-2"></span>
                                 </div>
-                                <div style="width: calc(100% - 50px)" class="px-2 item-container-title" style="color: #7b60fb; font-weight: 600;">
+                                <div style="width: calc(100% - 50px)" class="px-2 item-container-title">
                                     إضافة موقع جديد
                                 </div>
                             </div>
