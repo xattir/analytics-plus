@@ -774,8 +774,12 @@
     <div class="analytics-header">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h1>{{ $site->domain }}</h1>
+                <h1>{{ $site->title ?? $site->domain }}</h1>
+                @if($site->title && $site->title !== $site->domain)
+                <p style="font-size: 13px; color: var(--analytics-text-muted); margin-top: 4px;">{{ $site->domain }}</p>
+                @else
                 <p>لوحة تحكم التحليلات</p>
+                @endif
                 <div class="header-stats">
                     <span class="header-stat-item">
                         <span class="header-stat-icon">👥</span>
