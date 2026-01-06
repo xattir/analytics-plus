@@ -457,7 +457,7 @@
     .source-row {
         display: flex;
         align-items: center;
-        padding: 8px 12px;
+        padding: 4px 12px;
         margin-bottom: 4px;
         border-radius: 6px;
         background: var(--analytics-bg);
@@ -719,39 +719,57 @@
                                 $sourceName = strtolower($source['name'] ?? '');
                                 $sourceCount = $source['count'] ?? 0;
                                 $sourcePercent = $maxSourceCount > 0 ? ($sourceCount / $maxSourceCount) * 100 : 0;
+                                
+                                // Get icon domain based on source
+                                $sourceIconDomain = '';
+                                if ($source['type'] == 'direct' || $sourceName == 'direct') {
+                                    $sourceIconDomain = $site->domain;
+                                } elseif ($sourceName == 'google') {
+                                    $sourceIconDomain = 'google.com';
+                                } elseif ($sourceName == 'facebook' || $sourceName == 'fb.com') {
+                                    $sourceIconDomain = 'facebook.com';
+                                } elseif ($sourceName == 'instagram') {
+                                    $sourceIconDomain = 'instagram.com';
+                                } elseif ($sourceName == 'twitter' || $sourceName == 'x.com') {
+                                    $sourceIconDomain = 'x.com';
+                                } elseif ($sourceName == 'youtube') {
+                                    $sourceIconDomain = 'youtube.com';
+                                } elseif ($sourceName == 'linkedin') {
+                                    $sourceIconDomain = 'linkedin.com';
+                                } elseif ($sourceName == 'pinterest') {
+                                    $sourceIconDomain = 'pinterest.com';
+                                } elseif ($sourceName == 'reddit') {
+                                    $sourceIconDomain = 'reddit.com';
+                                } elseif ($sourceName == 'tiktok') {
+                                    $sourceIconDomain = 'tiktok.com';
+                                } elseif ($sourceName == 'bing') {
+                                    $sourceIconDomain = 'bing.com';
+                                } elseif ($sourceName == 'yahoo') {
+                                    $sourceIconDomain = 'yahoo.com';
+                                } elseif ($sourceName == 'duckduckgo') {
+                                    $sourceIconDomain = 'duckduckgo.com';
+                                } else {
+                                    // Try to extract domain from source name if it looks like a URL
+                                    $sourceIconDomain = $sourceName;
+                                }
+                                
+                                $sourceIconUrl = $sourceIconDomain ? 'https://icons.duckduckgo.com/ip3/' . $sourceIconDomain . '.ico' : '';
+                                
+                                // Display name
+                                $sourceDisplayName = '';
+                                if ($source['type'] == 'direct' || $sourceName == 'direct') {
+                                    $sourceDisplayName = 'مباشر';
+                                } else {
+                                    $sourceDisplayName = ucfirst($source['name']);
+                                }
                             @endphp
                             <div class="source-row" style="--progress-width: {{ $sourcePercent }}%;">
                                 <div class="source-row-content">
                                     <span class="source-icon-name">
-                                        @if($source['type'] == 'direct' || $sourceName == 'direct')
-                                            🔗 <span>مباشر</span>
-                                        @elseif($sourceName == 'google')
-                                            🔍 <span>Google</span>
-                                        @elseif($sourceName == 'facebook' || $sourceName == 'fb.com')
-                                            📘 <span>Facebook</span>
-                                        @elseif($sourceName == 'instagram')
-                                            📷 <span>Instagram</span>
-                                        @elseif($sourceName == 'twitter' || $sourceName == 'x.com')
-                                            🐦 <span>Twitter</span>
-                                        @elseif($sourceName == 'youtube')
-                                            📺 <span>YouTube</span>
-                                        @elseif($sourceName == 'linkedin')
-                                            💼 <span>LinkedIn</span>
-                                        @elseif($sourceName == 'pinterest')
-                                            📌 <span>Pinterest</span>
-                                        @elseif($sourceName == 'reddit')
-                                            🤖 <span>Reddit</span>
-                                        @elseif($sourceName == 'tiktok')
-                                            🎵 <span>TikTok</span>
-                                        @elseif($sourceName == 'bing')
-                                            🔎 <span>Bing</span>
-                                        @elseif($sourceName == 'yahoo')
-                                            📧 <span>Yahoo</span>
-                                        @elseif($sourceName == 'duckduckgo')
-                                            🦆 <span>DuckDuckGo</span>
-                                        @else
-                                            🔗 <span>{{ $source['name'] }}</span>
+                                        @if($sourceIconUrl)
+                                        <img src="{{ $sourceIconUrl }}" alt="" style="width: 16px; height: 16px; flex-shrink: 0;" onerror="this.style.display='none'">
                                         @endif
+                                        <span>{{ $sourceDisplayName }}</span>
                                     </span>
                                     <span class="source-count">{{ number_format($sourceCount) }}</span>
                                 </div>
