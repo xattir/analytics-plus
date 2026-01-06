@@ -607,9 +607,9 @@
     .source-row {
         display: flex;
         align-items: center;
-        padding: 6px 10px;
-        margin-bottom: 4px;
-        border-radius: 8px;
+        padding: 4px 8px;
+        margin-bottom: 3px;
+        border-radius: 6px;
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.8) 100%);
         border: 1px solid rgba(123, 96, 251, 0.15);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -648,23 +648,23 @@
     }
     
     .source-icon-name {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
         color: var(--analytics-text);
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
         flex: 1;
     }
     
     .source-count {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
         color: var(--analytics-primary);
         white-space: nowrap;
-        padding: 4px 8px;
+        padding: 3px 6px;
         background: rgba(123, 96, 251, 0.1);
-        border-radius: 6px;
+        border-radius: 5px;
         transition: all 0.2s ease;
     }
     
@@ -894,8 +894,8 @@
     <div style="padding: 0 40px 40px;">
         <!-- HERO SECTION -->
         <div class="row mb-5">
-            <!-- ACTIVE USERS (HERO) - ثلث الشاشة -->
-            <div class="col-lg-4 mb-4">
+            <!-- ACTIVE USERS (HERO) - نصف الشاشة -->
+            <div class="col-lg-6 mb-4">
                 <div class="hero-card @if(isset($hasTrafficLast24h) && $hasTrafficLast24h) hero-card-active @endif">
                     <div class="metric-label">
                         <span class="metric-icon">⚡@if(isset($hasTrafficLast24h) && $hasTrafficLast24h)<span class="metric-icon-indicator"></span>@endif</span>
@@ -908,8 +908,8 @@
                 </div>
             </div>
             
-            <!-- TOP TRAFFIC SOURCES - ثلث الشاشة -->
-            <div class="col-lg-4 mb-4">
+            <!-- TOP TRAFFIC SOURCES - ربع الشاشة -->
+            <div class="col-lg-3 mb-4">
                 <div class="section-card">
                     <h2 class="section-title">أفضل المصادر</h2>
                     @if(isset($topTrafficSources) && $topTrafficSources->count() > 0)
@@ -980,8 +980,8 @@
                 </div>
             </div>
             
-            <!-- VISITORS OVER TIME - ثلث الشاشة -->
-            <div class="col-lg-4 mb-4">
+            <!-- VISITORS OVER TIME - ربع الشاشة -->
+            <div class="col-lg-3 mb-4">
                 <div class="section-card">
                     <h2 class="section-title">الزوار - آخر 7 أيام</h2>
                     <div class="chart-container" style="height: 200px; margin-top: 16px;">
