@@ -564,7 +564,7 @@
                 @endphp
                 
                 <div class="dropdown" style="display: inline-block;">
-                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         الإجراءات
                     </button>
                     <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown">

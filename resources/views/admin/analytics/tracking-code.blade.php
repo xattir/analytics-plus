@@ -32,6 +32,22 @@
         <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
     </form>
     
+    @if(session('success'))
+    <div class="alert alert-success mt-3">
+        {{ session('success') }}
+    </div>
+    @endif
+    
+    @if($errors->any())
+    <div class="alert alert-danger mt-3">
+        <ul class="mb-0">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+    
     <script>
     function copyToClipboard() {
         const textarea = document.querySelector('textarea');
@@ -39,6 +55,49 @@
         document.execCommand('copy');
         alert('تم نسخ كود التتبع إلى الحافظة!');
     }
+    
+    // Handle form submission
+    document.getElementById('editTitleForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        var form = this;
+        var formData = new FormData(form);
+        var submitBtn = form.querySelector('button[type="submit"]');
+        var originalText = submitBtn.textContent;
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'جاري الحفظ...';
+        
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                alert('تم تحديث عنوان الموقع بنجاح!');
+                // Optionally reload the page to show updated title
+                window.location.reload();
+            } else {
+                alert('حدث خطأ أثناء تحديث العنوان');
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء تحديث العنوان');
+        })
+        .finally(function() {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    });
     </script>
 </div>
 @endsection
