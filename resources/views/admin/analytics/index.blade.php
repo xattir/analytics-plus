@@ -172,23 +172,52 @@
     }
     
     .site-online-dot {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         background-color: #10b981;
-        animation: spinner-fade 1.5s linear infinite;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        animation: pulse-fade 1.2s ease-in-out infinite;
         flex-shrink: 0;
+        position: relative;
     }
     
-    @keyframes spinner-fade {
+    .site-online-dot::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-color: #10b981;
+        animation: ripple 1.2s ease-out infinite;
+    }
+    
+    @keyframes pulse-fade {
         0% {
             opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
         }
         50% {
-            opacity: 0.3;
+            opacity: 0.6;
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
         }
         100% {
             opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+    }
+    
+    @keyframes ripple {
+        0% {
+            transform: scale(1);
+            opacity: 0.8;
+        }
+        100% {
+            transform: scale(2);
+            opacity: 0;
         }
     }
     
@@ -329,7 +358,7 @@
                         @endif
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        @if($activeUsers > 0)
+                        @if(isset($site->has_traffic_last_5min) && $site->has_traffic_last_5min)
                         <span class="site-online-indicator">
                             <span class="site-online-dot"></span>
                         </span>

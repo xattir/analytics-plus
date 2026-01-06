@@ -714,7 +714,7 @@
                         @php
                             $maxSourceCount = $topTrafficSources->first()['count'] ?? 1;
                         @endphp
-                        @foreach($topTrafficSources->take(5) as $source)
+                        @foreach($topTrafficSources->take(10) as $source)
                             @php
                                 $sourceName = strtolower($source['name'] ?? '');
                                 $sourceCount = $source['count'] ?? 0;
@@ -979,12 +979,27 @@
                                         <code class="ip-address">{{ $visit['ip'] ?? '—' }}</code>
                                     </td>
                                     <td class="visits-table-device">
-                                        @if($visit['device_type'] == 'desktop')
-                                            <span title="Desktop">🖥️ Desktop</span>
-                                        @elseif($visit['device_type'] == 'mobile')
-                                            <span title="Mobile">📱 Mobile</span>
-                                        @elseif($visit['device_type'] == 'tablet')
-                                            <span title="Tablet">📱 Tablet</span>
+                                        @php
+                                            $deviceType = $visit['device_type'] ?? null;
+                                            $deviceIconSvg = '';
+                                            $deviceLabel = '';
+                                            
+                                            if ($deviceType == 'desktop') {
+                                                $deviceIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>';
+                                                $deviceLabel = 'Desktop';
+                                            } elseif ($deviceType == 'mobile') {
+                                                $deviceIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>';
+                                                $deviceLabel = 'Mobile';
+                                            } elseif ($deviceType == 'tablet') {
+                                                $deviceIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>';
+                                                $deviceLabel = 'Tablet';
+                                            }
+                                        @endphp
+                                        @if($deviceIconSvg)
+                                            <span title="{{ $deviceLabel }}" style="display: inline-flex; align-items: center; gap: 6px; color: var(--analytics-text-muted, #6b7280);">
+                                                {!! $deviceIconSvg !!}
+                                                <span>{{ $deviceLabel }}</span>
+                                            </span>
                                         @else
                                             <span>—</span>
                                         @endif
@@ -993,17 +1008,38 @@
                                         @php
                                             $browser = strtolower($visit['browser'] ?? '');
                                             $version = $visit['browser_version'] ?? '';
+                                            $browserIcon = '';
+                                            $browserName = '';
+                                            
+                                            if (strpos($browser, 'chrome') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg';
+                                                $browserName = 'Chrome';
+                                            } elseif (strpos($browser, 'safari') !== false && strpos($browser, 'chrome') === false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/safari.svg';
+                                                $browserName = 'Safari';
+                                            } elseif (strpos($browser, 'firefox') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/firefox.svg';
+                                                $browserName = 'Firefox';
+                                            } elseif (strpos($browser, 'edge') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/microsoftedge.svg';
+                                                $browserName = 'Edge';
+                                            } elseif (strpos($browser, 'opera') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/opera.svg';
+                                                $browserName = 'Opera';
+                                            } elseif (strpos($browser, 'internet explorer') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/internetexplorer.svg';
+                                                $browserName = 'Internet Explorer';
+                                            } else {
+                                                $browserName = $visit['browser'] ?? 'Unknown';
+                                            }
                                         @endphp
-                                        @if(strpos($browser, 'chrome') !== false)
-                                            <span title="Chrome {{ $version }}">🌐 Chrome</span>
-                                        @elseif(strpos($browser, 'safari') !== false && strpos($browser, 'chrome') === false)
-                                            <span title="Safari {{ $version }}">🧭 Safari</span>
-                                        @elseif(strpos($browser, 'firefox') !== false)
-                                            <span title="Firefox {{ $version }}">🦊 Firefox</span>
-                                        @elseif(strpos($browser, 'edge') !== false)
-                                            <span title="Edge {{ $version }}">🔷 Edge</span>
+                                        @if($browserIcon)
+                                            <span title="{{ $browserName }} {{ $version }}" style="display: inline-flex; align-items: center; gap: 6px;">
+                                                <img src="{{ $browserIcon }}" alt="{{ $browserName }}" style="width: 18px; height: 18px;" onerror="this.style.display='none'">
+                                                <span>{{ $browserName }}</span>
+                                            </span>
                                         @else
-                                            <span title="{{ $visit['browser'] ?? 'Unknown' }}">{{ $visit['browser'] ?? '—' }}</span>
+                                            <span title="{{ $browserName }} {{ $version }}">{{ $browserName }}</span>
                                         @endif
                                     </td>
                                     <td class="visits-table-paths-count">

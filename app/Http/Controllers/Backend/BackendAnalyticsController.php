@@ -77,8 +77,10 @@ class BackendAnalyticsController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         
-        // Get active users data for each site (last 30 minutes)
+        // Get active users data for each site (last 30 minutes for chart)
         $activeUsersStart = Carbon::now()->subMinutes(30);
+        // Check traffic in last 5 minutes for indicator
+        $trafficLast5Minutes = Carbon::now()->subMinutes(5);
         foreach ($sites as $site) {
             $activeUsers = AnalyticsSession::where('site_id', $site->id)
                 ->where('last_seen', '>=', $activeUsersStart)
@@ -86,7 +88,14 @@ class BackendAnalyticsController extends Controller
                 ->distinct()
                 ->count('session_id');
             
+            // Check if has traffic in last 5 minutes for indicator
+            $hasTrafficLast5Min = AnalyticsSession::where('site_id', $site->id)
+                ->where('last_seen', '>=', $trafficLast5Minutes)
+                ->where('is_bot', false)
+                ->exists();
+            
             $site->active_users = $activeUsers;
+            $site->has_traffic_last_5min = $hasTrafficLast5Min;
             $site->active_users_chart_data = $this->getActiveUsersChartData($site->id, $activeUsersStart);
             // Get last 24 hours data for bars chart
             $site->last_24h_chart_data = $this->getLast24HoursChartData($site->id);
@@ -812,7 +821,7 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
-     * Get top traffic sources
+     * Get top traffic sources (top 10)
      */
     private function getTopTrafficSources($siteId, $dateFrom, $dateTo)
     {
@@ -831,6 +840,7 @@ class BackendAnalyticsController extends Controller
             ->select('referrer_source', DB::raw('COUNT(*) as count'))
             ->groupBy('referrer_source')
             ->orderByDesc('count')
+            ->limit(10)
             ->get();
         
         // Get UTM sources (for campaigns)
