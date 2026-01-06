@@ -321,10 +321,6 @@
 </style>
 
 <div class="col-12 p-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4>مواقع التحليلات @if(isset($isSuperAdmin) && $isSuperAdmin) <small class="text-muted">(جميع المواقع - عرض المشرف)</small> @endif</h4>
-        <a href="{{ request()->routeIs('admin.*') ? route('admin.analytics.create') : route('user.analytics.create') }}" class="btn btn-primary">إضافة موقع جديد</a>
-    </div>
     
     @if(isset($pendingInvitations) && $pendingInvitations->count() > 0)
     <div class="alert alert-info mb-3">

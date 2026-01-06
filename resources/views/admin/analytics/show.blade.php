@@ -21,13 +21,13 @@
     }
     
     .analytics-header {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        padding: 20px 40px;
-        margin-bottom: 24px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        padding: 24px 40px;
+        margin-bottom: 32px;
         margin-top: 55px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
         position: relative;
         z-index: 1;
         overflow: visible;
@@ -38,34 +38,46 @@
         position: absolute;
         top: 0;
         right: 0;
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, rgba(123, 96, 251, 0.08) 0%, transparent 70%);
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle at top right, rgba(123, 96, 251, 0.12) 0%, transparent 60%);
         pointer-events: none;
+        opacity: 0.6;
+    }
+    
+    .analytics-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(123, 96, 251, 0.2) 50%, transparent 100%);
     }
     
     .analytics-header h1 {
-        font-size: 28px;
-        font-weight: 700;
-        margin: 0 0 6px 0;
+        font-size: 32px;
+        font-weight: 800;
+        margin: 0 0 8px 0;
         color: var(--analytics-text);
-        letter-spacing: -0.5px;
+        letter-spacing: -0.8px;
         position: relative;
         z-index: 1;
     }
     
     .analytics-header p {
-        font-size: 14px;
+        font-size: 15px;
         color: var(--analytics-text-muted);
-        margin: 0 0 12px 0;
+        margin: 0 0 16px 0;
         position: relative;
         z-index: 1;
+        font-weight: 500;
     }
     
     .header-stats {
         display: flex;
-        gap: 20px;
-        margin-top: 12px;
+        gap: 16px;
+        margin-top: 16px;
         flex-wrap: wrap;
         position: relative;
         z-index: 1;
@@ -74,33 +86,94 @@
     .header-stat-item {
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 12px;
+        gap: 8px;
+        font-size: 13px;
         color: var(--analytics-text-muted);
-        padding: 6px 12px;
-        background: rgba(123, 96, 251, 0.05);
-        border-radius: 8px;
-        border: 1px solid rgba(123, 96, 251, 0.1);
-        transition: all 0.2s ease;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+        border-radius: 12px;
+        border: 1px solid rgba(123, 96, 251, 0.15);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(123, 96, 251, 0.08);
+        backdrop-filter: blur(10px);
     }
     
     .header-stat-item:hover {
-        background: rgba(123, 96, 251, 0.08);
-        transform: translateY(-1px);
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.15);
+        border-color: rgba(123, 96, 251, 0.25);
     }
     
     .header-stat-icon {
-        font-size: 16px;
+        font-size: 18px;
+        filter: grayscale(0.3);
+        transition: filter 0.3s ease;
+    }
+    
+    .header-stat-item:hover .header-stat-icon {
+        filter: grayscale(0);
     }
     
     .header-stat-label {
-        font-weight: 500;
+        font-weight: 600;
+        color: var(--analytics-text-muted);
     }
     
     .header-stat-value {
+        font-weight: 800;
+        color: var(--analytics-primary);
+        font-size: 16px;
+        letter-spacing: -0.3px;
+    }
+    
+    .analytics-header .dropdown button {
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.12) 0%, rgba(123, 96, 251, 0.08) 100%);
+        border: 1px solid rgba(123, 96, 251, 0.25);
+        border-radius: 12px;
+        padding: 12px 24px;
         font-weight: 700;
         color: var(--analytics-primary);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(123, 96, 251, 0.12);
         font-size: 14px;
+    }
+    
+    .analytics-header .dropdown button:hover {
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.2) 0%, rgba(123, 96, 251, 0.15) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.2);
+        border-color: rgba(123, 96, 251, 0.35);
+    }
+    
+    .analytics-header .dropdown button:focus {
+        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.2), 0 0 0 3px rgba(123, 96, 251, 0.1);
+    }
+    
+    .analytics-header .dropdown-menu {
+        border-radius: 12px;
+        border: 1px solid rgba(123, 96, 251, 0.15);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        padding: 8px;
+        margin-top: 8px;
+    }
+    
+    .analytics-header .dropdown-item {
+        border-radius: 8px;
+        padding: 10px 16px;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+    
+    .analytics-header .dropdown-item:hover {
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%);
+        color: var(--analytics-primary);
+        transform: translateX(-4px);
+    }
+    
+    .analytics-header .dropdown-item.text-danger:hover {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+        color: #dc2626;
     }
     
     /* Site Card Styles (matching index page) */
@@ -957,7 +1030,8 @@
                 @endphp
                 
                 <div class="dropdown" style="display: inline-block; position: relative; z-index: 1050;">
-                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%); border: 1px solid rgba(123, 96, 251, 0.2); border-radius: 10px; padding: 10px 20px; font-weight: 600; color: var(--analytics-primary); transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(123, 96, 251, 0.1);">
+                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-cog" style="margin-left: 6px;"></i>
                         الإجراءات
                     </button>
                     <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown" style="z-index: 1051; position: absolute;">
