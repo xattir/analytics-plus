@@ -1289,12 +1289,16 @@ HTML;
         
         $request->validate([
             'query' => 'required|string|max:500',
-            'match_type' => 'required|in:prefix,exact,ip',
+            'match_type' => 'required|in:prefix,exact,ip,country',
         ]);
         
         $query = trim($request->input('query'));
         $matchType = $request->input('match_type');
         $siteId = $site->id;
+        
+        // Define variables for view
+        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdminRoute = request()->routeIs('admin.*');
         
         // Get date range (default to last 30 days)
         $dateFrom = $request->get('date_from', Carbon::now()->subDays(30)->format('Y-m-d'));
@@ -1317,6 +1321,14 @@ HTML;
             if ($ipBinary) {
                 $sessionIds = (clone $baseQuery)
                     ->where('ip', $ipBinary)
+                    ->pluck('session_id');
+            }
+        } elseif ($matchType === 'country') {
+            // Search by country code
+            $countryCode = strtoupper(trim($query));
+            if (strlen($countryCode) === 2) {
+                $sessionIds = (clone $baseQuery)
+                    ->where('country', $countryCode)
                     ->pluck('session_id');
             }
         } else {
@@ -1418,9 +1430,6 @@ HTML;
         
         // Get visits with paths
         $visitsWithPaths = $this->getVisitsWithPathsForSessions($siteId, $dateFromCarbon, $dateToCarbon, $site, $sessionIds, 20);
-        
-        $isSuperAdmin = $this->isSuperAdmin();
-        $isAdminRoute = request()->routeIs('admin.*');
         
         return view('admin.analytics.search-results', compact(
             'site',

@@ -293,7 +293,7 @@
                     name="query" 
                     value="{{ old('query') }}" 
                     required 
-                    placeholder="https://example.com/path أو عنوان IP"
+                    placeholder="https://example.com/path أو عنوان IP أو كود الدولة (مثل: US, SA, EG)"
                 >
                 <div class="form-help-text">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -301,7 +301,7 @@
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    <span>أدخل URL كامل أو مسار أو عنوان IP للبحث</span>
+                    <span>أدخل URL كامل أو مسار أو عنوان IP أو كود الدولة (مثل: US, SA, EG) للبحث</span>
                 </div>
             </div>
             
@@ -346,6 +346,17 @@
                             <span>بحث بالـ IP</span>
                         </label>
                     </div>
+                    <div class="match-type-option">
+                        <input type="radio" name="match_type" id="match_country" value="country" class="match-type-radio" {{ old('match_type') == 'country' ? 'checked' : '' }} required>
+                        <label for="match_country" class="match-type-label">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                            </svg>
+                            <span>بحث بالدولة</span>
+                        </label>
+                    </div>
                 </div>
                 <div class="form-help-text">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -353,7 +364,7 @@
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    <span>Prefix: يبحث عن جميع المسارات التي تبدأ بهذا المسار | Exact: يبحث عن المسار المطابق تماماً | IP: يبحث عن جميع الزيارات من عنوان IP محدد</span>
+                    <span>Prefix: يبحث عن جميع المسارات التي تبدأ بهذا المسار | Exact: يبحث عن المسار المطابق تماماً | IP: يبحث عن جميع الزيارات من عنوان IP محدد | Country: يبحث عن جميع الزيارات من دولة محددة (استخدم كود الدولة مثل: US, SA, EG)</span>
                 </div>
             </div>
             
