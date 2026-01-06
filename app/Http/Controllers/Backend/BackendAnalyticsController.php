@@ -1321,7 +1321,7 @@ HTML;
         // Calculate statistics for filtered sessions
         $stats = [
             'total_sessions' => $filteredSessions->count(),
-            'unique_visitors' => $filteredSessions->distinct('device_fingerprint')->count('device_fingerprint'),
+            'unique_visitors' => $filteredSessions->pluck('device_fingerprint')->unique()->count(),
             'total_pageviews' => $filteredSessions->sum('pages_count'),
             'bounce_rate' => $this->calculateBounceRateForSessions($filteredSessions),
             'avg_duration' => $filteredSessions->avg('duration_ms'),
