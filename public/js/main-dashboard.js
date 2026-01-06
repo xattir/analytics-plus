@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(function() {
     $('.asideToggle').on('click', function() {
         $('.aside').toggleClass('active');
         $('.aside').toggleClass('in-active');
