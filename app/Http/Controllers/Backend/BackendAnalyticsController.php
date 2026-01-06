@@ -1222,6 +1222,416 @@ HTML;
     }
     
     /**
+     * Show search form
+     */
+    public function search(AnalyticsSite $site)
+    {
+        // Check authorization
+        if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
+            abort(403, 'You do not have access to this site.');
+        }
+        
+        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdminRoute = request()->routeIs('admin.*');
+        
+        return view('admin.analytics.search', compact('site', 'isSuperAdmin', 'isAdminRoute'));
+    }
+    
+    /**
+     * Show search results
+     */
+    public function searchResults(Request $request, AnalyticsSite $site)
+    {
+        // Check authorization
+        if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
+            abort(403, 'You do not have access to this site.');
+        }
+        
+        $request->validate([
+            'query' => 'required|string|max:500',
+            'match_type' => 'required|in:prefix,exact,ip',
+        ]);
+        
+        $query = trim($request->input('query'));
+        $matchType = $request->input('match_type');
+        $siteId = $site->id;
+        
+        // Get date range (default to last 30 days)
+        $dateFrom = $request->get('date_from', Carbon::now()->subDays(30)->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        $dateFromCarbon = Carbon::parse($dateFrom);
+        $dateToCarbon = Carbon::parse($dateTo);
+        
+        // Build base query for sessions
+        $baseQuery = AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+            ->where('is_bot', false);
+        
+        // Get session IDs based on match type
+        $sessionIds = collect();
+        
+        if ($matchType === 'ip') {
+            // Search by IP address
+            $ipBinary = inet_pton($query);
+            if ($ipBinary) {
+                $sessionIds = (clone $baseQuery)
+                    ->where('ip', $ipBinary)
+                    ->pluck('session_id');
+            }
+        } else {
+            // Search by URL/path
+            // Extract path from full URL if provided
+            $searchPath = $query;
+            if (preg_match('/https?:\/\/[^\/]+(\/.*)?$/', $query, $matches)) {
+                $searchPath = $matches[1] ?? '/';
+            }
+            
+            // Normalize path
+            if (empty($searchPath) || $searchPath === '/') {
+                $searchPath = '/';
+            }
+            
+            // Get session IDs from paths
+            $pathsQuery = AnalyticsSessionPath::where('site_id', $siteId)
+                ->whereBetween('created_at', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()]);
+            
+            if ($matchType === 'exact') {
+                $pathsQuery->where('path', $searchPath);
+            } else { // prefix
+                $pathsQuery->where('path', 'LIKE', $searchPath . '%');
+            }
+            
+            $sessionIds = $pathsQuery->pluck('session_id')->unique();
+        }
+        
+        if ($sessionIds->isEmpty()) {
+            // No results found
+            return view('admin.analytics.search-results', compact(
+                'site', 'query', 'matchType', 'dateFrom', 'dateTo', 'sessionIds', 'isSuperAdmin', 'isAdminRoute'
+            ))->with('noResults', true);
+        }
+        
+        // Get filtered sessions
+        $filteredSessions = (clone $baseQuery)
+            ->whereIn('session_id', $sessionIds)
+            ->get();
+        
+        // Calculate statistics for filtered sessions
+        $stats = [
+            'total_sessions' => $filteredSessions->count(),
+            'unique_visitors' => $filteredSessions->distinct('device_fingerprint')->count('device_fingerprint'),
+            'total_pageviews' => $filteredSessions->sum('pages_count'),
+            'bounce_rate' => $this->calculateBounceRateForSessions($filteredSessions),
+            'avg_duration' => $filteredSessions->avg('duration_ms'),
+            'avg_pages_per_session' => $filteredSessions->avg('pages_count'),
+            'new_visitors' => $filteredSessions->where('is_returning', false)->count(),
+            'returning_visitors' => $filteredSessions->where('is_returning', true)->count(),
+        ];
+        
+        // Today's date range
+        $todayStart = Carbon::today()->startOfDay();
+        $todayEnd = Carbon::today()->endOfDay();
+        
+        // Last 30 minutes for active users
+        $activeUsersStart = Carbon::now()->subMinutes(30);
+        
+        // TODAY'S METRICS
+        $todayQuery = (clone $baseQuery)
+            ->whereIn('session_id', $sessionIds)
+            ->whereBetween('first_seen', [$todayStart, $todayEnd]);
+        
+        $todayStats = [
+            'visitors' => (clone $todayQuery)->distinct('device_fingerprint')->count('device_fingerprint'),
+            'pageviews' => (clone $todayQuery)->sum('pages_count'),
+        ];
+        
+        $todayUsersCount = (clone $todayQuery)->distinct('device_fingerprint')->count('device_fingerprint');
+        
+        // ACTIVE USERS (last 30 minutes) - from filtered sessions
+        $activeUsersQuery = (clone $baseQuery)
+            ->whereIn('session_id', $sessionIds)
+            ->where('last_seen', '>=', $activeUsersStart);
+        
+        $activeUsersCount = (clone $activeUsersQuery)->distinct('session_id')->count('session_id');
+        $activeUsersData = $this->getActiveUsersChartDataForSessions($siteId, $activeUsersStart, $sessionIds);
+        
+        // Check if has traffic in last 5 minutes
+        $trafficLast5Minutes = Carbon::now()->subMinutes(5);
+        $hasTrafficLast5Min = (clone $baseQuery)
+            ->whereIn('session_id', $sessionIds)
+            ->where('last_seen', '>=', $trafficLast5Minutes)
+            ->exists();
+        
+        // Get top pages (from filtered sessions)
+        $topPages = $this->getTopPagesForSessions($siteId, $dateFromCarbon, $dateToCarbon, $sessionIds);
+        
+        // Get top browsers
+        $topBrowsers = $this->getTopBrowsersForSessions($siteId, $dateFromCarbon, $dateToCarbon, $sessionIds);
+        
+        // Get top traffic sources
+        $topTrafficSources = $this->getTopTrafficSourcesForSessions($siteId, $dateFromCarbon, $dateToCarbon, $sessionIds);
+        
+        // Get visitors last 7 days
+        $visitorsLast7Days = $this->getVisitorsLast7DaysForSessions($siteId, $sessionIds);
+        
+        // Get visits with paths
+        $visitsWithPaths = $this->getVisitsWithPathsForSessions($siteId, $dateFromCarbon, $dateToCarbon, $site, $sessionIds, 20);
+        
+        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdminRoute = request()->routeIs('admin.*');
+        
+        return view('admin.analytics.search-results', compact(
+            'site',
+            'query',
+            'matchType',
+            'dateFrom',
+            'dateTo',
+            'stats',
+            'todayStats',
+            'todayUsersCount',
+            'activeUsersCount',
+            'activeUsersData',
+            'hasTrafficLast5Min',
+            'topPages',
+            'topBrowsers',
+            'topTrafficSources',
+            'visitorsLast7Days',
+            'visitsWithPaths',
+            'isSuperAdmin',
+            'isAdminRoute'
+        ));
+    }
+    
+    /**
+     * Calculate bounce rate for a collection of sessions
+     */
+    private function calculateBounceRateForSessions($sessions)
+    {
+        $total = $sessions->count();
+        if ($total == 0) return 0;
+        
+        $bounces = $sessions->where('is_bounce', true)->count();
+        return round(($bounces / $total) * 100, 2);
+    }
+    
+    /**
+     * Get active users chart data for specific sessions
+     */
+    private function getActiveUsersChartDataForSessions($siteId, $startTime, $sessionIds)
+    {
+        $data = [];
+        $interval = 1.25; // 1.25-minute intervals (24 points for 30 minutes)
+        
+        for ($i = 0; $i < 24; $i++) {
+            $pointStart = $startTime->copy()->addMinutes($i * $interval);
+            $pointEnd = $pointStart->copy()->addMinutes($interval);
+            
+            $count = AnalyticsSession::where('site_id', $siteId)
+                ->whereIn('session_id', $sessionIds)
+                ->where('last_seen', '>=', $pointStart)
+                ->where('last_seen', '<', $pointEnd)
+                ->where('is_bot', false)
+                ->distinct()
+                ->count('session_id');
+            
+            $data[] = [
+                'time' => $pointStart->format('H:i'),
+                'count' => $count,
+            ];
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Get top pages for specific sessions
+     */
+    private function getTopPagesForSessions($siteId, $dateFrom, $dateTo, $sessionIds)
+    {
+        return AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
+            ->whereIn('analytics_session_paths.session_id', $sessionIds)
+            ->whereBetween('analytics_session_paths.created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
+            ->groupBy('analytics_session_paths.path')
+            ->orderByDesc('views')
+            ->limit(30)
+            ->get();
+    }
+    
+    /**
+     * Get top browsers for specific sessions
+     */
+    private function getTopBrowsersForSessions($siteId, $dateFrom, $dateTo, $sessionIds)
+    {
+        return AnalyticsSession::where('site_id', $siteId)
+            ->whereIn('session_id', $sessionIds)
+            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->whereNotNull('browser')
+            ->select('browser', DB::raw('COUNT(*) as count'))
+            ->groupBy('browser')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+    }
+    
+    /**
+     * Get top traffic sources for specific sessions
+     */
+    private function getTopTrafficSourcesForSessions($siteId, $dateFrom, $dateTo, $sessionIds)
+    {
+        $startDate = $dateFrom->copy()->startOfDay()->toDateTimeString();
+        $endDate = $dateTo->copy()->endOfDay()->toDateTimeString();
+        
+        $referrerSourcesRaw = AnalyticsSession::where('site_id', $siteId)
+            ->whereIn('session_id', $sessionIds)
+            ->whereBetween('first_seen', [$startDate, $endDate])
+            ->whereNotNull('referrer_source')
+            ->where('is_bot', false)
+            ->select('referrer_source', 'referrer', DB::raw('COUNT(*) as count'))
+            ->groupBy('referrer_source', 'referrer')
+            ->orderByDesc('count')
+            ->get();
+        
+        $referrerSourcesGrouped = [];
+        foreach ($referrerSourcesRaw as $source) {
+            $key = $source->referrer_source;
+            if (!isset($referrerSourcesGrouped[$key])) {
+                $referrerSourcesGrouped[$key] = [
+                    'name' => $source->referrer_source,
+                    'count' => 0,
+                    'referrer_url' => $source->referrer,
+                ];
+            }
+            $referrerSourcesGrouped[$key]['count'] += $source->count;
+            if (!$referrerSourcesGrouped[$key]['referrer_url'] && $source->referrer) {
+                $referrerSourcesGrouped[$key]['referrer_url'] = $source->referrer;
+            }
+        }
+        
+        $referrerSources = collect($referrerSourcesGrouped)
+            ->sortByDesc('count')
+            ->take(10)
+            ->values();
+        
+        $utmSources = AnalyticsSession::where('site_id', $siteId)
+            ->whereIn('session_id', $sessionIds)
+            ->whereBetween('first_seen', [$startDate, $endDate])
+            ->whereNotNull('utm_source')
+            ->where('is_bot', false)
+            ->select('utm_source', DB::raw('COUNT(*) as count'))
+            ->groupBy('utm_source')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+        
+        $directCount = AnalyticsSession::where('site_id', $siteId)
+            ->whereIn('session_id', $sessionIds)
+            ->whereBetween('first_seen', [$startDate, $endDate])
+            ->where(function($q) {
+                $q->whereNull('referrer_source')
+                  ->orWhere('referrer_source', 'Direct');
+            })
+            ->where('is_bot', false)
+            ->count();
+        
+        $sources = $referrerSources->map(function($source) {
+            return [
+                'name' => $source['name'],
+                'count' => $source['count'],
+                'type' => 'referrer',
+                'referrer_url' => $source['referrer_url'] ?? null,
+            ];
+        });
+        
+        foreach ($utmSources as $utmSource) {
+            $exists = $sources->firstWhere('name', $utmSource->utm_source);
+            if (!$exists) {
+                $sources->push([
+                    'name' => $utmSource->utm_source,
+                    'count' => $utmSource->count,
+                    'type' => 'utm',
+                ]);
+            }
+        }
+        
+        if ($directCount > 0) {
+            $sources->push([
+                'name' => 'Direct',
+                'count' => $directCount,
+                'type' => 'direct',
+            ]);
+        }
+        
+        return $sources->sortByDesc('count')->values()->take(10);
+    }
+    
+    /**
+     * Get visitors last 7 days for specific sessions
+     */
+    private function getVisitorsLast7DaysForSessions($siteId, $sessionIds)
+    {
+        $data = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $start = $date->copy()->startOfDay();
+            $end = $date->copy()->endOfDay();
+            
+            $count = AnalyticsSession::where('site_id', $siteId)
+                ->whereIn('session_id', $sessionIds)
+                ->whereBetween('first_seen', [$start, $end])
+                ->where('is_bot', false)
+                ->distinct('device_fingerprint')
+                ->count('device_fingerprint');
+            
+            $data[] = [
+                'date' => $date->format('Y-m-d'),
+                'label' => $date->format('D'),
+                'count' => $count,
+            ];
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Get visits with paths for specific sessions
+     */
+    private function getVisitsWithPathsForSessions($siteId, $dateFrom, $dateTo, $site, $sessionIds, $perPage = 20)
+    {
+        $startDate = $dateFrom->copy()->startOfDay()->toDateTimeString();
+        $endDate = $dateTo->copy()->endOfDay()->toDateTimeString();
+        
+        $sessions = AnalyticsSession::where('site_id', $siteId)
+            ->whereIn('session_id', $sessionIds)
+            ->whereBetween('first_seen', [$startDate, $endDate])
+            ->where('is_bot', false)
+            ->withCount('paths')
+            ->orderBy('first_seen', 'desc')
+            ->paginate($perPage);
+        
+        return $sessions->through(function($session) use ($site) {
+            return [
+                'session_id' => $session->session_id,
+                'entry_path' => $session->entry_path,
+                'exit_path' => $session->exit_path,
+                'paths_count' => $session->paths_count,
+                'first_seen' => $session->first_seen,
+                'last_seen' => $session->last_seen,
+                'duration_ms' => $session->duration_ms,
+                'country' => $session->country,
+                'ip' => $session->ip ? inet_ntop($session->ip) : null,
+                'device_type' => $session->device_type,
+                'browser' => $session->browser,
+                'browser_version' => $session->browser_version,
+                'referrer_source' => $session->referrer_source,
+                'referrer' => $session->referrer,
+                'site_domain' => $site->domain,
+            ];
+        });
+    }
+    
+    /**
      * Fetch site title from website HTML
      */
     private function fetchSiteTitle($site)

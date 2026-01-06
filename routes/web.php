@@ -61,6 +61,8 @@ Route::prefix('dashboard')->middleware(['auth','ActiveAccount','verified'])->nam
     Route::resource('analytics', BackendAnalyticsController::class, ['parameters' => ['analytics' => 'site']])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
     Route::post('analytics/reorder', [BackendAnalyticsController::class, 'reorder'])->name('analytics.reorder');
     Route::get('analytics/{site}/tracking-code', [BackendAnalyticsController::class, 'trackingCode'])->name('analytics.tracking-code');
+    Route::get('analytics/{site}/search', [BackendAnalyticsController::class, 'search'])->name('analytics.search');
+    Route::post('analytics/{site}/search', [BackendAnalyticsController::class, 'searchResults'])->name('analytics.search-results');
     Route::get('analytics/{site}/members', [BackendAnalyticsController::class, 'members'])->name('analytics.members');
     Route::get('analytics/{site}/visits/{sessionId}', [BackendAnalyticsController::class, 'visitDetails'])->name('analytics.visit-details');
     Route::post('analytics/{site}/invite', [BackendAnalyticsController::class, 'sendInvitation'])->name('analytics.invite');
@@ -129,6 +131,8 @@ Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->gr
         Route::resource('analytics', BackendAnalyticsController::class, ['parameters' => ['analytics' => 'site']])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
         Route::post('analytics/reorder', [BackendAnalyticsController::class, 'reorder'])->name('analytics.reorder');
         Route::get('analytics/{site}/tracking-code', [BackendAnalyticsController::class, 'trackingCode'])->name('analytics.tracking-code');
+        Route::get('analytics/{site}/search', [BackendAnalyticsController::class, 'search'])->name('analytics.search');
+        Route::post('analytics/{site}/search', [BackendAnalyticsController::class, 'searchResults'])->name('analytics.search-results');
         Route::get('analytics/{site}/members', [BackendAnalyticsController::class, 'members'])->name('analytics.members');
         Route::get('analytics/{site}/visits/{sessionId}', [BackendAnalyticsController::class, 'visitDetails'])->name('analytics.visit-details');
         Route::post('analytics/{site}/invite', [BackendAnalyticsController::class, 'sendInvitation'])->name('analytics.invite');
