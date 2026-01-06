@@ -733,11 +733,23 @@
     
     .chart-container {
         position: relative;
-        height: 160px;
+        height: 200px;
         margin-top: 12px;
         padding: 8px;
         border-radius: 12px;
         background: rgba(255, 255, 255, 0.5);
+        flex: 1;
+        min-height: 200px;
+    }
+    
+    .hero-card .chart-container {
+        flex: 1;
+        min-height: 200px;
+    }
+    
+    .section-card .chart-container {
+        flex: 1;
+        min-height: 200px;
     }
     
     .empty-state {
