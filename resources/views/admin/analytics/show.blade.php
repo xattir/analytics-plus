@@ -1325,10 +1325,10 @@
             </div>
         </div>
         
-        <!-- SECOND ROW: Top Sources Last 7 Days + Top Countries Last 7 Days + Visitors Last 7 Days -->
+        <!-- SECOND ROW: Top Sources Last 7 Days + Top Countries Last 7 Days + Visitors Last 7 Days + Browsers Last 7 Days -->
         <div class="row mb-5" style="display: flex; align-items: stretch;">
-            <!-- TOP TRAFFIC SOURCES LAST 7 DAYS - ثلث الشاشة -->
-            <div class="col-lg-4 mb-4">
+            <!-- TOP TRAFFIC SOURCES LAST 7 DAYS - ربع الشاشة -->
+            <div class="col-lg-3 mb-4">
                 <div class="section-card sources-scrollable">
                     <h2 class="section-title">أفضل المصادر - آخر 7 أيام</h2>
                     <div class="sources-content">
@@ -1401,8 +1401,8 @@
                 </div>
             </div>
             
-            <!-- TOP COUNTRIES LAST 7 DAYS - ثلث الشاشة -->
-            <div class="col-lg-4 mb-4">
+            <!-- TOP COUNTRIES LAST 7 DAYS - ربع الشاشة -->
+            <div class="col-lg-3 mb-4">
                 <div class="section-card sources-scrollable">
                     <h2 class="section-title">أعلى الدول - آخر 7 أيام</h2>
                     <div class="sources-content">
@@ -1450,14 +1450,26 @@
                 </div>
             </div>
             
-            <!-- VISITORS OVER TIME - ثلث الشاشة -->
-            <div class="col-lg-4 mb-4">
+            <!-- VISITORS OVER TIME - ربع الشاشة -->
+            <div class="col-lg-3 mb-4">
                 <div class="section-card">
                     <h2 class="section-title">الزوار - آخر 7 أيام</h2>
                     <div class="chart-container" style="margin-top: 16px;">
                         <canvas id="visitorsChart"></canvas>
                     </div>
                 </div>
+            </div>
+            
+            <!-- BROWSERS LAST 7 DAYS - ربع الشاشة -->
+            <div class="col-lg-3 mb-4">
+                @if($topBrowsers->count() > 0)
+                <div class="section-card">
+                    <h2 class="section-title">المتصفحات - آخر 7 أيام</h2>
+                    <div class="chart-container" style="margin-top: 16px; height: 200px;">
+                        <canvas id="browsersChart"></canvas>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
         
@@ -1753,20 +1765,6 @@
                 </div>
             @endif
                 </div>
-            </div>
-        </div>
-        
-        <!-- BROWSERS -->
-        <div class="row">
-            <div class="col-lg-4 mb-4">
-                @if($topBrowsers->count() > 0)
-                <div class="section-card">
-                    <h2 class="section-title">المتصفحات - آخر 7 أيام</h2>
-                    <div class="chart-container" style="height: 250px;">
-                        <canvas id="browsersChart"></canvas>
-                    </div>
-                </div>
-                @endif
             </div>
         </div>
     </div>
