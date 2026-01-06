@@ -1150,32 +1150,20 @@
     </div>
     
     @if(isset($noResults) && $noResults)
-                event.preventDefault();
-                if (confirm('هل أنت متأكد من حذف الموقع "' + domain + '"؟\n\nهذا الإجراء لا يمكن التراجع عنه.')) {
-                    var form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = url;
-                    
-                    var csrfToken = document.createElement('input');
-                    csrfToken.type = 'hidden';
-                    csrfToken.name = '_token';
-                    csrfToken.value = '{{ csrf_token() }}';
-                    form.appendChild(csrfToken);
-                    
-                    var methodInput = document.createElement('input');
-                    methodInput.type = 'hidden';
-                    methodInput.name = '_method';
-                    methodInput.value = 'DELETE';
-                    form.appendChild(methodInput);
-                    
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            }
-            </script>
+    <div style="padding: 0 40px 40px; text-align: center; padding-top: 60px;">
+        <div class="empty-state">
+            <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <p class="empty-state-text">لم يتم العثور على نتائج للبحث المحدد</p>
+            <a href="{{ request()->routeIs('admin.*') ? route('admin.analytics.search', ['site' => $site->site_key]) : route('user.analytics.search', ['site' => $site->site_key]) }}" class="btn btn-primary" style="margin-top: 20px; padding: 10px 20px; border-radius: 8px;">
+                <i class="fa fa-search" style="margin-left: 6px;"></i>
+                بحث جديد
+            </a>
         </div>
     </div>
-    
+    @else
     <div style="padding: 0 40px 40px;">
         <!-- HERO SECTION -->
         <div class="row mb-5" style="display: flex; align-items: stretch;">
