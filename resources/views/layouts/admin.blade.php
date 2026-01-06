@@ -359,6 +359,7 @@
     
 </head>
 
+
 <body style="background: #f5f5f5" class="dash">
     <style type="text/css">
         #toast-container>div {
@@ -386,7 +387,7 @@
     <form method="POST" action="{{route('logout')}}" id="logout-form" class="d-none">@csrf</form>
     <div class="col-12 d-flex">
         <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside active">
-            <div class="col-12 px-0 d-flex" style="height: 55px">
+            <div class="col-12 px-0 d-none style="height:55px">
                 <div class="col-12 p-1" style="color: var(--background-1)">
                     <div class="col-12 p-0 row">
                         <div class="col-3 py-1 px-1">

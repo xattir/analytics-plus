@@ -114,10 +114,6 @@
         position: relative;
         overflow: hidden;
         z-index: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 380px;
-        height: 100%;
     }
     
     .hero-card::before {
@@ -252,31 +248,18 @@
         position: relative;
         overflow: hidden;
         z-index: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 380px;
-        height: 100%;
-    }
-    
-    .section-card .chart-container {
-        flex: 1;
-        min-height: 200px;
     }
     
     .section-card.sources-scrollable {
         display: flex;
         flex-direction: column;
-        min-height: 380px;
-        height: 100%;
     }
     
     .section-card.sources-scrollable .sources-content {
-        flex: 1;
-        max-height: 320px;
+        max-height: 295px;
         overflow-y: auto;
         overflow-x: hidden;
         padding-right: 4px;
-        min-height: 200px;
     }
     
     .section-card.sources-scrollable .sources-content::-webkit-scrollbar {
@@ -738,18 +721,6 @@
         padding: 8px;
         border-radius: 12px;
         background: rgba(255, 255, 255, 0.5);
-        flex: 1;
-        min-height: 200px;
-    }
-    
-    .hero-card .chart-container {
-        flex: 1;
-        min-height: 200px;
-    }
-    
-    .section-card .chart-container {
-        flex: 1;
-        min-height: 200px;
     }
     
     .empty-state {
