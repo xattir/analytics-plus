@@ -215,99 +215,6 @@
                                 'icon'=>"fal fa-home"
                             ],
                             [
-                                'can'=>"roles-read",
-                                'text'=>"الصلاحيات",
-                                'url'=>route('admin.roles.index'),
-                                'icon'=>"fal fa-key"
-                            ],
-                            [
-                                'can'=>"users-read",
-                                'text'=>"المستخدمين",
-                                'url'=>route('admin.users.index'),
-                                'icon'=>"fal fa-users"
-                            ],
-                            [
-                                'can'=>"profile-read",
-                                'text'=>"المحتوى",
-                                'url'=>"#",
-                                'icon'=>"fal fa-newspaper",
-                                'links'=>[
-                                    [
-                                        'can'=>"categories-read",
-                                        'url'=>route('admin.categories.index'),
-                                        'icon'=>"fal fa-tag",
-                                        'text'=>"الأقسام"
-                                    ],
-                                    [
-                                        'can'=>"articles-read",
-                                        'url'=>route('admin.articles.index'),
-                                        'icon'=>"fal fa-book",
-                                        'text'=>"المقالات"
-                                    ],
-                                    [
-                                        'can'=>"comments-read",
-                                        'url'=>route('admin.article-comments.index'),
-                                        'icon'=>"fal fa-comments",
-                                        'text'=>"التعليقات"
-                                    ],
-                                    [
-                                        'can'=>"announcements-read",
-                                        'url'=>route('admin.announcements.index'),
-                                        'icon'=>"fal fa-bullhorn",
-                                        'text'=>"الاعلانات"
-                                    ],
-                                    [
-                                        'can'=>"pages-read",
-                                        'url'=>route('admin.pages.index'),
-                                        'icon'=>"fal fa-file-invoice",
-                                        'text'=>"الصفحات"
-                                    ],
-                                    [
-                                        'can'=>"menus-read",
-                                        'url'=>route('admin.menus.index'),
-                                        'icon'=>"fal fa-list",
-                                        'text'=>"القوائم"
-                                    ],
-                                    [
-                                        'can'=>"faqs-read",
-                                        'url'=>route('admin.faqs.index'),
-                                        'icon'=>"fal fa-question",
-                                        'text'=>"الأسئلة الشائعة"
-                                    ],
-                                    [
-                                        'can'=>"redirections-read",
-                                        'url'=>route('admin.redirections.index'),
-                                        'icon'=>"fal fa-directions",
-                                        'text'=>"التحويلات"
-                                    ],
-                                    [
-                                        'can'=>"tags-read",
-                                        'url'=>route('admin.tags.index'),
-                                        'icon'=>"fal fa-tags",
-                                        'text'=>"الوسوم"
-                                    ],
-                                ]
-                            ],
-                            [
-                                'can'=>"contacts-read",
-                                'text'=>"طلب التواصل",
-                                'url'=>route('admin.contacts.index'),
-                                'icon'=>"fal fa-phone",
-                                'notification'=>\App\Models\Contact::where('status','PENDING')->count()??null,
-                            ],
-
-                            [
-                                'can'=>"plugins-read",
-                                'text'=>"الاضافات",
-                                'url'=>route('admin.plugins.index'),
-                                'icon'=>"fal fa-puzzle-piece-simple"
-                            ],
-                            [
-                                'text'=>"التحليلات",
-                                'url'=>route('admin.analytics.index'),
-                                'icon'=>"fal fa-chart-line"
-                            ],
-                            [
                                 'can'=>"settings-update",
                                 'text'=>"الاعدادات",
                                 'url'=>route('admin.settings.index'),
@@ -322,6 +229,58 @@
                             ],
                         ]
                     ])
+                    
+                    <!-- Analytics Sites List -->
+                    @php
+                        $userId = auth()->id();
+                        $isSuperAdmin = auth()->user()->hasRole('superadmin');
+                        
+                        if ($isSuperAdmin) {
+                            $analyticsSites = \App\Models\AnalyticsSite::orderBy('order', 'asc')->orderBy('created_at', 'desc')->get();
+                        } else {
+                            $ownedSites = \App\Models\AnalyticsSite::where('user_id', $userId)->get();
+                            $memberSites = \App\Models\AnalyticsSite::whereHas('users', function($query) use ($userId) {
+                                $query->where('user_id', $userId);
+                            })->get();
+                            $analyticsSites = $ownedSites->merge($memberSites)->unique('id')->sortBy('order')->values();
+                        }
+                    @endphp
+                    <div class="col-12 px-0 mt-3" style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 15px;">
+                        <div class="col-12 px-3 mb-2" style="color: var(--color-2); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            المواقع
+                        </div>
+                        @if($analyticsSites->count() > 0)
+                            @foreach($analyticsSites as $site)
+                                <a href="{{ route('admin.analytics.show', ['site' => $site->site_key]) }}" class="col-12 px-0">
+                                    <div class="col-12 item-container px-0 d-flex {{ request()->routeIs('admin.analytics.show') && request()->route('site') == $site->site_key ? 'active' : '' }}">
+                                        <div style="width: 50px" class="px-3 text-center">
+                                            <img src="https://icons.duckduckgo.com/ip3/{{ $site->domain }}.ico" 
+                                                 alt="" 
+                                                 style="width: 20px; height: 20px; border-radius: 4px;"
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                                            <span class="fal fa-chart-line font-2" style="display: none;"></span>
+                                        </div>
+                                        <div style="width: calc(100% - 50px)" class="px-2 item-container-title">
+                                            <div style="font-size: 13px; font-weight: 500;">{{ $site->title ?? $site->domain }}</div>
+                                            @if($site->title && $site->title !== $site->domain)
+                                            <div style="font-size: 11px; color: rgba(0,0,0,0.5); margin-top: 2px;">{{ $site->domain }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+                        @endif
+                        <a href="{{ route('admin.analytics.create') }}" class="col-12 px-0 mt-2">
+                            <div class="col-12 item-container px-0 d-flex" style="background: rgba(123, 96, 251, 0.1); border: 1px dashed rgba(123, 96, 251, 0.3); border-radius: 6px;">
+                                <div style="width: 50px" class="px-3 text-center">
+                                    <span class="fal fa-plus font-2" style="color: #7b60fb;"></span>
+                                </div>
+                                <div style="width: calc(100% - 50px)" class="px-2 item-container-title" style="color: #7b60fb; font-weight: 600;">
+                                    إضافة موقع جديد
+                                </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
            
@@ -368,19 +327,73 @@
                         <div style="width: 55px;height: 55px;cursor: pointer;" data-bs-toggle="dropdown" aria-expanded="false" class="d-flex justify-content-center align-items-center cursor-pointer">
                             <img src="{{auth()->user()->getUserAvatar()}}" style="padding: 10px;border-radius: 50%;width: 55px;height: 55px;">
                         </div>
-                        <ul class="dropdown-menu shadow border-0" aria-labelledby="dropdownMenuButton1" style="top: -3px;">
+                        <ul class="dropdown-menu shadow border-0" aria-labelledby="dropdownMenuButton1" style="top: -3px; max-height: 80vh; overflow-y: auto;">
                                 <li><a class="dropdown-item font-1" href="/" target="_blank"><span class="fal fa-desktop font-1"></span> عرض الموقع</a></li>
                                 <li><a class="dropdown-item font-1" href="{{route('admin.profile.index')}}"><span class="fal fa-user font-1"></span> ملفي الشخصي</a></li>
-
                                 <li><a class="dropdown-item font-1" href="{{route('admin.profile.edit')}}"><span class="fal fa-edit font-1"></span> تعديل ملفي الشخصي</a></li> 
-
                                 
-
-
+                                <li><hr style="height: 1px;margin: 10px 0px 5px;"></li>
+                                
+                                @can('roles-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.roles.index')}}"><span class="fal fa-key font-1"></span> الصلاحيات</a></li>
+                                @endcan
+                                
+                                @can('users-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.users.index')}}"><span class="fal fa-users font-1"></span> المستخدمين</a></li>
+                                @endcan
+                                
+                                @can('profile-read')
+                                <li><hr style="height: 1px;margin: 10px 0px 5px;"></li>
+                                <li><a class="dropdown-item font-1" href="#" style="font-weight: 600;"><span class="fal fa-newspaper font-1"></span> المحتوى</a></li>
+                                @can('categories-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.categories.index')}}" style="padding-right: 40px;"><span class="fal fa-tag font-1"></span> الأقسام</a></li>
+                                @endcan
+                                @can('articles-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.articles.index')}}" style="padding-right: 40px;"><span class="fal fa-book font-1"></span> المقالات</a></li>
+                                @endcan
+                                @can('comments-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.article-comments.index')}}" style="padding-right: 40px;"><span class="fal fa-comments font-1"></span> التعليقات</a></li>
+                                @endcan
+                                @can('announcements-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.announcements.index')}}" style="padding-right: 40px;"><span class="fal fa-bullhorn font-1"></span> الاعلانات</a></li>
+                                @endcan
+                                @can('pages-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.pages.index')}}" style="padding-right: 40px;"><span class="fal fa-file-invoice font-1"></span> الصفحات</a></li>
+                                @endcan
+                                @can('menus-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.menus.index')}}" style="padding-right: 40px;"><span class="fal fa-list font-1"></span> القوائم</a></li>
+                                @endcan
+                                @can('faqs-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.faqs.index')}}" style="padding-right: 40px;"><span class="fal fa-question font-1"></span> الأسئلة الشائعة</a></li>
+                                @endcan
+                                @can('redirections-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.redirections.index')}}" style="padding-right: 40px;"><span class="fal fa-directions font-1"></span> التحويلات</a></li>
+                                @endcan
+                                @can('tags-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.tags.index')}}" style="padding-right: 40px;"><span class="fal fa-tags font-1"></span> الوسوم</a></li>
+                                @endcan
+                                @endcan
+                                
+                                @can('contacts-read')
+                                <li><hr style="height: 1px;margin: 10px 0px 5px;"></li>
+                                <li><a class="dropdown-item font-1" href="{{route('admin.contacts.index')}}">
+                                    <span class="fal fa-phone font-1"></span> طلب التواصل
+                                    @if(\App\Models\Contact::where('status','PENDING')->count() > 0)
+                                    <span style="background: #d34339;border-radius: 2px;color:#fff!important;display: inline-block;font-size: 11px;text-align: center;padding: 1px 5px;margin: 0px 8px">{{ \App\Models\Contact::where('status','PENDING')->count() }}</span>
+                                    @endif
+                                </a></li>
+                                @endcan
+                                
+                                @can('plugins-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.plugins.index')}}"><span class="fal fa-puzzle-piece-simple font-1"></span> الاضافات</a></li>
+                                @endcan
+                                
+                                <li><a class="dropdown-item font-1" href="{{route('admin.analytics.index')}}"><span class="fal fa-chart-line font-1"></span> التحليلات</a></li>
+                                
                                 @can('hub-files-read')
+                                <li><hr style="height: 1px;margin: 10px 0px 5px;"></li>
                                 <li><a class="dropdown-item font-1" href="{{route('admin.files.index')}}"><span class="fal fa-file font-1"></span> الملفات</a></li> 
                                 @endcan
-
 
                                 @can('traffics-read')
                                 <li><a class="dropdown-item font-1" href="{{route('admin.traffics.index')}}"><span class="fal fa-traffic-light font-1"></span> الترافيك</a></li> 
@@ -390,9 +403,6 @@
                                 <li><a class="dropdown-item font-1" href="{{route('admin.traffics.error-reports')}}"><span class="fal fa-bug font-1"></span> تقارير الأخطاء</a></li> 
                                 @endcan
                                 
- 
-
-
                                 <li><hr style="height: 1px;margin: 10px 0px 5px;"></li>
                                 <li><a class="dropdown-item font-1" href="#" onclick="document.getElementById('logout-form').submit();"><span class="fal fa-sign-out-alt font-1"></span> تسجيل خروج</a></li>
                         </ul>
