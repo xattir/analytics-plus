@@ -27,6 +27,21 @@
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.08) !important;
         }
         
+        @media (max-width: 991.98px) {
+            .aside {
+                transform: translateX(100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .aside.active {
+                transform: translateX(0);
+            }
+            
+            .aside.in-active {
+                transform: translateX(100%);
+            }
+        }
+        
         .aside-menu {
             padding: 8px 12px !important;
         }
@@ -395,6 +410,72 @@
         .top-nav .notifications-container::-webkit-scrollbar-thumb:hover {
             background: rgba(123, 96, 251, 0.5);
         }
+        
+        /* Body Overlay for Mobile */
+        .body-overlay {
+            background: rgba(0, 0, 0, 0.4);
+            position: fixed;
+            width: 100%;
+            height: 100vh;
+            z-index: 899;
+            top: 0;
+            right: 0;
+            display: none;
+            opacity: 0;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(2px);
+        }
+        
+        .body-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        /* Mobile Aside Close Button */
+        .aside-close-mobile {
+            display: none;
+        }
+        
+        .aside-close-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .aside-close-btn:hover {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
+            transform: scale(1.1);
+        }
+        
+        .aside-close-btn:hover span {
+            color: #7b60fb !important;
+        }
+        
+        .aside-close-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Mobile Aside Styles */
+        @media (max-width: 991.98px) {
+            .aside {
+                transform: translateX(100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .aside.active {
+                transform: translateX(0);
+            }
+            
+            .aside.in-active {
+                transform: translateX(100%);
+            }
+            
+            .aside-close-mobile {
+                display: flex !important;
+            }
+            
+            .main-content.active {
+                margin-right: 0 !important;
+            }
+        }
     </style>
     @php
     $page_title="لوحة التحكم";
@@ -550,25 +631,16 @@
         @endif
     </div>
     <form method="POST" action="{{route('logout')}}" id="logout-form" class="d-none">@csrf</form>
+    <!-- Body Overlay for Mobile -->
+    <div id="body-overlay" class="body-overlay" onclick="$('.aside').removeClass('active').addClass('in-active');$('.main-content').removeClass('active').addClass('in-active');$(this).removeClass('active');"></div>
     <div class="col-12 d-flex">
-        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside active">
-            <div class="col-12 px-0 d-none style="height:55px">
-                <div class="col-12 p-1" style="color: var(--background-1)">
-                    <div class="col-12 p-0 row">
-                        <div class="col-3 py-1 px-1">
-                             {{-- <span class="fas fa-chart-bar font-4 d-flex justify-content-center align-items-center" style="background: #38b59c;height: 40px;width: 40px;border-radius: 50%;color: var(--background-1);"></span> --}}
-                        </div>
-                        <div class="col-9 ">
-                            {{-- <span class="d-inline-block px-2 font-3 pt-1">لوحة التحكم</span>  --}}
-                            <span style="width: 55px;height: 55px;position: absolute;left: 0px;top: 0px;align-items: center;justify-content: center;cursor: pointer;border-color: transparent!important;" class="asideToggle d-flex d-md-none rounded-0" >
-                                <span class="fal fa-bars font-4 "></span>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="d-none d-md-none justify-content-center align-items-center px-0   asideToggle" style="width: 40px;height: 40px;">
-                        <span class="fal fa-bars font-4 cursor-pointer"></span>
-                    </div>
-                </div>
+        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside active in-active">
+            <!-- Mobile Close Button -->
+            <div class="aside-close-mobile d-flex d-md-none justify-content-between align-items-center px-3 py-2" style="border-bottom: 1px solid rgba(0, 0, 0, 0.08);">
+                <span class="font-1" style="font-weight: 600; color: var(--color-2);">القائمة</span>
+                <button class="aside-close-btn d-flex justify-content-center align-items-center" onclick="$('.aside').removeClass('active').addClass('in-active');$('.main-content').removeClass('active').addClass('in-active');$('#body-overlay').removeClass('active');" style="width: 36px;height: 36px;border: none;background: transparent;border-radius: 8px;cursor: pointer;transition: all 0.3s ease;">
+                    <span class="fal fa-times font-4" style="color: var(--color-2);"></span>
+                </button>
             </div>
         <div class="col-12 px-0 user-profile-section">
             <a href="{{route('admin.profile.edit')}}">

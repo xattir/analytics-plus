@@ -4,6 +4,7 @@ $('.asideToggle').on('click', function() {
     $('.aside').toggleClass('in-active');
     $('.main-content').toggleClass('active');
     $('.main-content').toggleClass('in-active');
+    $('#body-overlay').toggleClass('active');
 });
 $('.settings-tab-opener').on('click',function(){
     $('.settings-tab-opener').removeClass('active');
