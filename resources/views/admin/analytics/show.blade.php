@@ -250,6 +250,36 @@
         z-index: 1;
     }
     
+    .section-card.sources-scrollable {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .section-card.sources-scrollable .sources-content {
+        max-height: 295px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 4px;
+    }
+    
+    .section-card.sources-scrollable .sources-content::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .section-card.sources-scrollable .sources-content::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+    }
+    
+    .section-card.sources-scrollable .sources-content::-webkit-scrollbar-thumb {
+        background: rgba(123, 96, 251, 0.3);
+        border-radius: 10px;
+    }
+    
+    .section-card.sources-scrollable .sources-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(123, 96, 251, 0.5);
+    }
+    
     .dropdown-menu {
         z-index: 1051 !important;
     }
@@ -923,8 +953,9 @@
             
             <!-- TOP TRAFFIC SOURCES - ربع الشاشة -->
             <div class="col-lg-3 mb-4">
-                <div class="section-card">
+                <div class="section-card sources-scrollable">
                     <h2 class="section-title">أفضل المصادر</h2>
+                    <div class="sources-content">
                     @if(isset($topTrafficSources) && $topTrafficSources->count() > 0)
                         @php
                             $maxSourceCount = $topTrafficSources->first()['count'] ?? 1;
@@ -990,6 +1021,7 @@
                             <p class="empty-state-text">لا توجد بيانات</p>
                         </div>
                     @endif
+                    </div>
                 </div>
             </div>
             
