@@ -605,7 +605,7 @@
                                     <small class="form-text text-muted">اتركه فارغاً للعودة إلى اسم النطاق الافتراضي</small>
                                 </div>
                             </div>
-                            <div class="modal-footer">
+                            <div class="modal-footer" style="padding-top: 16px; padding-bottom: 16px;">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
                                 <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
                             </div>
@@ -785,9 +785,8 @@
             
             <!-- VISITORS OVER TIME - ثلث الشاشة -->
             <div class="col-lg-4 mb-4">
-                <div class="hero-card">
-                    <div class="metric-icon">📊</div>
-                    <div class="metric-label">الزوار - آخر 7 أيام</div>
+                <div class="section-card">
+                    <h2 class="section-title">الزوار - آخر 7 أيام</h2>
                     <div class="chart-container" style="height: 200px; margin-top: 16px;">
                         <canvas id="visitorsChart"></canvas>
                     </div>
