@@ -15,7 +15,6 @@
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
         color: var(--analytics-text);
         background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-        min-height: 100vh;
         padding: 0;
         margin: 0;
         margin-top: -55px !important;
