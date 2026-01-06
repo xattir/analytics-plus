@@ -177,19 +177,22 @@
     }
     
     .metric-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
+        font-size: 16px;
         position: relative;
         background: linear-gradient(135deg, rgba(123, 96, 251, 0.15) 0%, rgba(123, 96, 251, 0.08) 100%);
         color: var(--analytics-primary);
-        margin-bottom: 16px;
-        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.15);
+        margin-left: 8px;
+        margin-bottom: 0;
+        box-shadow: 0 2px 8px rgba(123, 96, 251, 0.15);
         transition: all 0.3s ease;
+        vertical-align: middle;
+        flex-shrink: 0;
     }
     
     .hero-card:hover .metric-icon {
@@ -199,7 +202,7 @@
     .hero-card-active .metric-icon {
         background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
         color: var(--analytics-active);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
     }
     
     .metric-label {
@@ -209,6 +212,10 @@
         margin-bottom: 12px;
         text-transform: uppercase;
         letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
     }
     
     .metric-value {
