@@ -396,104 +396,41 @@
             background: rgba(123, 96, 251, 0.5);
         }
         
-        /* Body Overlay for Mobile */
-        .body-overlay {
-            background: rgba(0, 0, 0, 0.4);
-            position: fixed;
-            width: 100%;
-            height: 100vh;
-            z-index: 899;
-            top: 0;
-            right: 0;
-            display: none;
-            opacity: 0;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(2px);
-        }
-        
-        .body-overlay.active {
-            display: block;
-            opacity: 1;
-        }
-        
-        /* Mobile Aside Close Button */
-        .aside-close-mobile {
+        /* Mobile Aside Toggle Button */
+        .aside-mobile-toggle {
             display: none;
         }
         
-        .aside-close-btn {
+        .aside-toggle-btn {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: auto !important;
             z-index: 1000 !important;
             position: relative;
         }
         
-        .aside-close-btn:hover {
+        .aside-toggle-btn span {
+            pointer-events: none;
+        }
+        
+        .aside-toggle-btn:hover {
             background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
             transform: scale(1.1);
         }
         
-        .aside-close-btn:hover span {
+        .aside-toggle-btn:hover span {
             color: #7b60fb !important;
         }
         
-        .aside-close-btn:active {
+        .aside-toggle-btn:active {
             transform: scale(0.95);
         }
         
-        .aside-close-btn:focus {
-            outline: none;
-        }
-        
-        /* Mobile Aside Styles */
         @media (max-width: 991.98px) {
-            .aside {
-                right: -280px !important;
-                transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            }
-            
-            /* Show aside only when it has active class AND doesn't have in-active */
-            .aside.active:not(.in-active) {
-                right: 0 !important;
-            }
-            
-            /* Hide aside when it has in-active class */
-            .aside.in-active {
-                right: -280px !important;
-            }
-            
-            /* Force hide aside if it has both active and in-active (in-active takes priority) */
-            .aside.active.in-active {
-                right: -280px !important;
-            }
-            
-            .aside-close-mobile {
+            .aside-mobile-toggle {
                 display: flex !important;
             }
-            
-            .main-content {
-                margin-right: 0 !important;
-            }
-            
-            .main-content.active {
-                margin-right: 0 !important;
-            }
         }
         
-        /* Desktop Aside Styles - Always Visible */
-        @media (min-width: 992px) {
-            .aside {
-                transform: none !important;
-            }
-            
-            .aside-close-mobile {
-                display: none !important;
-            }
-            
-            .body-overlay {
-                display: none !important;
-            }
-        }
     </style>
     @php
     $page_title="لوحة التحكم";
@@ -649,14 +586,11 @@
         @endif
     </div>
     <form method="POST" action="{{route('logout')}}" id="logout-form" class="d-none">@csrf</form>
-    <!-- Body Overlay for Mobile -->
-    <div id="body-overlay" class="body-overlay"></div>
     <div class="col-12 d-flex">
-        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside in-active">
-            <!-- Mobile Close Button -->
-            <div class="aside-close-mobile d-flex d-md-none justify-content-between align-items-center px-3 py-2" style="border-bottom: 1px solid rgba(0, 0, 0, 0.08);">
-                <span class="font-1" style="font-weight: 600; color: var(--color-2);">القائمة</span>
-                <button class="aside-close-btn d-flex justify-content-center align-items-center" style="width: 36px;height: 36px;border: none;background: transparent;border-radius: 8px;cursor: pointer;transition: all 0.3s ease;">
+        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside active">
+            <!-- Mobile Toggle Button -->
+            <div class="aside-mobile-toggle d-flex d-md-none justify-content-end align-items-center px-3 py-2" style="border-bottom: 1px solid rgba(0, 0, 0, 0.08);">
+                <button class="aside-toggle-btn d-flex justify-content-center align-items-center" style="width: 36px;height: 36px;border: none;background: transparent;border-radius: 8px;cursor: pointer;transition: all 0.3s ease;">
                     <span class="fal fa-times font-4" style="color: var(--color-2);"></span>
                 </button>
             </div>

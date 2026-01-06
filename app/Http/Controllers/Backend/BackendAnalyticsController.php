@@ -333,6 +333,7 @@ class BackendAnalyticsController extends Controller
     {
         $request->validate([
             'domain' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
         ]);
         
         // Get max order for user's sites
@@ -342,6 +343,7 @@ class BackendAnalyticsController extends Controller
             'user_id' => auth()->id(),
             'site_key' => $this->generateSiteKey(),
             'domain' => $request->domain,
+            'title' => $request->title,
             'order' => $maxOrder + 1,
         ]);
         
