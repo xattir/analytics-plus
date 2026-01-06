@@ -1050,7 +1050,7 @@
             <div class="col-lg-3 mb-4">
                 <div class="section-card">
                     <h2 class="section-title">الزوار - آخر 7 أيام</h2>
-                    <div class="chart-container" style="height: 200px; margin-top: 16px;">
+                    <div class="chart-container" style="margin-top: 16px;">
                         <canvas id="visitorsChart"></canvas>
                     </div>
                 </div>
