@@ -29,15 +29,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 250);
     });
     
-    $('.asideToggle').on('click', function() {
+    $('.asideToggle').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
         if (isMobile()) {
             // Mobile: Toggle aside visibility
-            if ($('.aside').hasClass('active') && !$('.aside').hasClass('in-active')) {
-                $('.aside').addClass('in-active').removeClass('active');
+            var aside = $('.aside');
+            var isVisible = aside.hasClass('active') && !aside.hasClass('in-active');
+            
+            if (isVisible) {
+                // Hide aside
+                aside.removeClass('active').addClass('in-active');
                 $('.main-content').removeClass('active').addClass('in-active');
                 $('#body-overlay').removeClass('active');
             } else {
-                $('.aside').removeClass('in-active').addClass('active');
+                // Show aside
+                aside.removeClass('in-active').addClass('active');
                 $('.main-content').removeClass('in-active').addClass('active');
                 $('#body-overlay').addClass('active');
             }
@@ -48,6 +56,26 @@ document.addEventListener("DOMContentLoaded", () => {
             $('.main-content').toggleClass('active');
             $('.main-content').toggleClass('in-active');
         }
+    });
+    
+    // Handle close button click
+    $('.aside-close-btn').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        $('.aside').removeClass('active').addClass('in-active');
+        $('.main-content').removeClass('active').addClass('in-active');
+        $('#body-overlay').removeClass('active');
+    });
+    
+    // Handle overlay click
+    $('#body-overlay').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        $('.aside').removeClass('active').addClass('in-active');
+        $('.main-content').removeClass('active').addClass('in-active');
+        $(this).removeClass('active');
     });
 $('.settings-tab-opener').on('click',function(){
     $('.settings-tab-opener').removeClass('active');
