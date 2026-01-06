@@ -252,6 +252,19 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
+        z-index: 1;
+    }
+    
+    .dropdown-menu {
+        z-index: 1051 !important;
+    }
+    
+    .modal {
+        z-index: 1060 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 1059 !important;
     }
     
     .section-card::before {
@@ -789,35 +802,37 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Modal for Edit Title -->
-            <div class="modal fade" id="editTitleModal" tabindex="-1" aria-labelledby="editTitleModalLabel" aria-hidden="true" style="z-index: 1060;">
-                <div class="modal-dialog" style="z-index: 1061;">
-                    <div class="modal-content" style="z-index: 1062;">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editTitleModalLabel">تعديل عنوان الموقع</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form id="editTitleForm" method="POST" action="{{ request()->routeIs('admin.*') ? route('admin.analytics.update-title', ['site' => $site->site_key]) : route('user.analytics.update-title', ['site' => $site->site_key]) }}">
-                            @csrf
-                            @method('PUT')
-                            <div class="modal-body">
-                                <div class="form-group">
-                                    <label for="siteTitleInput">عنوان الموقع</label>
-                                    <input type="text" class="form-control" id="siteTitleInput" name="title" value="{{ $site->title ?? '' }}" placeholder="{{ $site->domain }}">
-                                    <small class="form-text text-muted">اتركه فارغاً للعودة إلى اسم النطاق الافتراضي</small>
-                                </div>
-                            </div>
-                            <div class="modal-footer px-4 py-2" >
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                                <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
-                            </div>
-                        </form>
-                    </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Edit Title - Outside header -->
+    <div class="modal fade" id="editTitleModal" tabindex="-1" aria-labelledby="editTitleModalLabel" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog" style="z-index: 1061;">
+            <div class="modal-content" style="z-index: 1062;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTitleModalLabel">تعديل عنوان الموقع</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+                <form id="editTitleForm" method="POST" action="{{ request()->routeIs('admin.*') ? route('admin.analytics.update-title', ['site' => $site->site_key]) : route('user.analytics.update-title', ['site' => $site->site_key]) }}">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="siteTitleInput">عنوان الموقع</label>
+                            <input type="text" class="form-control" id="siteTitleInput" name="title" value="{{ $site->title ?? '' }}" placeholder="{{ $site->domain }}">
+                            <small class="form-text text-muted">اتركه فارغاً للعودة إلى اسم النطاق الافتراضي</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer px-4 py-2" >
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                    </div>
+                </form>
             </div>
-            
-            <script>
+        </div>
+    </div>
+    
+    <script>
             function deleteSite(event, url, domain) {
                 event.preventDefault();
                 if (confirm('هل أنت متأكد من حذف الموقع "' + domain + '"؟\n\nهذا الإجراء لا يمكن التراجع عنه.')) {
