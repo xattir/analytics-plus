@@ -441,16 +441,23 @@
         /* Mobile Aside Styles */
         @media (max-width: 991.98px) {
             .aside {
-                transform: translateX(100%) !important;
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                right: -280px !important;
+                transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
             
-            .aside.active {
-                transform: translateX(0) !important;
+            /* Show aside only when it has active class AND doesn't have in-active */
+            .aside.active:not(.in-active) {
+                right: 0 !important;
             }
             
+            /* Hide aside when it has in-active class */
             .aside.in-active {
-                transform: translateX(100%) !important;
+                right: -280px !important;
+            }
+            
+            /* Force hide aside if it has both active and in-active (in-active takes priority) */
+            .aside.active.in-active {
+                right: -280px !important;
             }
             
             .aside-close-mobile {
@@ -638,7 +645,7 @@
     <!-- Body Overlay for Mobile -->
     <div id="body-overlay" class="body-overlay"></div>
     <div class="col-12 d-flex">
-        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside active">
+        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside in-active">
             <!-- Mobile Close Button -->
             <div class="aside-close-mobile d-flex d-md-none justify-content-between align-items-center px-3 py-2" style="border-bottom: 1px solid rgba(0, 0, 0, 0.08);">
                 <span class="font-1" style="font-weight: 600; color: var(--color-2);">القائمة</span>

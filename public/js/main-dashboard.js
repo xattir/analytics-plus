@@ -37,6 +37,7 @@ $(document).ready(function() {
         if (isMobile()) {
             // Mobile: Toggle aside visibility
             var aside = $('.aside');
+            // Check if aside is currently visible (has active class and doesn't have in-active)
             var isVisible = aside.hasClass('active') && !aside.hasClass('in-active');
             
             if (isVisible) {

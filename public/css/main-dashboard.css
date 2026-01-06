@@ -163,10 +163,10 @@ thead th {
         right: -260px;
     }
     .aside.active {
-        right: -260px;
+        right: 0px;
     }
     .aside.in-active {
-        right: 0px;
+        right: -260px;
     }
     #loading-image-container{
         width: 100%;
