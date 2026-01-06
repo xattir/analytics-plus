@@ -25,7 +25,7 @@
         border-radius: 12px;
         padding: 20px;
         transition: box-shadow 0.2s, border-color 0.2s;
-        cursor: grab;
+        cursor: default; /* Changed from grab - only handle is draggable */
         position: relative;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         will-change: transform;
@@ -427,6 +427,7 @@ if (sitesGrid) {
         forceFallback: true,
         fallbackTolerance: 5,
         fallbackOnBody: true,
+        handle: '.site-card-drag-handle', // Only allow dragging from the handle icon
         filter: '.site-card-actions, .site-card-actions *',
         preventOnFilter: true,
         ghostClass: 'sortable-ghost',
