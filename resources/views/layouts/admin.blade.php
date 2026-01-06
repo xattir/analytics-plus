@@ -231,6 +231,170 @@
             color: #7b60fb !important;
             font-weight: 600 !important;
         }
+        
+        /* Modern Top Navbar Styles */
+        .top-nav {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .top-nav::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(123, 96, 251, 0.2) 50%, transparent 100%);
+        }
+        
+        .top-nav .asideToggle {
+            background: transparent !important;
+            border: none !important;
+            color: var(--color-2) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            margin: 0 8px;
+        }
+        
+        .top-nav .asideToggle:hover {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
+            color: #7b60fb !important;
+            transform: scale(1.05);
+        }
+        
+        .top-nav .asideToggle:active {
+            transform: scale(0.95);
+        }
+        
+        .top-nav .asideToggle span {
+            transition: transform 0.3s ease;
+        }
+        
+        .top-nav .asideToggle:hover span {
+            transform: rotate(90deg);
+        }
+        
+        .top-nav #notificationDropdown {
+            margin: 0 4px;
+        }
+        
+        .top-nav #notificationDropdown > div {
+            background: transparent !important;
+            border: none !important;
+            color: var(--color-2) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            position: relative;
+        }
+        
+        .top-nav #notificationDropdown > div:hover {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
+            color: #7b60fb !important;
+            transform: scale(1.05);
+        }
+        
+        .top-nav #notificationDropdown > div:hover .fal {
+            transform: rotate(15deg) scale(1.1);
+        }
+        
+        .top-nav #dropdown-notifications-icon {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+            font-weight: 700;
+            animation: pulse-badge 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-badge {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+        
+        .top-nav .dropdown {
+            margin: 0 4px;
+        }
+        
+        .top-nav .dropdown > div {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+        }
+        
+        .top-nav .dropdown > div:hover {
+            transform: scale(1.05);
+        }
+        
+        .top-nav .dropdown img {
+            border: 2px solid rgba(123, 96, 251, 0.15) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(123, 96, 251, 0.1);
+        }
+        
+        .top-nav .dropdown > div:hover img {
+            border-color: rgba(123, 96, 251, 0.3) !important;
+            box-shadow: 0 4px 12px rgba(123, 96, 251, 0.2);
+        }
+        
+        .top-nav .dropdown-menu {
+            border-radius: 12px !important;
+            border: 1px solid rgba(123, 96, 251, 0.15) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+            padding: 8px !important;
+            margin-top: 8px !important;
+            backdrop-filter: blur(20px);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%) !important;
+        }
+        
+        .top-nav .dropdown-item {
+            border-radius: 8px !important;
+            padding: 10px 16px !important;
+            transition: all 0.2s ease !important;
+            font-weight: 500 !important;
+            margin: 2px 0 !important;
+        }
+        
+        .top-nav .dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
+            color: #7b60fb !important;
+            transform: translateX(-4px);
+        }
+        
+        .top-nav .dropdown-item span[class*="fa"] {
+            margin-left: 8px;
+            transition: transform 0.2s ease;
+        }
+        
+        .top-nav .dropdown-item:hover span[class*="fa"] {
+            transform: scale(1.15);
+        }
+        
+        .top-nav .notifications-container {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(123, 96, 251, 0.3) transparent;
+        }
+        
+        .top-nav .notifications-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .top-nav .notifications-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .top-nav .notifications-container::-webkit-scrollbar-thumb {
+            background: rgba(123, 96, 251, 0.3);
+            border-radius: 10px;
+        }
+        
+        .top-nav .notifications-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(123, 96, 251, 0.5);
+        }
     </style>
     @php
     $page_title="لوحة التحكم";
@@ -501,27 +665,27 @@
            
         </div>
         <div class="main-content in-active" style="overflow: hidden;">
-            <div class="col-12 px-0 d-flex justify-content-between top-nav" style="height: 55px;background: var(--background-1);position: fixed;width: 100%;width: calc(100% - 260px);z-index: 99;border-bottom: 1px solid var(--border-color);">
+            <div class="col-12 px-0 d-flex justify-content-between align-items-center top-nav" style="height: 60px;position: fixed;width: 100%;width: calc(100% - 260px);z-index: 99;padding: 0 16px;">
 
-                <div class="col-12 px-0 d-flex justify-content-center align-items-center btn  asideToggle" style="width: 55px;height: 55px;">
+                <div class="col-auto px-0 d-flex justify-content-center align-items-center btn asideToggle" style="width: 44px;height: 44px;">
                     <span class="fal fa-bars font-4"></span>
                 </div> 
-                <div class="col-auto px-0 d-flex justify-content-end  " style="height: 60px;">
+                <div class="col-auto px-0 d-flex justify-content-end align-items-center" style="gap: 8px;">
 
 
 
 
-                    <div class="btn-group" id="notificationDropdown" style="width:55px">
+                    <div class="btn-group" id="notificationDropdown" style="width:44px;height:44px;">
 
-                        <div class="col-12 px-0 d-flex justify-content-center align-items-center btn  " style="width: 55px;height: 55px;" data-bs-toggle="dropdown" aria-expanded="false" id="dropdown-notifications">
-                            <span class="fal fa-bell font-3 d-inline-block" style="color: var(--color-2);transform: rotate(15deg)"></span>
-                            <span style="position: absolute;min-width: 25px;min-height: 25px;
+                        <div class="d-flex justify-content-center align-items-center btn" style="width: 44px;height: 44px;position: relative;" data-bs-toggle="dropdown" aria-expanded="false" id="dropdown-notifications">
+                            <span class="fal fa-bell font-3 d-inline-block" style="color: var(--color-2);transform: rotate(15deg);transition: all 0.3s ease;"></span>
+                            <span style="position: absolute;min-width: 20px;min-height: 20px;
                             @if($unreadNotifications!=0)
-                            display: inline-block;
+                            display: inline-flex;
                             @else
                             display: none;
                             @endif
-                            right: 0px;top: 0px;border-radius: 20px;background: #c00;color:#fff;font-size: 14px;" class="text-center" id="dropdown-notifications-icon">{{$unreadNotifications}}</span>
+                            align-items: center;justify-content: center;right: 0px;top: 0px;border-radius: 10px;font-size: 11px;font-weight: 700;padding: 2px 6px;" class="text-center" id="dropdown-notifications-icon">{{$unreadNotifications}}</span>
 
                         </div>
                         <div class="dropdown-menu py-0 rounded-0 border-0 shadow " style="cursor: auto!important;z-index: 20000;width: 350px;height: 450px;top: -3px!important;">
@@ -538,9 +702,9 @@
                         </div>
                     </div>
 
-                    <div class="col-12 px-0 d-flex justify-content-center align-items-center  dropdown"  style="width: 55px;height: 55px;" >
-                        <div style="width: 55px;height: 55px;cursor: pointer;" data-bs-toggle="dropdown" aria-expanded="false" class="d-flex justify-content-center align-items-center cursor-pointer">
-                            <img src="{{auth()->user()->getUserAvatar()}}" style="padding: 10px;border-radius: 50%;width: 55px;height: 55px;">
+                    <div class="d-flex justify-content-center align-items-center dropdown" style="width: 44px;height: 44px;">
+                        <div style="width: 44px;height: 44px;cursor: pointer;" data-bs-toggle="dropdown" aria-expanded="false" class="d-flex justify-content-center align-items-center cursor-pointer">
+                            <img src="{{auth()->user()->getUserAvatar()}}" style="border-radius: 50%;width: 44px;height: 44px;object-fit: cover;">
                         </div>
                         <ul class="dropdown-menu shadow border-0" aria-labelledby="dropdownMenuButton1" style="top: -3px; max-height: 80vh; overflow-y: auto;">
                                 <li><a class="dropdown-item font-1" href="/" target="_blank"><span class="fal fa-desktop font-1"></span> عرض الموقع</a></li>

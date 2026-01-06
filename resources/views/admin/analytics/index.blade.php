@@ -308,15 +308,63 @@
     }
     
     .empty-sites {
-        text-align: center;
-        padding: 60px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 20px;
         color: var(--analytics-text-muted, #6b7280);
+        min-height: 400px;
     }
     
     .empty-sites-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
+        width: 100px;
+        height: 100px;
+        margin-bottom: 24px;
         opacity: 0.4;
+        animation: float 3s ease-in-out infinite;
+        filter: grayscale(100%) opacity(0.5);
+        transition: all 0.3s ease;
+    }
+    
+    .empty-sites-icon svg {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .empty-sites:hover .empty-sites-icon {
+        opacity: 0.6;
+        filter: grayscale(50%) opacity(0.7);
+    }
+    
+    .empty-sites-text {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--analytics-text-muted, #6b7280);
+        margin: 0;
+        text-align: center;
+    }
+    
+    .empty-sites-text a {
+        color: var(--analytics-primary, #7b60fb);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        border-bottom: 2px solid transparent;
+    }
+    
+    .empty-sites-text a:hover {
+        color: #667eea;
+        border-bottom-color: #667eea;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-8px);
+        }
     }
 </style>
 
