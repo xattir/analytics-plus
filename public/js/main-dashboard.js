@@ -1,10 +1,24 @@
 document.addEventListener("DOMContentLoaded", () => {
 $('.asideToggle').on('click', function() {
-    $('.aside').toggleClass('active');
-    $('.aside').toggleClass('in-active');
-    $('.main-content').toggleClass('active');
-    $('.main-content').toggleClass('in-active');
-    $('#body-overlay').toggleClass('active');
+    var isMobile = window.innerWidth <= 991.98;
+    if (isMobile) {
+        // Mobile: Toggle aside visibility
+        if ($('.aside').hasClass('active') && !$('.aside').hasClass('in-active')) {
+            $('.aside').addClass('in-active');
+            $('.main-content').removeClass('active').addClass('in-active');
+            $('#body-overlay').removeClass('active');
+        } else {
+            $('.aside').removeClass('in-active').addClass('active');
+            $('.main-content').removeClass('in-active').addClass('active');
+            $('#body-overlay').addClass('active');
+        }
+    } else {
+        // Desktop: Toggle aside visibility (original behavior)
+        $('.aside').toggleClass('active');
+        $('.aside').toggleClass('in-active');
+        $('.main-content').toggleClass('active');
+        $('.main-content').toggleClass('in-active');
+    }
 });
 $('.settings-tab-opener').on('click',function(){
     $('.settings-tab-opener').removeClass('active');

@@ -27,21 +27,6 @@
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.08) !important;
         }
         
-        @media (max-width: 991.98px) {
-            .aside {
-                transform: translateX(100%);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            
-            .aside.active {
-                transform: translateX(0);
-            }
-            
-            .aside.in-active {
-                transform: translateX(100%);
-            }
-        }
-        
         .aside-menu {
             padding: 8px 12px !important;
         }
@@ -460,12 +445,13 @@
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
-            .aside.active {
-                transform: translateX(0);
+            .aside.active:not(.in-active) {
+                transform: translateX(0) !important;
             }
             
-            .aside.in-active {
-                transform: translateX(100%);
+            .aside.in-active,
+            .aside:not(.active) {
+                transform: translateX(100%) !important;
             }
             
             .aside-close-mobile {
@@ -474,6 +460,25 @@
             
             .main-content.active {
                 margin-right: 0 !important;
+            }
+            
+            .body-overlay {
+                display: block;
+            }
+        }
+        
+        /* Desktop Aside Styles - Always Visible */
+        @media (min-width: 992px) {
+            .aside {
+                transform: none !important;
+            }
+            
+            .aside-close-mobile {
+                display: none !important;
+            }
+            
+            .body-overlay {
+                display: none !important;
             }
         }
     </style>
@@ -634,7 +639,7 @@
     <!-- Body Overlay for Mobile -->
     <div id="body-overlay" class="body-overlay" onclick="$('.aside').removeClass('active').addClass('in-active');$('.main-content').removeClass('active').addClass('in-active');$(this).removeClass('active');"></div>
     <div class="col-12 d-flex">
-        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside active in-active">
+        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside active">
             <!-- Mobile Close Button -->
             <div class="aside-close-mobile d-flex d-md-none justify-content-between align-items-center px-3 py-2" style="border-bottom: 1px solid rgba(0, 0, 0, 0.08);">
                 <span class="font-1" style="font-weight: 600; color: var(--color-2);">القائمة</span>
