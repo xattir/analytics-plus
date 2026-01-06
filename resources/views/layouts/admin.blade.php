@@ -397,40 +397,6 @@
         }
         
         /* Mobile Aside Toggle Button */
-        .aside-mobile-toggle {
-            display: none;
-        }
-        
-        .aside-toggle-btn {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: auto !important;
-            z-index: 1000 !important;
-            position: relative;
-        }
-        
-        .aside-toggle-btn span {
-            pointer-events: none;
-        }
-        
-        .aside-toggle-btn:hover {
-            background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
-            transform: scale(1.1);
-        }
-        
-        .aside-toggle-btn:hover span {
-            color: #7b60fb !important;
-        }
-        
-        .aside-toggle-btn:active {
-            transform: scale(0.95);
-        }
-        
-        @media (max-width: 991.98px) {
-            .aside-mobile-toggle {
-                display: flex !important;
-            }
-        }
-        
     </style>
     @php
     $page_title="لوحة التحكم";
@@ -588,12 +554,6 @@
     <form method="POST" action="{{route('logout')}}" id="logout-form" class="d-none">@csrf</form>
     <div class="col-12 d-flex">
         <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside active">
-            <!-- Mobile Toggle Button -->
-            <div class="aside-mobile-toggle d-flex d-md-none justify-content-end align-items-center px-3 py-2" style="border-bottom: 1px solid rgba(0, 0, 0, 0.08);">
-                <button class="aside-toggle-btn d-flex justify-content-center align-items-center" style="width: 36px;height: 36px;border: none;background: transparent;border-radius: 8px;cursor: pointer;transition: all 0.3s ease;">
-                    <span class="fal fa-times font-4" style="color: var(--color-2);"></span>
-                </button>
-            </div>
         <div class="col-12 px-0 user-profile-section">
             <a href="{{route('admin.profile.edit')}}">
                 <img src="{{auth()->user()->getUserAvatar()}}" class="d-inline-block">
