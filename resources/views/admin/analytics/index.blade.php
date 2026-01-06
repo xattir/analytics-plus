@@ -25,10 +25,18 @@
         border-radius: 12px;
         padding: 20px;
         transition: box-shadow 0.2s, border-color 0.2s;
-        cursor: default; /* Changed from grab - only handle is draggable */
+        cursor: pointer; /* Pointer cursor to indicate clickable */
         position: relative;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         will-change: transform;
+    }
+    
+    .site-card .site-card-drag-handle {
+        cursor: grab; /* Grab cursor only for drag handle */
+    }
+    
+    .site-card .site-card-drag-handle:active {
+        cursor: grabbing;
     }
     
     @media (max-width: 1200px) {
