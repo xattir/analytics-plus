@@ -9,51 +9,85 @@
         --analytics-primary: #7b60fb;
         --analytics-success: #10b981;
         --analytics-active: #10b981;
+        --analytics-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --analytics-gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
         
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
         color: var(--analytics-text);
-        background: var(--background-0, #f9fafb);
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
         min-height: 100vh;
         padding: 0;
     }
     
     .analytics-header {
-        background: var(--analytics-bg);
-        border-bottom: 1px solid var(--analytics-border);
-        padding: 24px 32px;
-        margin-bottom: 32px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        padding: 32px 40px;
+        margin-bottom: 40px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .analytics-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(123, 96, 251, 0.08) 0%, transparent 70%);
+        pointer-events: none;
     }
     
     .analytics-header h1 {
-        font-size: 24px;
-        font-weight: 600;
-        margin: 0 0 4px 0;
+        font-size: 32px;
+        font-weight: 700;
+        margin: 0 0 8px 0;
         color: var(--analytics-text);
+        letter-spacing: -0.5px;
+        position: relative;
+        z-index: 1;
     }
     
     .analytics-header p {
-        font-size: 14px;
+        font-size: 15px;
         color: var(--analytics-text-muted);
-        margin: 0 0 12px 0;
+        margin: 0 0 20px 0;
+        position: relative;
+        z-index: 1;
     }
     
     .header-stats {
         display: flex;
-        gap: 24px;
-        margin-top: 8px;
+        gap: 32px;
+        margin-top: 16px;
         flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
     }
     
     .header-stat-item {
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 12px;
+        gap: 8px;
+        font-size: 13px;
         color: var(--analytics-text-muted);
+        padding: 8px 16px;
+        background: rgba(123, 96, 251, 0.05);
+        border-radius: 8px;
+        border: 1px solid rgba(123, 96, 251, 0.1);
+        transition: all 0.2s ease;
+    }
+    
+    .header-stat-item:hover {
+        background: rgba(123, 96, 251, 0.08);
+        transform: translateY(-1px);
     }
     
     .header-stat-icon {
-        font-size: 14px;
+        font-size: 16px;
     }
     
     .header-stat-label {
@@ -61,111 +95,192 @@
     }
     
     .header-stat-value {
-        font-weight: 600;
-        color: var(--analytics-text);
+        font-weight: 700;
+        color: var(--analytics-primary);
+        font-size: 14px;
     }
     
     .hero-card {
-        background: var(--analytics-bg);
-        border: 1px solid var(--analytics-border);
-        border-radius: 12px;
-        padding: 24px;
-        transition: all 0.2s;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 20px;
+        padding: 32px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(123, 96, 251, 0.05) 0%, transparent 70%);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
     
     .hero-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+    }
+    
+    .hero-card:hover::before {
+        opacity: 1;
     }
     
     .hero-card-active {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, rgba(16, 185, 129, 0.01) 100%);
-        border-color: var(--analytics-active);
-        box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.08), 0 2px 8px rgba(16, 185, 129, 0.08);
-        opacity: 0.95;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%);
+        border-color: rgba(16, 185, 129, 0.3);
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.15), 0 0 0 1px rgba(16, 185, 129, 0.1);
+    }
+    
+    .hero-card-active::before {
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+        opacity: 1;
     }
     
     .hero-card-active .metric-icon::after {
         content: '';
         position: absolute;
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         background-color: #10b981;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        animation: spinner-fade 1.5s linear infinite;
+        animation: pulse-glow 2s ease-in-out infinite;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
     }
     
-    @keyframes spinner-fade {
+    @keyframes pulse-glow {
         0% {
             opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
         }
         50% {
-            opacity: 0.3;
+            opacity: 0.8;
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
         }
         100% {
             opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
         }
     }
     
     .metric-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
+        font-size: 24px;
         position: relative;
-        background: rgba(123, 96, 251, 0.1);
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.15) 0%, rgba(123, 96, 251, 0.08) 100%);
         color: var(--analytics-primary);
-        margin-bottom: 16px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .hero-card:hover .metric-icon {
+        transform: scale(1.05) rotate(2deg);
     }
     
     .hero-card-active .metric-icon {
-        background: rgba(16, 185, 129, 0.15);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
         color: var(--analytics-active);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
     
     .metric-label {
-        font-size: 13px;
+        font-size: 12px;
         color: var(--analytics-text-muted);
-        font-weight: 500;
-        margin-bottom: 8px;
+        font-weight: 600;
+        margin-bottom: 12px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
     }
     
     .metric-value {
-        font-size: 36px;
-        font-weight: 700;
-        line-height: 1.2;
-        margin: 0;
+        font-size: 42px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0 0 8px 0;
         color: var(--analytics-text);
+        letter-spacing: -1px;
+        background: linear-gradient(135deg, var(--analytics-text) 0%, var(--analytics-text-muted) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
     .hero-card-active .metric-value {
-        color: var(--analytics-active);
+        background: var(--analytics-gradient-success);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
     .section-card {
-        background: var(--analytics-bg);
-        border: 1px solid var(--analytics-border);
-        border-radius: 12px;
-        padding: 24px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 20px;
+        padding: 32px;
         margin-bottom: 32px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .section-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(123, 96, 251, 0.04) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    
+    .section-card:hover {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+        transform: translateY(-2px);
     }
     
     .section-title {
-        font-size: 18px;
-        font-weight: 600;
-        margin: 0 0 24px 0;
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0 0 28px 0;
         color: var(--analytics-text);
-        padding-bottom: 16px;
-        border-bottom: 2px solid var(--analytics-border);
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(123, 96, 251, 0.1);
+        position: relative;
+        letter-spacing: -0.3px;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        right: 0;
+        width: 60px;
+        height: 2px;
+        background: var(--analytics-gradient);
+        border-radius: 2px;
     }
     
     .visits-filter-form {
@@ -311,15 +426,18 @@
         font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
         font-size: 12px;
         color: var(--analytics-primary);
-        background: rgba(123, 96, 251, 0.08);
-        padding: 4px 8px;
-        border-radius: 4px;
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.12) 0%, rgba(123, 96, 251, 0.08) 100%);
+        padding: 6px 12px;
+        border-radius: 8px;
         display: inline-block;
         max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         cursor: help;
+        border: 1px solid rgba(123, 96, 251, 0.2);
+        font-weight: 500;
+        transition: all 0.2s ease;
     }
     
     .path-link-clickable {
@@ -332,23 +450,26 @@
         font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
         font-size: 12px;
         color: var(--analytics-primary);
-        background: rgba(123, 96, 251, 0.08);
-        padding: 4px 8px;
-        border-radius: 4px;
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.12) 0%, rgba(123, 96, 251, 0.08) 100%);
+        padding: 6px 12px;
+        border-radius: 8px;
         display: inline-block;
         max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(123, 96, 251, 0.2);
+        font-weight: 500;
     }
     
     .path-link-clickable:hover code {
-        background: rgba(123, 96, 251, 0.15);
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.2) 0%, rgba(123, 96, 251, 0.15) 100%);
         color: var(--analytics-primary);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(123, 96, 251, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.25);
+        border-color: rgba(123, 96, 251, 0.4);
     }
     
     .visits-table-time {
@@ -369,15 +490,18 @@
     .ip-address {
         font-size: 12px;
         color: var(--analytics-text-muted);
-        background: rgba(0, 0, 0, 0.03);
-        padding: 4px 8px;
-        border-radius: 4px;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.03) 100%);
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        font-weight: 500;
     }
     
     .visits-table-device,
     .visits-table-browser {
-        font-size: 12px;
+        font-size: 13px;
         white-space: nowrap;
+        font-weight: 500;
     }
     
     .visits-table-paths-count {
@@ -386,28 +510,31 @@
     
     .paths-count-link {
         display: inline-block;
-        font-weight: 600;
+        font-weight: 700;
         color: var(--analytics-primary);
-        background: rgba(123, 96, 251, 0.1);
-        padding: 6px 12px;
-        border-radius: 6px;
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.15) 0%, rgba(123, 96, 251, 0.1) 100%);
+        padding: 8px 16px;
+        border-radius: 10px;
         text-decoration: none;
-        transition: all 0.2s;
-        min-width: 40px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        min-width: 48px;
         text-align: center;
+        border: 1px solid rgba(123, 96, 251, 0.2);
+        box-shadow: 0 2px 8px rgba(123, 96, 251, 0.1);
     }
     
     .paths-count-link:hover {
-        background: var(--analytics-primary);
+        background: var(--analytics-gradient);
         color: white;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(123, 96, 251, 0.3);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 16px rgba(123, 96, 251, 0.35);
+        border-color: transparent;
     }
     
     .visits-pagination {
-        margin-top: 24px;
-        padding-top: 16px;
-        border-top: 1px solid var(--analytics-border);
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 2px solid rgba(123, 96, 251, 0.1);
         display: flex;
         justify-content: center;
     }
@@ -418,58 +545,78 @@
     
     .visits-pagination .page-link {
         color: var(--analytics-primary);
-        border-color: var(--analytics-border);
-        padding: 8px 16px;
+        border-color: rgba(123, 96, 251, 0.2);
+        padding: 10px 18px;
+        border-radius: 10px;
+        margin: 0 4px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.8);
     }
     
     .visits-pagination .page-link:hover {
-        background-color: rgba(123, 96, 251, 0.1);
-        border-color: var(--analytics-border);
+        background-color: rgba(123, 96, 251, 0.15);
+        border-color: var(--analytics-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.2);
     }
     
     .visits-pagination .page-item.active .page-link {
-        background-color: var(--analytics-primary);
-        border-color: var(--analytics-primary);
+        background: var(--analytics-gradient);
+        border-color: transparent;
+        color: white;
+        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.3);
     }
     
     .path-sequence {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 8px;
+        gap: 10px;
+        margin-top: 12px;
     }
     
     .path-badge {
-        padding: 6px 12px;
-        background: rgba(123, 96, 251, 0.1);
-        border: 1px solid rgba(123, 96, 251, 0.2);
-        border-radius: 6px;
+        padding: 8px 14px;
+        background: linear-gradient(135deg, rgba(123, 96, 251, 0.15) 0%, rgba(123, 96, 251, 0.1) 100%);
+        border: 1px solid rgba(123, 96, 251, 0.25);
+        border-radius: 10px;
         font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
         font-size: 12px;
         color: var(--analytics-primary);
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .path-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.2);
     }
     
     .path-arrow {
         color: var(--analytics-text-muted);
-        font-size: 14px;
+        font-size: 16px;
+        font-weight: 600;
     }
     
     .source-row {
         display: flex;
         align-items: center;
-        padding: 4px 12px;
-        margin-bottom: 4px;
-        border-radius: 6px;
-        background: var(--analytics-bg);
-        border: 1px solid var(--analytics-border);
-        transition: all 0.2s;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.8) 100%);
+        border: 1px solid rgba(123, 96, 251, 0.15);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
+        backdrop-filter: blur(10px);
     }
     
     .source-row:hover {
         border-color: var(--analytics-primary);
-        box-shadow: 0 1px 4px rgba(123, 96, 251, 0.1);
+        box-shadow: 0 4px 16px rgba(123, 96, 251, 0.15);
+        transform: translateX(-4px);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%);
     }
     
     .source-row::before {
@@ -479,8 +626,9 @@
         top: 0;
         bottom: 0;
         width: var(--progress-width, 0%);
-        background: rgba(123, 96, 251, 0.08);
+        background: linear-gradient(90deg, transparent 0%, rgba(123, 96, 251, 0.12) 100%);
         z-index: 0;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .source-row-content {
@@ -490,42 +638,64 @@
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        gap: 12px;
+        gap: 16px;
     }
     
     .source-icon-name {
-        font-size: 13px;
-        font-weight: 500;
+        font-size: 14px;
+        font-weight: 600;
         color: var(--analytics-text);
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         flex: 1;
     }
     
     .source-count {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--analytics-text);
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--analytics-primary);
         white-space: nowrap;
+        padding: 6px 12px;
+        background: rgba(123, 96, 251, 0.1);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .source-row:hover .source-count {
+        background: rgba(123, 96, 251, 0.15);
+        transform: scale(1.05);
     }
     
     .chart-container {
         position: relative;
         height: 200px;
-        margin-top: 16px;
+        margin-top: 20px;
+        padding: 8px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.5);
     }
     
     .empty-state {
         text-align: center;
-        padding: 60px 20px;
+        padding: 80px 20px;
         color: var(--analytics-text-muted);
     }
     
     .empty-state-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-        opacity: 0.4;
+        font-size: 64px;
+        margin-bottom: 20px;
+        opacity: 0.3;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
     }
 </style>
 <div class="analytics-dashboard">
@@ -564,7 +734,7 @@
                 @endphp
                 
                 <div class="dropdown" style="display: inline-block;">
-                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%); border: 1px solid rgba(123, 96, 251, 0.2); border-radius: 10px; padding: 10px 20px; font-weight: 600; color: var(--analytics-primary); transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(123, 96, 251, 0.1);">
                         الإجراءات
                     </button>
                     <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown">
@@ -691,7 +861,7 @@
         </div>
     </div>
     
-    <div style="padding: 0 32px 32px;">
+    <div style="padding: 0 40px 40px;">
         <!-- HERO SECTION -->
         <div class="row mb-5">
             <!-- ACTIVE USERS (HERO) - ثلث الشاشة -->
@@ -720,41 +890,27 @@
                                 $sourceCount = $source['count'] ?? 0;
                                 $sourcePercent = $maxSourceCount > 0 ? ($sourceCount / $maxSourceCount) * 100 : 0;
                                 
-                                // Get icon domain based on source
+                                // Get icon domain from referrer URL hostname
                                 $sourceIconDomain = '';
                                 if ($source['type'] == 'direct' || $sourceName == 'direct') {
                                     $sourceIconDomain = $site->domain;
-                                } elseif ($sourceName == 'google') {
-                                    $sourceIconDomain = 'google.com';
-                                } elseif ($sourceName == 'facebook' || $sourceName == 'fb.com') {
-                                    $sourceIconDomain = 'facebook.com';
-                                } elseif ($sourceName == 'instagram') {
-                                    $sourceIconDomain = 'instagram.com';
-                                } elseif ($sourceName == 'twitter' || $sourceName == 'x.com') {
-                                    $sourceIconDomain = 'x.com';
-                                } elseif ($sourceName == 'youtube') {
-                                    $sourceIconDomain = 'youtube.com';
-                                } elseif ($sourceName == 'linkedin') {
-                                    $sourceIconDomain = 'linkedin.com';
-                                } elseif ($sourceName == 'pinterest') {
-                                    $sourceIconDomain = 'pinterest.com';
-                                } elseif ($sourceName == 'reddit') {
-                                    $sourceIconDomain = 'reddit.com';
-                                } elseif ($sourceName == 'tiktok') {
-                                    $sourceIconDomain = 'tiktok.com';
-                                } elseif ($sourceName == 'bing') {
-                                    $sourceIconDomain = 'bing.com';
-                                } elseif ($sourceName == 'yahoo') {
-                                    $sourceIconDomain = 'yahoo.com';
-                                } elseif ($sourceName == 'duckduckgo') {
-                                    $sourceIconDomain = 'duckduckgo.com';
-                                } else {
-                                    // Try to extract domain from source name if it looks like a URL
-                                    // If source name doesn't contain a dot, assume it needs .com
-                                    if (strpos($sourceName, '.') === false) {
-                                        $sourceIconDomain = $sourceName . '.com';
+                                } elseif (!empty($source['referrer_url'])) {
+                                    // Extract hostname from referrer URL
+                                    $parsed = parse_url($source['referrer_url']);
+                                    if (isset($parsed['host'])) {
+                                        $sourceIconDomain = $parsed['host'];
+                                        // Remove www. prefix if exists
+                                        $sourceIconDomain = preg_replace('/^www\./', '', $sourceIconDomain);
+                                    }
+                                }
+                                
+                                // Fallback: if no referrer URL, try to use source name as domain
+                                if (!$sourceIconDomain && $source['type'] == 'referrer') {
+                                    $sourceNameClean = $source['name'];
+                                    if (strpos($sourceNameClean, '.') === false) {
+                                        $sourceIconDomain = $sourceNameClean . '.com';
                                     } else {
-                                        $sourceIconDomain = $sourceName;
+                                        $sourceIconDomain = $sourceNameClean;
                                     }
                                 }
                                 
@@ -905,47 +1061,19 @@
                                         $sourceDisplay = $referrerSource;
                                         $sourceUrl = $referrerUrl;
                                         
-                                        // Get icon domain based on source
-                                        $sourceName = strtolower($referrerSource);
-                                        if ($sourceName == 'direct') {
-                                            $sourceIconDomain = $site->domain;
-                                        } elseif ($sourceName == 'google') {
-                                            $sourceIconDomain = 'google.com';
-                                        } elseif ($sourceName == 'facebook' || $sourceName == 'fb.com') {
-                                            $sourceIconDomain = 'facebook.com';
-                                        } elseif ($sourceName == 'instagram') {
-                                            $sourceIconDomain = 'instagram.com';
-                                        } elseif ($sourceName == 'twitter' || $sourceName == 'x.com') {
-                                            $sourceIconDomain = 'x.com';
-                                        } elseif ($sourceName == 'youtube') {
-                                            $sourceIconDomain = 'youtube.com';
-                                        } elseif ($sourceName == 'linkedin') {
-                                            $sourceIconDomain = 'linkedin.com';
-                                        } elseif ($sourceName == 'pinterest') {
-                                            $sourceIconDomain = 'pinterest.com';
-                                        } elseif ($sourceName == 'reddit') {
-                                            $sourceIconDomain = 'reddit.com';
-                                        } elseif ($sourceName == 'tiktok') {
-                                            $sourceIconDomain = 'tiktok.com';
-                                        } elseif ($sourceName == 'bing') {
-                                            $sourceIconDomain = 'bing.com';
-                                        } elseif ($sourceName == 'yahoo') {
-                                            $sourceIconDomain = 'yahoo.com';
-                                        } elseif ($sourceName == 'duckduckgo') {
-                                            $sourceIconDomain = 'duckduckgo.com';
-                                        } else {
-                                            // Extract domain from referrer URL if available
-                                            if ($referrerUrl) {
-                                                $parsed = parse_url($referrerUrl);
-                                                $sourceIconDomain = $parsed['host'] ?? $site->domain;
-                                            } else {
-                                                // If source name doesn't contain a dot, assume it needs .com
-                                                if (strpos($sourceName, '.') === false) {
-                                                    $sourceIconDomain = $sourceName . '.com';
-                                                } else {
-                                                    $sourceIconDomain = $sourceName;
-                                                }
+                                        // Get hostname from referrer URL
+                                        if ($referrerUrl) {
+                                            $parsed = parse_url($referrerUrl);
+                                            $sourceIconDomain = $parsed['host'] ?? null;
+                                            // Remove www. prefix if exists
+                                            if ($sourceIconDomain) {
+                                                $sourceIconDomain = preg_replace('/^www\./', '', $sourceIconDomain);
                                             }
+                                        }
+                                        
+                                        // Fallback to site domain if no referrer URL
+                                        if (!$sourceIconDomain) {
+                                            $sourceIconDomain = $site->domain;
                                         }
                                     }
                                     

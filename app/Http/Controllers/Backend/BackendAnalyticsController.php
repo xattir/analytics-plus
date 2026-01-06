@@ -832,16 +832,40 @@ class BackendAnalyticsController extends Controller
         $startDate = $dateFrom->copy()->startOfDay()->toDateTimeString();
         $endDate = $dateTo->copy()->endOfDay()->toDateTimeString();
         
-        // Get referrer sources (this is the main source of traffic data)
-        $referrerSources = AnalyticsSession::where('site_id', $siteId)
+        // Get referrer sources with referrer URL (this is the main source of traffic data)
+        // We need to get a sample referrer URL for each referrer_source to extract hostname
+        $referrerSourcesRaw = AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$startDate, $endDate])
             ->whereNotNull('referrer_source')
             ->where('is_bot', false)
-            ->select('referrer_source', DB::raw('COUNT(*) as count'))
-            ->groupBy('referrer_source')
+            ->select('referrer_source', 'referrer', DB::raw('COUNT(*) as count'))
+            ->groupBy('referrer_source', 'referrer')
             ->orderByDesc('count')
-            ->limit(10)
             ->get();
+        
+        // Group by referrer_source and aggregate counts, keeping first referrer URL
+        $referrerSourcesGrouped = [];
+        foreach ($referrerSourcesRaw as $source) {
+            $key = $source->referrer_source;
+            if (!isset($referrerSourcesGrouped[$key])) {
+                $referrerSourcesGrouped[$key] = [
+                    'name' => $source->referrer_source,
+                    'count' => 0,
+                    'referrer_url' => $source->referrer,
+                ];
+            }
+            $referrerSourcesGrouped[$key]['count'] += $source->count;
+            // Keep first non-null referrer URL
+            if (!$referrerSourcesGrouped[$key]['referrer_url'] && $source->referrer) {
+                $referrerSourcesGrouped[$key]['referrer_url'] = $source->referrer;
+            }
+        }
+        
+        // Sort by count and take top 10
+        $referrerSources = collect($referrerSourcesGrouped)
+            ->sortByDesc('count')
+            ->take(10)
+            ->values();
         
         // Get UTM sources (for campaigns)
         $utmSources = AnalyticsSession::where('site_id', $siteId)
@@ -865,11 +889,12 @@ class BackendAnalyticsController extends Controller
             ->count();
         
         // Combine referrer sources
-        $sources = collect($referrerSources)->map(function($source) {
+        $sources = $referrerSources->map(function($source) {
             return [
-                'name' => $source->referrer_source,
-                'count' => $source->count,
+                'name' => $source['name'],
+                'count' => $source['count'],
                 'type' => 'referrer',
+                'referrer_url' => $source['referrer_url'] ?? null,
             ];
         });
         
