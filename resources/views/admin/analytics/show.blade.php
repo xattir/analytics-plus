@@ -572,6 +572,9 @@
                             <i class="fa fa-code"></i> كود التتبع
                         </a>
                         @if($canManage)
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editTitleModal">
+                                <i class="fa fa-edit"></i> تعديل العنوان
+                            </a>
                             <a class="dropdown-item" href="{{ $membersRoute }}">
                                 <i class="fa fa-users"></i> إدارة الفريق
                             </a>
@@ -580,6 +583,33 @@
                                 <i class="fa fa-trash"></i> حذف الموقع
                             </a>
                         @endif
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal for Edit Title -->
+            <div class="modal fade" id="editTitleModal" tabindex="-1" aria-labelledby="editTitleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editTitleModalLabel">تعديل عنوان الموقع</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form id="editTitleForm" method="POST" action="{{ request()->routeIs('admin.*') ? route('admin.analytics.update-title', ['site' => $site->site_key]) : route('user.analytics.update-title', ['site' => $site->site_key]) }}">
+                            @csrf
+                            @method('PUT')
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="siteTitleInput">عنوان الموقع</label>
+                                    <input type="text" class="form-control" id="siteTitleInput" name="title" value="{{ $site->title ?? '' }}" placeholder="{{ $site->domain }}">
+                                    <small class="form-text text-muted">اتركه فارغاً للعودة إلى اسم النطاق الافتراضي</small>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -608,6 +638,55 @@
                     form.submit();
                 }
             }
+            
+            // Handle edit title form submission
+            document.getElementById('editTitleForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                var form = this;
+                var formData = new FormData(form);
+                var submitBtn = form.querySelector('button[type="submit"]');
+                var originalText = submitBtn.textContent;
+                
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'جاري الحفظ...';
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.success) {
+                        alert('تم تحديث عنوان الموقع بنجاح!');
+                        // Close modal
+                        var modalElement = document.getElementById('editTitleModal');
+                        var modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                        }
+                        // Reload page to show updated title
+                        window.location.reload();
+                    } else {
+                        alert('حدث خطأ أثناء تحديث العنوان');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء تحديث العنوان');
+                })
+                .finally(function() {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                });
+            });
             </script>
         </div>
     </div>
