@@ -76,6 +76,7 @@
             font-size: 15px;
             margin-top: 12px;
             margin-bottom: 0;
+            text-align: center;
         }
         
         .aside .item-container {

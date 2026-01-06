@@ -114,6 +114,10 @@
         position: relative;
         overflow: hidden;
         z-index: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 380px;
+        height: 100%;
     }
     
     .hero-card::before {
@@ -248,18 +252,31 @@
         position: relative;
         overflow: hidden;
         z-index: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 380px;
+        height: 100%;
+    }
+    
+    .section-card .chart-container {
+        flex: 1;
+        min-height: 200px;
     }
     
     .section-card.sources-scrollable {
         display: flex;
         flex-direction: column;
+        min-height: 380px;
+        height: 100%;
     }
     
     .section-card.sources-scrollable .sources-content {
-        max-height: 295px;
+        flex: 1;
+        max-height: 320px;
         overflow-y: auto;
         overflow-x: hidden;
         padding-right: 4px;
+        min-height: 200px;
     }
     
     .section-card.sources-scrollable .sources-content::-webkit-scrollbar {
