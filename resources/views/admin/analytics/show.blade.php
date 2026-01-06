@@ -17,14 +17,17 @@
         background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
         min-height: 100vh;
         padding: 0;
+        margin: 0;
+        margin-top: -55px !important;
     }
     
     .analytics-header {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
         backdrop-filter: blur(10px);
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        padding: 24px 40px;
-        margin-bottom: 32px;
+        padding: 20px 40px;
+        margin-bottom: 24px;
+        margin-top: 55px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
         position: relative;
         z-index: 1;
@@ -228,17 +231,10 @@
         margin: 0 0 6px 0;
         color: var(--analytics-text);
         letter-spacing: -1px;
-        background: linear-gradient(135deg, var(--analytics-text) 0%, var(--analytics-text-muted) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
     }
     
     .hero-card-active .metric-value {
-        background: var(--analytics-gradient-success);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--analytics-active);
     }
     
     .section-card {
@@ -1308,12 +1304,12 @@
 @section('scripts')
 <script src="/js/chartjs.min.js"></script>
 <script>
-// Active Users Chart (Hero - Last 30 minutes) - Bar Chart with 24 bars
+// Active Users Chart (Hero - Last 30 minutes) - Line Chart with 24 data points
 @if(isset($activeUsersData) && count($activeUsersData) > 0)
 const activeUsersCtx = document.getElementById('activeUsersChart');
 if (activeUsersCtx) {
     new Chart(activeUsersCtx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: [
                 @foreach($activeUsersData as $point)
@@ -1327,11 +1323,16 @@ if (activeUsersCtx) {
                     {{ $point['count'] }},
                     @endforeach
                 ],
-                backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
                 borderColor: '#10b981',
-                borderWidth: 1,
-                borderRadius: 3,
-                borderSkipped: false
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
             }]
         },
         options: {
@@ -1360,7 +1361,7 @@ if (activeUsersCtx) {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        display: false
+                        color: 'rgba(0, 0, 0, 0.05)'
                     },
                     ticks: {
                         display: false
