@@ -66,8 +66,8 @@ $(document).ready(function() {
         e.preventDefault();
         e.stopPropagation();
         
+        // Simply change active to in-active
         $('.aside').removeClass('active').addClass('in-active');
-        $('.main-content').removeClass('active');
         $('#body-overlay').removeClass('active');
     });
     

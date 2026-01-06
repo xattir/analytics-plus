@@ -423,6 +423,9 @@
         
         .aside-close-btn {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto !important;
+            z-index: 1000 !important;
+            position: relative;
         }
         
         .aside-close-btn:hover {
@@ -436,6 +439,10 @@
         
         .aside-close-btn:active {
             transform: scale(0.95);
+        }
+        
+        .aside-close-btn:focus {
+            outline: none;
         }
         
         /* Mobile Aside Styles */
