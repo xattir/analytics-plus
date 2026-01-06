@@ -8,6 +8,22 @@
     
     .main-content {
         margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    .main-content > .col-12 {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    .analytics-dashboard {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    .analytics-header {
+        margin-top: 0 !important;
+        padding-top: 32px !important;
     }
     .analytics-dashboard {
         --analytics-bg: var(--background-1, #ffffff);
