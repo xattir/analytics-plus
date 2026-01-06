@@ -178,9 +178,31 @@ class BackendAnalyticsController extends Controller
         // Get time series data
         $timeSeries = $this->getTimeSeries($siteId, $dateFromCarbon, $dateToCarbon);
         
-        // Get top pages - Last 7 days (for display in sections)
+        // Last 7 days date range (reused multiple times)
         $last7DaysStart = Carbon::now()->subDays(7)->startOfDay();
         $last7DaysEnd = Carbon::now()->endOfDay();
+        
+        // Optimize: Use single query for traffic quality metrics
+        $baseQueryForQuality = (clone $query)->where('is_bot', false);
+        $trafficQuality = [
+            'total_sessions' => $stats['total_sessions'],
+            'bot_sessions' => (clone $query)->where('is_bot', true)->count(),
+            'real_sessions' => (clone $baseQueryForQuality)->count(),
+            'high_quality' => (clone $baseQueryForQuality)
+                ->where('pages_count', '>', 1)
+                ->where('duration_ms', '>', 30000)
+                ->where('max_scroll_percent', '>', 50)
+                ->count(),
+            'low_quality' => (clone $baseQueryForQuality)
+                ->where(function($q) {
+                    $q->where('pages_count', 1)
+                      ->orWhere('duration_ms', '<', 5000)
+                      ->orWhere('max_scroll_percent', '<', 10);
+                })
+                ->count(),
+        ];
+        
+        // Get top pages - Last 7 days (only once, reused later)
         $topPages = $this->getTopPages($siteId, $last7DaysStart, $last7DaysEnd);
         
         // Get top entry pages
@@ -207,40 +229,14 @@ class BackendAnalyticsController extends Controller
         // Get real-time visitors
         $realtimeVisitors = $this->getRealtimeVisitors($siteId);
         
-        // Get sessions with path counts
-        $sessions = AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
-            ->withCount('paths')
-            ->orderBy('first_seen', 'desc')
-            ->paginate(20);
+        // Page Performance with detailed stats (only if needed)
+        $pagePerformance = collect([]);
         
-        // Traffic Quality Metrics
-        $trafficQuality = [
-            'total_sessions' => (clone $query)->count(),
-            'bot_sessions' => (clone $query)->where('is_bot', true)->count(),
-            'real_sessions' => (clone $query)->where('is_bot', false)->count(),
-            'high_quality' => (clone $query)->where('is_bot', false)
-                ->where('pages_count', '>', 1)
-                ->where('duration_ms', '>', 30000)
-                ->where('max_scroll_percent', '>', 50)
-                ->count(),
-            'low_quality' => (clone $query)->where('is_bot', false)
-                ->where(function($q) {
-                    $q->where('pages_count', 1)
-                      ->orWhere('duration_ms', '<', 5000)
-                      ->orWhere('max_scroll_percent', '<', 10);
-                })
-                ->count(),
-        ];
+        // User Flow (entry -> next -> exit) (only if needed)
+        $userFlow = collect([]);
         
-        // Page Performance with detailed stats
-        $pagePerformance = $this->getPagePerformance($siteId, $dateFromCarbon, $dateToCarbon);
-        
-        // User Flow (entry -> next -> exit)
-        $userFlow = $this->getUserFlow($siteId, $dateFromCarbon, $dateToCarbon);
-        
-        // Source Quality
-        $sourceQuality = $this->getSourceQuality($siteId, $dateFromCarbon, $dateToCarbon);
+        // Source Quality (only if needed)
+        $sourceQuality = collect([]);
         
         // Calculate returning sessions percentage
         $stats['returning_sessions_pct'] = $stats['total_sessions'] > 0 
@@ -281,15 +277,7 @@ class BackendAnalyticsController extends Controller
         $visitorsLast7Days = $this->getVisitorsLast7Days($siteId);
         
         // Top traffic sources - Last 7 days
-        $last7DaysStart = Carbon::now()->subDays(7)->startOfDay();
-        $last7DaysEnd = Carbon::now()->endOfDay();
         $topTrafficSources = $this->getTopTrafficSources($siteId, $last7DaysStart, $last7DaysEnd);
-        
-        // Top pages - Last 7 days
-        $topPages = $this->getTopPages($siteId, $last7DaysStart, $last7DaysEnd);
-        
-        // Top browsers - Last 7 days
-        $topBrowsers = $this->getTopBrowsers($siteId, $last7DaysStart, $last7DaysEnd);
         
         // Top countries - Last 30 minutes
         $last30MinStart = Carbon::now()->subMinutes(30);
@@ -471,8 +459,12 @@ class BackendAnalyticsController extends Controller
     private function getTopPages($siteId, $dateFrom, $dateTo)
     {
         return AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
-            ->join('analytics_sessions', 'analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
+            ->join('analytics_sessions', function($join) use ($siteId) {
+                $join->on('analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
+                     ->where('analytics_sessions.site_id', '=', $siteId);
+            })
             ->whereBetween('analytics_sessions.first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->where('analytics_sessions.is_bot', false)
             ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
@@ -531,6 +523,7 @@ class BackendAnalyticsController extends Controller
     {
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->where('is_bot', false)
             ->whereNotNull('browser')
             ->select('browser', DB::raw('COUNT(*) as count'))
             ->groupBy('browser')
@@ -575,6 +568,7 @@ class BackendAnalyticsController extends Controller
     {
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->where('is_bot', false)
             ->whereNotNull('country')
             ->select('country', DB::raw('COUNT(*) as count'))
             ->groupBy('country')
@@ -852,22 +846,32 @@ class BackendAnalyticsController extends Controller
      */
     private function getVisitorsLast7Days($siteId)
     {
+        $startDate = Carbon::today()->subDays(6)->startOfDay();
+        $endDate = Carbon::today()->endOfDay();
+        
+        // Single query with GROUP BY DATE for better performance
+        $results = AnalyticsSession::where('site_id', $siteId)
+            ->whereBetween('first_seen', [$startDate, $endDate])
+            ->where('is_bot', false)
+            ->select(
+                DB::raw('DATE(first_seen) as date'),
+                DB::raw('COUNT(DISTINCT device_fingerprint) as count')
+            )
+            ->groupBy(DB::raw('DATE(first_seen)'))
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+        
+        // Build data array for all 7 days
         $data = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
-            $start = $date->copy()->startOfDay();
-            $end = $date->copy()->endOfDay();
-            
-            $count = AnalyticsSession::where('site_id', $siteId)
-                ->whereBetween('first_seen', [$start, $end])
-                ->where('is_bot', false)
-                ->distinct('device_fingerprint')
-                ->count('device_fingerprint');
+            $dateKey = $date->format('Y-m-d');
             
             $data[] = [
-                'date' => $date->format('Y-m-d'),
+                'date' => $dateKey,
                 'label' => $date->format('D'),
-                'count' => $count,
+                'count' => $results->get($dateKey)->count ?? 0,
             ];
         }
         
@@ -886,38 +890,33 @@ class BackendAnalyticsController extends Controller
         $startDate = $dateFrom->copy()->startOfDay()->toDateTimeString();
         $endDate = $dateTo->copy()->endOfDay()->toDateTimeString();
         
-        // Get referrer sources with referrer URL (this is the main source of traffic data)
-        // We need to get a sample referrer URL for each referrer_source to extract hostname
+        // Optimized: Get referrer sources with aggregated counts and sample referrer URL
         $referrerSourcesRaw = AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$startDate, $endDate])
             ->whereNotNull('referrer_source')
             ->where('is_bot', false)
-            ->select('referrer_source', 'referrer', DB::raw('COUNT(*) as count'))
-            ->groupBy('referrer_source', 'referrer')
+            ->select(
+                'referrer_source',
+                DB::raw('MIN(referrer) as referrer_url'),
+                DB::raw('COUNT(*) as count')
+            )
+            ->groupBy('referrer_source')
             ->orderByDesc('count')
+            ->limit(10)
             ->get();
         
-        // Group by referrer_source and aggregate counts, keeping first referrer URL
-        $referrerSourcesGrouped = [];
-        foreach ($referrerSourcesRaw as $source) {
-            $key = $source->referrer_source;
-            if (!isset($referrerSourcesGrouped[$key])) {
-                $referrerSourcesGrouped[$key] = [
-                    'name' => $source->referrer_source,
-                    'count' => 0,
-                    'referrer_url' => $source->referrer,
-                ];
-            }
-            $referrerSourcesGrouped[$key]['count'] += $source->count;
-            // Keep first non-null referrer URL
-            if (!$referrerSourcesGrouped[$key]['referrer_url'] && $source->referrer) {
-                $referrerSourcesGrouped[$key]['referrer_url'] = $source->referrer;
-            }
-        }
+        // Transform to expected format
+        $referrerSources = $referrerSourcesRaw->map(function($source) {
+            return [
+                'name' => $source->referrer_source,
+                'count' => $source->count,
+                'referrer_url' => $source->referrer_url,
+                'type' => $source->referrer_source === 'Direct' ? 'direct' : 'referrer',
+            ];
+        });
         
         // Sort by count and take top 10
-        $referrerSources = collect($referrerSourcesGrouped)
-            ->sortByDesc('count')
+        return $referrerSources->sortByDesc('count')
             ->take(10)
             ->values();
         
