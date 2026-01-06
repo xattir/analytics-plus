@@ -37,11 +37,7 @@ select2();
 
 import '/public/js/bootstrap.bundle.min.js';
 import '/public/js/main.js';
-
-// Import main-dashboard.js after jQuery is available
-window.addEventListener('DOMContentLoaded', function() {
-    import('/public/js/main-dashboard.js');
-});
+import '/public/js/main-dashboard.js';
 
 
 
