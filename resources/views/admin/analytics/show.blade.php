@@ -605,7 +605,7 @@
                                     <small class="form-text text-muted">اتركه فارغاً للعودة إلى اسم النطاق الافتراضي</small>
                                 </div>
                             </div>
-                            <div class="modal-footer" style="padding-top: 16px; padding-bottom: 16px;">
+                            <div class="modal-footer px-4 py-2" >
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
                                 <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
                             </div>
@@ -750,7 +750,12 @@
                                     $sourceIconDomain = 'duckduckgo.com';
                                 } else {
                                     // Try to extract domain from source name if it looks like a URL
-                                    $sourceIconDomain = $sourceName;
+                                    // If source name doesn't contain a dot, assume it needs .com
+                                    if (strpos($sourceName, '.') === false) {
+                                        $sourceIconDomain = $sourceName . '.com';
+                                    } else {
+                                        $sourceIconDomain = $sourceName;
+                                    }
                                 }
                                 
                                 $sourceIconUrl = $sourceIconDomain ? 'https://icons.duckduckgo.com/ip3/' . $sourceIconDomain . '.ico' : '';
@@ -934,7 +939,12 @@
                                                 $parsed = parse_url($referrerUrl);
                                                 $sourceIconDomain = $parsed['host'] ?? $site->domain;
                                             } else {
-                                                $sourceIconDomain = $site->domain;
+                                                // If source name doesn't contain a dot, assume it needs .com
+                                                if (strpos($sourceName, '.') === false) {
+                                                    $sourceIconDomain = $sourceName . '.com';
+                                                } else {
+                                                    $sourceIconDomain = $sourceName;
+                                                }
                                             }
                                         }
                                     }
