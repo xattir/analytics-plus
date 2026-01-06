@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+$(document).ready(function() {
     function isMobile() {
         return window.innerWidth <= 991.98;
     }
@@ -29,7 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 250);
     });
     
-    $('.asideToggle').on('click', function(e) {
+    // Handle aside toggle button
+    $(document).on('click', '.asideToggle', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -59,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     // Handle close button click
-    $('.aside-close-btn').on('click', function(e) {
+    $(document).on('click', '.aside-close-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -69,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     // Handle overlay click
-    $('#body-overlay').on('click', function(e) {
+    $(document).on('click', '#body-overlay', function(e) {
         e.preventDefault();
         e.stopPropagation();
         

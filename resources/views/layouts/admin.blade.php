@@ -441,16 +441,15 @@
         /* Mobile Aside Styles */
         @media (max-width: 991.98px) {
             .aside {
-                transform: translateX(100%);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transform: translateX(100%) !important;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
             
-            .aside.active:not(.in-active) {
+            .aside.active {
                 transform: translateX(0) !important;
             }
             
-            .aside.in-active,
-            .aside:not(.active) {
+            .aside.in-active {
                 transform: translateX(100%) !important;
             }
             
@@ -458,12 +457,16 @@
                 display: flex !important;
             }
             
+            .main-content {
+                margin-right: 0 !important;
+            }
+            
             .main-content.active {
                 margin-right: 0 !important;
             }
             
             .body-overlay {
-                display: block;
+                display: block !important;
             }
         }
         
@@ -639,7 +642,7 @@
     <!-- Body Overlay for Mobile -->
     <div id="body-overlay" class="body-overlay"></div>
     <div class="col-12 d-flex">
-        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside">
+        <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside in-active">
             <!-- Mobile Close Button -->
             <div class="aside-close-mobile d-flex d-md-none justify-content-between align-items-center px-3 py-2" style="border-bottom: 1px solid rgba(0, 0, 0, 0.08);">
                 <span class="font-1" style="font-weight: 600; color: var(--color-2);">القائمة</span>
