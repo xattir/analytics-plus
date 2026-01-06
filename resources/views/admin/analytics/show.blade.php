@@ -28,7 +28,7 @@
         margin-top: 0;
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
         position: relative;
-        z-index: 1;
+        z-index: 100;
         overflow: visible;
     }
     
@@ -549,8 +549,14 @@
     #siteActionsDropdown + .dropdown-menu,
     .dropdown[style*="z-index: 9999"] .dropdown-menu,
     .analytics-header .dropdown-menu {
-        z-index: 10000 !important;
+        z-index: 10001 !important;
         position: absolute !important;
+    }
+    
+    /* Ensure dropdown container is above cards */
+    .analytics-header .dropdown {
+        position: relative;
+        z-index: 10001;
     }
     
     /* Ensure cards don't overlap dropdown */
@@ -1090,12 +1096,12 @@
                         : route('user.analytics.destroy', ['site' => $site->site_key]);
                 @endphp
                 
-                <div class="dropdown" style="display: inline-block; position: relative; z-index: 9999;">
+                <div class="dropdown" style="display: inline-block; position: relative; z-index: 10001;">
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fa fa-cog" style="margin-left: 6px;"></i>
                         الإجراءات
                     </button>
-                    <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown" style="z-index: 10000 !important; position: absolute !important;">
+                    <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown" style="z-index: 10001 !important; position: absolute !important;">
                         <a class="dropdown-item" href="{{ $trackingCodeRoute }}">
                             <i class="fa fa-code"></i> كود التتبع
                         </a>
