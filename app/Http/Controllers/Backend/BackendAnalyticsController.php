@@ -251,9 +251,19 @@ class BackendAnalyticsController extends Controller
             'pageviews' => (clone $todayQuery)->sum('pages_count'),
         ];
         
+        // TODAY'S USERS COUNT (for card matching index page)
+        $todayUsersCount = (clone $todayQuery)->where('is_bot', false)->distinct('device_fingerprint')->count('device_fingerprint');
+        
         // ACTIVE USERS (last 30 minutes) - Hero metric
         $activeUsersCount = (clone $activeUsersQuery)->distinct('session_id')->count('session_id');
         $activeUsersData = $this->getActiveUsersChartData($siteId, $activeUsersStart);
+        
+        // Check if site has traffic in last 5 minutes (for indicator)
+        $trafficLast5Minutes = Carbon::now()->subMinutes(5);
+        $hasTrafficLast5Min = AnalyticsSession::where('site_id', $siteId)
+            ->where('last_seen', '>=', $trafficLast5Minutes)
+            ->where('is_bot', false)
+            ->exists();
         
         // Check if site has traffic in last 24 hours
         $hasTrafficLast24h = AnalyticsSession::where('site_id', $siteId)
@@ -278,8 +288,10 @@ class BackendAnalyticsController extends Controller
             'site',
             'stats',
             'todayStats',
+            'todayUsersCount',
             'activeUsersCount',
             'activeUsersData',
+            'hasTrafficLast5Min',
             'hasTrafficLast24h',
             'timeSeries',
             'topPages',

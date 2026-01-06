@@ -103,6 +103,154 @@
         font-size: 14px;
     }
     
+    /* Site Card Styles (matching index page) */
+    .site-card {
+        background: var(--background-1, #ffffff);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 12px;
+        padding: 20px;
+        transition: box-shadow 0.2s, border-color 0.2s;
+        position: relative;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .site-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: var(--analytics-primary, #7b60fb);
+    }
+    
+    .site-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+    
+    .site-card-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .site-card-favicon {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        object-fit: contain;
+    }
+    
+    .site-card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--color-2, #1f2937);
+        margin: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.3;
+    }
+    
+    .site-card-domain {
+        display: block;
+        font-size: 11px;
+        color: var(--analytics-text-muted, #6b7280);
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .site-online-indicator {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--analytics-text-muted, #6b7280);
+        flex-shrink: 0;
+        position: relative;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .site-online-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #10b981;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 2;
+        animation: dot-pulse 1.5s ease-in-out infinite;
+    }
+    
+    .site-online-indicator::before {
+        content: '';
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #10b981;
+        border-top-color: transparent;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-rotate 1s linear infinite;
+        z-index: 1;
+    }
+    
+    @keyframes spinner-rotate {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    
+    @keyframes dot-pulse {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.7;
+            transform: scale(0.9);
+        }
+    }
+    
+    .site-card-stats {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .site-card-stat {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .site-card-stat-label {
+        font-size: 12px;
+        color: var(--analytics-text-muted, #6b7280);
+        margin-bottom: 4px;
+    }
+    
+    .site-card-stat-value {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--color-2, #1f2937);
+    }
+    
+    .site-card-chart {
+        height: 80px;
+        margin-top: 12px;
+    }
+    
     .hero-card {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
         backdrop-filter: blur(10px);
@@ -943,15 +1091,43 @@
         <div class="row mb-5">
             <!-- ACTIVE USERS (HERO) - نصف الشاشة -->
             <div class="col-lg-6 mb-4">
-                <div class="hero-card @if(isset($hasTrafficLast24h) && $hasTrafficLast24h) hero-card-active @endif">
-                    <div class="metric-label">
-                        <span class="metric-icon">⚡@if(isset($hasTrafficLast24h) && $hasTrafficLast24h)<span class="metric-icon-indicator"></span>@endif</span>
-                        المستخدمون النشطون (آخر 30 دقيقة)
+                <div class="site-card">
+                    <div class="site-card-header">
+                        <div class="site-card-title-wrapper">
+                            <img src="https://icons.duckduckgo.com/ip3/{{ $site->domain }}.ico" 
+                                 alt="" 
+                                 class="site-card-favicon"
+                                 onerror="this.style.display='none'">
+                            <h3 class="site-card-title">{{ $site->title ?? $site->domain }}</h3>
+                            @if($site->title && $site->title !== $site->domain)
+                            <small class="site-card-domain">{{ $site->domain }}</small>
+                            @endif
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            @if(isset($hasTrafficLast5Min) && $hasTrafficLast5Min)
+                            <span class="site-online-indicator">
+                                <span class="site-online-dot"></span>
+                            </span>
+                            @endif
+                        </div>
                     </div>
-                    <div class="metric-value">{{ number_format($activeUsersCount ?? 0) }}</div>
-                    <div class="chart-container">
+                    
+                    <div class="site-card-stats">
+                        <div class="site-card-stat">
+                            <span class="site-card-stat-label">المستخدمون النشطون</span>
+                            <span class="site-card-stat-value">{{ number_format($activeUsersCount ?? 0) }}</span>
+                        </div>
+                        <div class="site-card-stat">
+                            <span class="site-card-stat-label">المستخدمون اليوم</span>
+                            <span class="site-card-stat-value">{{ number_format($todayUsersCount ?? 0) }}</span>
+                        </div>
+                    </div>
+                    
+                    @if(isset($activeUsersData) && count($activeUsersData) > 0)
+                    <div class="site-card-chart">
                         <canvas id="activeUsersChart"></canvas>
                     </div>
+                    @endif
                 </div>
             </div>
             
@@ -1339,12 +1515,12 @@
 @section('scripts')
 <script src="/js/chartjs.min.js"></script>
 <script>
-// Active Users Chart (Hero - Last 30 minutes) - Line Chart with 24 data points
+// Active Users Chart (Hero - Last 30 minutes) - Bar Chart matching index page
 @if(isset($activeUsersData) && count($activeUsersData) > 0)
 const activeUsersCtx = document.getElementById('activeUsersChart');
 if (activeUsersCtx) {
     new Chart(activeUsersCtx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: [
                 @foreach($activeUsersData as $point)
@@ -1352,22 +1528,17 @@ if (activeUsersCtx) {
                 @endforeach
             ],
             datasets: [{
-                label: 'مستخدمون نشطون',
+                label: 'المستخدمون النشطون',
                 data: [
                     @foreach($activeUsersData as $point)
                     {{ $point['count'] }},
                     @endforeach
                 ],
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                backgroundColor: 'rgba(16, 185, 129, 0.6)',
                 borderColor: '#10b981',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 2,
-                pointHoverRadius: 4,
-                pointBackgroundColor: '#10b981',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2
+                borderWidth: 1,
+                borderRadius: 4,
+                borderSkipped: false
             }]
         },
         options: {
@@ -1395,10 +1566,10 @@ if (activeUsersCtx) {
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    },
                     ticks: {
+                        display: false
+                    },
+                    grid: {
                         display: false
                     }
                 },
