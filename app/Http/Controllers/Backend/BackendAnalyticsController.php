@@ -943,25 +943,11 @@ class BackendAnalyticsController extends Controller
         $baseUrl = config('app.url');
         
         $trackingCode = <<<HTML
-<!-- Analytics Tracking Code -->
 <script>
     window.ANALYTICS_SITE_KEY = '{$site->site_key}';
     window.ANALYTICS_API_URL = '{$baseUrl}/api/analytics/track';
-    (function() {
-        var script = document.createElement('script');
-        script.async = true;
-        script.src = '{$baseUrl}/js/analytics.js';
-        script.onload = function() {
-            // Script loaded successfully
-        };
-        script.onerror = function() {
-            console.error('Analytics script failed to load');
-        };
-        var firstScript = document.getElementsByTagName('script')[0];
-        firstScript.parentNode.insertBefore(script, firstScript);
-    })();
 </script>
-<!-- End Analytics Tracking Code -->
+<script async src="{$baseUrl}/js/analytics.js"></script>
 HTML;
         
         return view('admin.analytics.tracking-code', compact('site', 'trackingCode'));
@@ -1142,11 +1128,36 @@ HTML;
         $site->title = $request->input('title') ?: null;
         $site->save();
         
-        return response()->json([
-            'success' => true,
-            'title' => $site->title,
-            'domain' => $site->domain,
-        ]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'title' => $site->title,
+                'domain' => $site->domain,
+            ]);
+        }
+        
+        return back()->with('success', 'تم تحديث عنوان الموقع بنجاح.');
+    }
+    
+    /**
+     * Delete an analytics site
+     */
+    public function destroy(AnalyticsSite $site)
+    {
+        // Check authorization - only owner or superadmin can delete
+        if (!$this->isSuperAdmin() && $site->user_id != auth()->id()) {
+            abort(403, 'You do not have permission to delete this site.');
+        }
+        
+        $siteKey = $site->site_key;
+        $site->delete();
+        
+        $redirectRoute = request()->routeIs('admin.*') 
+            ? route('admin.analytics.index')
+            : route('user.analytics.index');
+        
+        return redirect($redirectRoute)
+            ->with('success', 'تم حذف الموقع بنجاح.');
     }
     
     /**

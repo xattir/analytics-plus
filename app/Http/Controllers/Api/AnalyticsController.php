@@ -192,7 +192,6 @@ class AnalyticsController extends Controller
     {
         $device = UserSystemInfoHelper::get_device();
         $os = UserSystemInfoHelper::get_os();
-        $browser = UserSystemInfoHelper::get_browsers();
         
         // Map device type
         $deviceType = null;
@@ -211,20 +210,61 @@ class AnalyticsController extends Controller
             $osVersion = $matches[1];
         }
         
-        // Extract browser version
+        // Detect browser - IMPORTANT: Check Edge and Chrome BEFORE Safari
+        // because most browsers include "Safari" in their user agent
+        $browser = 'Unknown Browser';
         $browserVersion = null;
-        if (preg_match('/(?:Chrome|Firefox|Safari|Edge|Opera)\/([\d.]+)/i', $userAgent, $matches)) {
-            $browserVersion = $matches[1];
-        }
-        
-        // Detect browser engine
         $browserEngine = null;
-        if (stripos($userAgent, 'Chrome') !== false || stripos($userAgent, 'Edge') !== false) {
+        
+        $uaLower = strtolower($userAgent);
+        
+        // Edge (check first, as it may contain Chrome)
+        if (stripos($userAgent, 'Edg/') !== false || stripos($userAgent, 'Edge/') !== false) {
+            $browser = 'Edge';
+            if (preg_match('/Edg[e]?\/([\d.]+)/i', $userAgent, $matches)) {
+                $browserVersion = $matches[1];
+            }
             $browserEngine = 'Blink';
-        } elseif (stripos($userAgent, 'Firefox') !== false) {
+        }
+        // Chrome (check before Safari, as Chrome contains Safari in UA)
+        elseif (stripos($userAgent, 'Chrome/') !== false && stripos($userAgent, 'Edg') === false) {
+            $browser = 'Chrome';
+            if (preg_match('/Chrome\/([\d.]+)/i', $userAgent, $matches)) {
+                $browserVersion = $matches[1];
+            }
+            $browserEngine = 'Blink';
+        }
+        // Firefox
+        elseif (stripos($userAgent, 'Firefox/') !== false) {
+            $browser = 'Firefox';
+            if (preg_match('/Firefox\/([\d.]+)/i', $userAgent, $matches)) {
+                $browserVersion = $matches[1];
+            }
             $browserEngine = 'Gecko';
-        } elseif (stripos($userAgent, 'Safari') !== false && stripos($userAgent, 'Chrome') === false) {
+        }
+        // Opera
+        elseif (stripos($userAgent, 'Opera/') !== false || stripos($userAgent, 'OPR/') !== false) {
+            $browser = 'Opera';
+            if (preg_match('/(?:Opera|OPR)\/([\d.]+)/i', $userAgent, $matches)) {
+                $browserVersion = $matches[1];
+            }
+            $browserEngine = 'Blink';
+        }
+        // Safari (check last, as it's often included in other browsers)
+        elseif (stripos($userAgent, 'Safari/') !== false && stripos($userAgent, 'Chrome') === false) {
+            $browser = 'Safari';
+            if (preg_match('/Version\/([\d.]+)/i', $userAgent, $matches)) {
+                $browserVersion = $matches[1];
+            }
             $browserEngine = 'WebKit';
+        }
+        // Internet Explorer
+        elseif (stripos($userAgent, 'MSIE') !== false || stripos($userAgent, 'Trident') !== false) {
+            $browser = 'Internet Explorer';
+            if (preg_match('/MSIE\s+([\d.]+)/i', $userAgent, $matches)) {
+                $browserVersion = $matches[1];
+            }
+            $browserEngine = 'Trident';
         }
         
         return [

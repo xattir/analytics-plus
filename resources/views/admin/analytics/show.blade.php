@@ -549,18 +549,66 @@
                 </div>
             </div>
             <div>
-                @if(isset($isAdminRoute) && $isAdminRoute)
-                    <a href="{{ route('admin.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">كود التتبع</a>
-                    @if(isset($isSuperAdmin) && $isSuperAdmin || $site->user_id == auth()->id())
-                        <a href="{{ route('admin.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">إدارة الفريق</a>
-                    @endif
-                @else
-                    <a href="{{ route('user.analytics.tracking-code', ['site' => $site->site_key]) }}" class="btn btn-sm btn-success">كود التتبع</a>
-                    @if($site->user_id == auth()->id())
-                        <a href="{{ route('user.analytics.members', ['site' => $site->site_key]) }}" class="btn btn-sm btn-primary">إدارة الفريق</a>
-                    @endif
-                @endif
+                @php
+                    $isOwner = $site->user_id == auth()->id();
+                    $canManage = (isset($isSuperAdmin) && $isSuperAdmin) || $isOwner;
+                    $trackingCodeRoute = isset($isAdminRoute) && $isAdminRoute 
+                        ? route('admin.analytics.tracking-code', ['site' => $site->site_key])
+                        : route('user.analytics.tracking-code', ['site' => $site->site_key]);
+                    $membersRoute = isset($isAdminRoute) && $isAdminRoute
+                        ? route('admin.analytics.members', ['site' => $site->site_key])
+                        : route('user.analytics.members', ['site' => $site->site_key]);
+                    $destroyRoute = isset($isAdminRoute) && $isAdminRoute
+                        ? route('admin.analytics.destroy', ['site' => $site->id])
+                        : route('user.analytics.destroy', ['site' => $site->id]);
+                @endphp
+                
+                <div class="dropdown" style="display: inline-block;">
+                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        الإجراءات
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown">
+                        <a class="dropdown-item" href="{{ $trackingCodeRoute }}">
+                            <i class="fa fa-code"></i> كود التتبع
+                        </a>
+                        @if($canManage)
+                            <a class="dropdown-item" href="{{ $membersRoute }}">
+                                <i class="fa fa-users"></i> إدارة الفريق
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-danger" href="#" onclick="deleteSite(event, '{{ $destroyRoute }}', '{{ $site->domain }}')">
+                                <i class="fa fa-trash"></i> حذف الموقع
+                            </a>
+                        @endif
+                    </div>
+                </div>
             </div>
+            
+            <script>
+            function deleteSite(event, url, domain) {
+                event.preventDefault();
+                if (confirm('هل أنت متأكد من حذف الموقع "' + domain + '"؟\n\nهذا الإجراء لا يمكن التراجع عنه.')) {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = url;
+                    
+                    var csrfToken = document.createElement('input');
+                    csrfToken.type = 'hidden';
+                    csrfToken.name = '_token';
+                    csrfToken.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfToken);
+                    
+                    var methodInput = document.createElement('input');
+                    methodInput.type = 'hidden';
+                    methodInput.name = '_method';
+                    methodInput.value = 'DELETE';
+                    form.appendChild(methodInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+            </script>
         </div>
     </div>
     
