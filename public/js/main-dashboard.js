@@ -8,12 +8,12 @@ $(document).ready(function() {
         if (isMobile()) {
             // Mobile: Start with aside hidden
             $('.aside').removeClass('active').addClass('in-active');
-            $('.main-content').removeClass('active').addClass('in-active');
+            $('.main-content').removeClass('active');
             $('#body-overlay').removeClass('active');
         } else {
-            // Desktop: Start with aside visible
+            // Desktop: Start with aside visible (default state)
             $('.aside').addClass('active').removeClass('in-active');
-            $('.main-content').addClass('active').removeClass('in-active');
+            $('.main-content').removeClass('active');
         }
     }
     
@@ -42,20 +42,21 @@ $(document).ready(function() {
             if (isVisible) {
                 // Hide aside
                 aside.removeClass('active').addClass('in-active');
-                $('.main-content').removeClass('active').addClass('in-active');
+                $('.main-content').removeClass('active');
                 $('#body-overlay').removeClass('active');
             } else {
                 // Show aside
                 aside.removeClass('in-active').addClass('active');
-                $('.main-content').removeClass('in-active').addClass('active');
+                $('.main-content').removeClass('active');
                 $('#body-overlay').addClass('active');
             }
         } else {
             // Desktop: Toggle aside visibility (original behavior)
+            // When aside is active (visible), toggle to in-active (hidden) and make main-content active (full width)
+            // When aside is in-active (hidden), toggle to active (visible) and make main-content inactive (normal width)
             $('.aside').toggleClass('active');
             $('.aside').toggleClass('in-active');
             $('.main-content').toggleClass('active');
-            $('.main-content').toggleClass('in-active');
         }
     });
     
@@ -65,7 +66,7 @@ $(document).ready(function() {
         e.stopPropagation();
         
         $('.aside').removeClass('active').addClass('in-active');
-        $('.main-content').removeClass('active').addClass('in-active');
+        $('.main-content').removeClass('active');
         $('#body-overlay').removeClass('active');
     });
     
@@ -75,7 +76,7 @@ $(document).ready(function() {
         e.stopPropagation();
         
         $('.aside').removeClass('active').addClass('in-active');
-        $('.main-content').removeClass('active').addClass('in-active');
+        $('.main-content').removeClass('active');
         $(this).removeClass('active');
     });
 $('.settings-tab-opener').on('click',function(){
