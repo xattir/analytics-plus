@@ -385,9 +385,9 @@
                 </div>
                 
                 @php
-                    $last24hData = $site->last_24h_chart_data ?? [];
+                    $activeUsersChartData = $site->active_users_chart_data ?? [];
                 @endphp
-                @if(count($last24hData) > 0)
+                @if(count($activeUsersChartData) > 0)
                 <div class="site-card-chart">
                     <canvas id="chart-{{ $site->id }}"></canvas>
                 </div>
@@ -530,30 +530,39 @@ if (sitesGrid) {
     });
 }
 
-// Initialize charts for each site
+// Initialize charts for each site - Active Users Last 30 Minutes
 @foreach($sites as $site)
     @php
-        $last24hData = $site->last_24h_chart_data ?? [];
+        $activeUsersChartData = $site->active_users_chart_data ?? [];
     @endphp
-    @if(count($last24hData) > 0)
+    @if(count($activeUsersChartData) > 0)
     const ctx{{ $site->id }} = document.getElementById('chart-{{ $site->id }}');
     if (ctx{{ $site->id }}) {
         new Chart(ctx{{ $site->id }}, {
-            type: 'bar',
+            type: 'line',
             data: {
-                labels: Array(24).fill(''),
+                labels: [
+                    @foreach($activeUsersChartData as $point)
+                    "{{ $point['time'] }}",
+                    @endforeach
+                ],
                 datasets: [{
-                    label: 'زيارات آخر 24 ساعة',
+                    label: 'المستخدمون النشطون',
                     data: [
-                        @foreach($last24hData as $point)
+                        @foreach($activeUsersChartData as $point)
                         {{ $point['count'] }},
                         @endforeach
                     ],
-                    backgroundColor: 'rgba(123, 96, 251, 0.6)',
-                    borderColor: 'rgb(123, 96, 251)',
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    borderSkipped: false
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
                 }]
             },
             options: {
@@ -569,8 +578,11 @@ if (sitesGrid) {
                         callbacks: {
                             title: function(context) {
                                 var index = context[0].dataIndex;
-                                var hourData = @json($last24hData);
-                                return hourData[index] ? hourData[index].hour : '';
+                                var chartData = @json($activeUsersChartData);
+                                return chartData[index] ? chartData[index].time : '';
+                            },
+                            label: function(context) {
+                                return 'المستخدمون: ' + context.parsed.y;
                             }
                         }
                     }
@@ -582,7 +594,7 @@ if (sitesGrid) {
                             display: false
                         },
                         grid: {
-                            display: false
+                            color: 'rgba(0, 0, 0, 0.05)'
                         }
                     },
                     x: {

@@ -23,11 +23,10 @@
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
         backdrop-filter: blur(10px);
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        padding: 32px 40px;
-        margin-bottom: 40px;
+        padding: 24px 40px;
+        margin-bottom: 32px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
         position: relative;
-        overflow: hidden;
     }
     
     .analytics-header::before {
@@ -42,9 +41,9 @@
     }
     
     .analytics-header h1 {
-        font-size: 32px;
+        font-size: 28px;
         font-weight: 700;
-        margin: 0 0 8px 0;
+        margin: 0 0 6px 0;
         color: var(--analytics-text);
         letter-spacing: -0.5px;
         position: relative;
@@ -52,17 +51,17 @@
     }
     
     .analytics-header p {
-        font-size: 15px;
+        font-size: 14px;
         color: var(--analytics-text-muted);
-        margin: 0 0 20px 0;
+        margin: 0 0 12px 0;
         position: relative;
         z-index: 1;
     }
     
     .header-stats {
         display: flex;
-        gap: 32px;
-        margin-top: 16px;
+        gap: 20px;
+        margin-top: 12px;
         flex-wrap: wrap;
         position: relative;
         z-index: 1;
@@ -71,10 +70,10 @@
     .header-stat-item {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 13px;
+        gap: 6px;
+        font-size: 12px;
         color: var(--analytics-text-muted);
-        padding: 8px 16px;
+        padding: 6px 12px;
         background: rgba(123, 96, 251, 0.05);
         border-radius: 8px;
         border: 1px solid rgba(123, 96, 251, 0.1);
@@ -104,8 +103,8 @@
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 20px;
-        padding: 32px;
+        border-radius: 16px;
+        padding: 24px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
         position: relative;
@@ -178,17 +177,17 @@
     }
     
     .metric-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 16px;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
+        font-size: 20px;
         position: relative;
         background: linear-gradient(135deg, rgba(123, 96, 251, 0.15) 0%, rgba(123, 96, 251, 0.08) 100%);
         color: var(--analytics-primary);
-        margin-bottom: 20px;
+        margin-bottom: 16px;
         box-shadow: 0 4px 12px rgba(123, 96, 251, 0.15);
         transition: all 0.3s ease;
     }
@@ -213,10 +212,10 @@
     }
     
     .metric-value {
-        font-size: 42px;
+        font-size: 36px;
         font-weight: 800;
         line-height: 1.1;
-        margin: 0 0 8px 0;
+        margin: 0 0 6px 0;
         color: var(--analytics-text);
         letter-spacing: -1px;
         background: linear-gradient(135deg, var(--analytics-text) 0%, var(--analytics-text-muted) 100%);
@@ -236,9 +235,9 @@
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 20px;
-        padding: 32px;
-        margin-bottom: 32px;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 24px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
@@ -262,11 +261,11 @@
     }
     
     .section-title {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 700;
-        margin: 0 0 28px 0;
+        margin: 0 0 16px 0;
         color: var(--analytics-text);
-        padding-bottom: 20px;
+        padding-bottom: 12px;
         border-bottom: 2px solid rgba(123, 96, 251, 0.1);
         position: relative;
         letter-spacing: -0.3px;
@@ -601,9 +600,9 @@
     .source-row {
         display: flex;
         align-items: center;
-        padding: 12px 16px;
-        margin-bottom: 8px;
-        border-radius: 12px;
+        padding: 6px 10px;
+        margin-bottom: 4px;
+        border-radius: 8px;
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.8) 100%);
         border: 1px solid rgba(123, 96, 251, 0.15);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -642,23 +641,23 @@
     }
     
     .source-icon-name {
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 600;
         color: var(--analytics-text);
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         flex: 1;
     }
     
     .source-count {
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 700;
         color: var(--analytics-primary);
         white-space: nowrap;
-        padding: 6px 12px;
+        padding: 4px 8px;
         background: rgba(123, 96, 251, 0.1);
-        border-radius: 8px;
+        border-radius: 6px;
         transition: all 0.2s ease;
     }
     
@@ -669,8 +668,8 @@
     
     .chart-container {
         position: relative;
-        height: 200px;
-        margin-top: 20px;
+        height: 160px;
+        margin-top: 12px;
         padding: 8px;
         border-radius: 12px;
         background: rgba(255, 255, 255, 0.5);
@@ -729,8 +728,8 @@
                         ? route('admin.analytics.members', ['site' => $site->site_key])
                         : route('user.analytics.members', ['site' => $site->site_key]);
                     $destroyRoute = isset($isAdminRoute) && $isAdminRoute
-                        ? route('admin.analytics.destroy', ['site' => $site->id])
-                        : route('user.analytics.destroy', ['site' => $site->id]);
+                        ? route('admin.analytics.destroy', ['site' => $site->site_key])
+                        : route('user.analytics.destroy', ['site' => $site->site_key]);
                 @endphp
                 
                 <div class="dropdown" style="display: inline-block;">
