@@ -178,8 +178,10 @@ class BackendAnalyticsController extends Controller
         // Get time series data
         $timeSeries = $this->getTimeSeries($siteId, $dateFromCarbon, $dateToCarbon);
         
-        // Get top pages
-        $topPages = $this->getTopPages($siteId, $dateFromCarbon, $dateToCarbon);
+        // Get top pages - Last 7 days (for display in sections)
+        $last7DaysStart = Carbon::now()->subDays(7)->startOfDay();
+        $last7DaysEnd = Carbon::now()->endOfDay();
+        $topPages = $this->getTopPages($siteId, $last7DaysStart, $last7DaysEnd);
         
         // Get top entry pages
         $topEntryPages = $this->getTopEntryPages($siteId, $dateFromCarbon, $dateToCarbon);
@@ -187,8 +189,8 @@ class BackendAnalyticsController extends Controller
         // Get top exit pages
         $topExitPages = $this->getTopExitPages($siteId, $dateFromCarbon, $dateToCarbon);
         
-        // Get browser statistics
-        $topBrowsers = $this->getTopBrowsers($siteId, $dateFromCarbon, $dateToCarbon);
+        // Get browser statistics - Last 7 days
+        $topBrowsers = $this->getTopBrowsers($siteId, $last7DaysStart, $last7DaysEnd);
         
         // Get device statistics
         $topDevices = $this->getTopDevices($siteId, $dateFromCarbon, $dateToCarbon);
@@ -278,8 +280,26 @@ class BackendAnalyticsController extends Controller
         // Last 7 days visitors chart
         $visitorsLast7Days = $this->getVisitorsLast7Days($siteId);
         
-        // Top traffic sources
-        $topTrafficSources = $this->getTopTrafficSources($siteId, $dateFromCarbon, $dateToCarbon);
+        // Top traffic sources - Last 7 days
+        $last7DaysStart = Carbon::now()->subDays(7)->startOfDay();
+        $last7DaysEnd = Carbon::now()->endOfDay();
+        $topTrafficSources = $this->getTopTrafficSources($siteId, $last7DaysStart, $last7DaysEnd);
+        
+        // Top pages - Last 7 days
+        $topPages = $this->getTopPages($siteId, $last7DaysStart, $last7DaysEnd);
+        
+        // Top browsers - Last 7 days
+        $topBrowsers = $this->getTopBrowsers($siteId, $last7DaysStart, $last7DaysEnd);
+        
+        // Top countries - Last 30 minutes
+        $last30MinStart = Carbon::now()->subMinutes(30);
+        $topCountriesLast30Min = $this->getTopCountries($siteId, $last30MinStart, Carbon::now());
+        
+        // Top pages - Last 30 minutes
+        $topPagesLast30Min = $this->getTopPagesLast30Minutes($siteId, $last30MinStart);
+        
+        // Top countries - Last 7 days
+        $topCountriesLast7Days = $this->getTopCountries($siteId, $last7DaysStart, $last7DaysEnd);
         
         $isSuperAdmin = $this->isSuperAdmin();
         $isAdminRoute = request()->routeIs('admin.*');
@@ -298,9 +318,12 @@ class BackendAnalyticsController extends Controller
             'visitsWithPaths',
             'visitorsLast7Days',
             'topTrafficSources',
+            'topBrowsers',
+            'topCountriesLast30Min',
+            'topPagesLast30Min',
+            'topCountriesLast7Days',
             'topEntryPages',
             'topExitPages',
-            'topBrowsers',
             'topDevices',
             'topOs',
             'topCountries',
@@ -447,12 +470,29 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopPages($siteId, $dateFrom, $dateTo)
     {
-        return AnalyticsSessionPath::where('site_id', $siteId)
-            ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
-            ->select('path', DB::raw('COUNT(*) as views'))
-            ->groupBy('path')
+        return AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
+            ->join('analytics_sessions', 'analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
+            ->whereBetween('analytics_sessions.first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
+            ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
             ->limit(30)
+            ->get();
+    }
+    
+    /**
+     * Get top pages - Last 30 minutes
+     */
+    private function getTopPagesLast30Minutes($siteId, $startTime)
+    {
+        return AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
+            ->join('analytics_sessions', 'analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
+            ->where('analytics_sessions.last_seen', '>=', $startTime)
+            ->where('analytics_sessions.is_bot', false)
+            ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
+            ->groupBy('analytics_session_paths.path')
+            ->orderByDesc('views')
+            ->limit(10)
             ->get();
     }
 

@@ -1,29 +1,44 @@
 @extends('layouts.admin')
 @section('content')
 <style>
-    /* Hide navbar on analytics show page */
-    .top-nav {
-        display: none !important;
+    /* Hide navbar on analytics show page - Desktop only */
+    @media (min-width: 769px) {
+        .top-nav {
+            display: none !important;
+        }
+        
+        .main-content {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        .main-content > .col-12 {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        .analytics-dashboard {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        .analytics-header {
+            margin-top: 0 !important;
+            padding-top: 32px !important;
+        }
     }
     
-    .main-content {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-    
-    .main-content > .col-12 {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-    
-    .analytics-dashboard {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
-    
-    .analytics-header {
-        margin-top: 0 !important;
-        padding-top: 32px !important;
+    /* On mobile, keep navbar visible and adjust spacing */
+    @media (max-width: 768px) {
+        .analytics-header {
+            margin-top: 0 !important;
+            padding-top: 20px !important;
+        }
+        
+        .analytics-dashboard {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
     }
     .analytics-dashboard {
         --analytics-bg: var(--background-1, #ffffff);
@@ -1179,7 +1194,7 @@
     </div>
     
     <div style="padding: 0 40px 40px;">
-        <!-- HERO SECTION -->
+        <!-- FIRST ROW: Active Users + Top Countries Last 30 Min + Top Pages Last 30 Min -->
         <div class="row mb-5" style="display: flex; align-items: stretch;">
             <!-- ACTIVE USERS (HERO) - نصف الشاشة -->
             <div class="col-lg-6 mb-4">
@@ -1223,10 +1238,99 @@
                 </div>
             </div>
             
-            <!-- TOP TRAFFIC SOURCES - ربع الشاشة -->
+            <!-- TOP COUNTRIES LAST 30 MIN - ربع الشاشة -->
             <div class="col-lg-3 mb-4">
                 <div class="section-card sources-scrollable">
-                    <h2 class="section-title">أفضل المصادر</h2>
+                    <h2 class="section-title">أعلى الدول - آخر 30 دقيقة</h2>
+                    <div class="sources-content">
+                    @if(isset($topCountriesLast30Min) && $topCountriesLast30Min->count() > 0)
+                        @php
+                            $maxCountryCount = $topCountriesLast30Min->first()->count ?? 1;
+                        @endphp
+                        @foreach($topCountriesLast30Min->take(10) as $country)
+                            @php
+                                $countryCode = $country->country ?? null;
+                                $countryNameAr = $countryCode;
+                                $countryFlag = '🌍';
+                                
+                                if ($countryCode) {
+                                    $countries = collect(config('countries'));
+                                    $countryData = $countries->firstWhere('iso2', strtoupper($countryCode));
+                                    if ($countryData) {
+                                        $countryNameAr = $countryData['name_ar'] ?? $countryCode;
+                                        $countryFlag = $countryData['flag'] ?? '🌍';
+                                    }
+                                }
+                                
+                                $countryCount = $country->count ?? 0;
+                                $countryPercent = $maxCountryCount > 0 ? ($countryCount / $maxCountryCount) * 100 : 0;
+                            @endphp
+                            <div class="source-row" style="--progress-width: {{ $countryPercent }}%;">
+                                <div class="source-row-content">
+                                    <span class="source-icon-name">
+                                        <span>{{ $countryFlag }} {{ $countryNameAr }}</span>
+                                    </span>
+                                    <span class="source-count">{{ number_format($countryCount) }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="empty-state">
+                            <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            <p class="empty-state-text">لا توجد بيانات</p>
+                        </div>
+                    @endif
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TOP PAGES LAST 30 MIN - ربع الشاشة -->
+            <div class="col-lg-3 mb-4">
+                <div class="section-card sources-scrollable">
+                    <h2 class="section-title">أعلى الصفحات - آخر 30 دقيقة</h2>
+                    <div class="sources-content">
+                    @if(isset($topPagesLast30Min) && $topPagesLast30Min->count() > 0)
+                        @php
+                            $maxPageViews = $topPagesLast30Min->first()->views ?? 1;
+                        @endphp
+                        @foreach($topPagesLast30Min->take(10) as $page)
+                            @php
+                                $decodedPath = urldecode($page->path);
+                                $pageViews = $page->views ?? 0;
+                                $pagePercent = $maxPageViews > 0 ? ($pageViews / $maxPageViews) * 100 : 0;
+                            @endphp
+                            <div class="source-row" style="--progress-width: {{ $pagePercent }}%;">
+                                <div class="source-row-content">
+                                    <span class="source-icon-name">
+                                        <span style="font-family: 'Monaco', 'Menlo', 'Courier New', monospace; font-size: 11px;">{{ Str::limit($decodedPath, 40) }}</span>
+                                    </span>
+                                    <span class="source-count">{{ number_format($pageViews) }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="empty-state">
+                            <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <p class="empty-state-text">لا توجد بيانات</p>
+                        </div>
+                    @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECOND ROW: Top Sources Last 7 Days + Top Countries Last 7 Days + Visitors Last 7 Days -->
+        <div class="row mb-5" style="display: flex; align-items: stretch;">
+            <!-- TOP TRAFFIC SOURCES LAST 7 DAYS - ثلث الشاشة -->
+            <div class="col-lg-4 mb-4">
+                <div class="section-card sources-scrollable">
+                    <h2 class="section-title">أفضل المصادر - آخر 7 أيام</h2>
                     <div class="sources-content">
                     @if(isset($topTrafficSources) && $topTrafficSources->count() > 0)
                         @php
@@ -1297,8 +1401,57 @@
                 </div>
             </div>
             
-            <!-- VISITORS OVER TIME - ربع الشاشة -->
-            <div class="col-lg-3 mb-4">
+            <!-- TOP COUNTRIES LAST 7 DAYS - ثلث الشاشة -->
+            <div class="col-lg-4 mb-4">
+                <div class="section-card sources-scrollable">
+                    <h2 class="section-title">أعلى الدول - آخر 7 أيام</h2>
+                    <div class="sources-content">
+                    @if(isset($topCountriesLast7Days) && $topCountriesLast7Days->count() > 0)
+                        @php
+                            $maxCountryCount = $topCountriesLast7Days->first()->count ?? 1;
+                        @endphp
+                        @foreach($topCountriesLast7Days->take(10) as $country)
+                            @php
+                                $countryCode = $country->country ?? null;
+                                $countryNameAr = $countryCode;
+                                $countryFlag = '🌍';
+                                
+                                if ($countryCode) {
+                                    $countries = collect(config('countries'));
+                                    $countryData = $countries->firstWhere('iso2', strtoupper($countryCode));
+                                    if ($countryData) {
+                                        $countryNameAr = $countryData['name_ar'] ?? $countryCode;
+                                        $countryFlag = $countryData['flag'] ?? '🌍';
+                                    }
+                                }
+                                
+                                $countryCount = $country->count ?? 0;
+                                $countryPercent = $maxCountryCount > 0 ? ($countryCount / $maxCountryCount) * 100 : 0;
+                            @endphp
+                            <div class="source-row" style="--progress-width: {{ $countryPercent }}%;">
+                                <div class="source-row-content">
+                                    <span class="source-icon-name">
+                                        <span>{{ $countryFlag }} {{ $countryNameAr }}</span>
+                                    </span>
+                                    <span class="source-count">{{ number_format($countryCount) }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="empty-state">
+                            <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            <p class="empty-state-text">لا توجد بيانات</p>
+                        </div>
+                    @endif
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VISITORS OVER TIME - ثلث الشاشة -->
+            <div class="col-lg-4 mb-4">
                 <div class="section-card">
                     <h2 class="section-title">الزوار - آخر 7 أيام</h2>
                     <div class="chart-container" style="margin-top: 16px;">
@@ -1313,7 +1466,7 @@
             <!-- TOP PAGES -->
             <div class="col-lg-4 mb-4">
                 <div class="section-card">
-                    <h2 class="section-title">أفضل الصفحات</h2>
+                    <h2 class="section-title">أفضل الصفحات - آخر 7 أيام</h2>
                     @if($topPages->count() > 0)
                         @php
                             $maxVisits = $topPages->first()->views ?? 1;
@@ -1593,7 +1746,7 @@
             <div class="col-lg-4 mb-4">
                 @if($topBrowsers->count() > 0)
                 <div class="section-card">
-                    <h2 class="section-title">المتصفحات</h2>
+                    <h2 class="section-title">المتصفحات - آخر 7 أيام</h2>
                     <div class="chart-container" style="height: 250px;">
                         <canvas id="browsersChart"></canvas>
                     </div>
