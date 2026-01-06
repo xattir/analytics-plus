@@ -154,27 +154,28 @@
         }
         
         .aside .sites-section {
-            margin-top: 16px;
-            padding-top: 16px;
+            margin-top: 12px;
+            padding-top: 12px;
             border-top: 1px solid rgba(0, 0, 0, 0.08);
         }
         
         .aside .sites-section-title {
             color: #6b7280 !important;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            padding: 0 16px 12px;
-            margin-bottom: 8px;
+            padding: 0 12px 8px;
+            margin-bottom: 4px;
         }
         
         .aside .site-item {
-            padding: 10px 12px !important;
-            margin: 3px 0;
-            border-radius: 10px;
+            padding: 6px 10px !important;
+            margin: 2px 0;
+            border-radius: 8px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid transparent;
+            min-height: auto;
         }
         
         .aside .site-item:hover {
@@ -189,31 +190,34 @@
         }
         
         .aside .site-item img {
-            width: 22px !important;
-            height: 22px !important;
-            border-radius: 6px !important;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 18px !important;
+            height: 18px !important;
+            border-radius: 4px !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .aside .site-item-title {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             color: #374151;
+            line-height: 1.3;
         }
         
         .aside .site-item-domain {
-            font-size: 11px;
+            font-size: 10px;
             color: #9ca3af;
-            margin-top: 2px;
+            margin-top: 1px;
+            line-height: 1.2;
         }
         
         .aside .add-site-button {
             background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
             border: 2px dashed rgba(123, 96, 251, 0.3) !important;
-            border-radius: 10px !important;
-            padding: 12px !important;
-            margin-top: 8px;
+            border-radius: 8px !important;
+            padding: 8px 10px !important;
+            margin-top: 6px;
             transition: all 0.25s ease;
+            font-size: 12px;
         }
         
         .aside .add-site-button:hover {
@@ -462,14 +466,14 @@
                                     @php
                                         $isActive = request()->routeIs('admin.analytics.show') && request()->route('site') && (is_string(request()->route('site')) ? request()->route('site') == $site->site_key : request()->route('site')->site_key == $site->site_key);
                                     @endphp
-                                    <div class="col-12 site-item px-0 d-flex {{ $isActive ? 'active' : '' }}">
-                                        <div style="width: 50px" class="px-3 text-center d-flex align-items-center justify-content-center">
+                                    <div class="col-12 site-item px-0 d-flex align-items-center {{ $isActive ? 'active' : '' }}">
+                                        <div style="width: 40px; flex-shrink: 0;" class="px-2 text-center d-flex align-items-center justify-content-center">
                                             <img src="https://icons.duckduckgo.com/ip3/{{ $site->domain }}.ico" 
                                                  alt="" 
                                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                                            <span class="fal fa-chart-line font-2" style="display: none; color: #7b60fb;"></span>
+                                            <span class="fal fa-chart-line font-2" style="display: none; color: #7b60fb; font-size: 14px;"></span>
                                         </div>
-                                        <div style="width: calc(100% - 50px)" class="px-2">
+                                        <div style="width: calc(100% - 40px); min-width: 0;" class="px-2">
                                             <div class="site-item-title">{{ $site->title ?? $site->domain }}</div>
                                             @if($site->title && $site->title !== $site->domain)
                                             <div class="site-item-domain">{{ $site->domain }}</div>
@@ -480,11 +484,11 @@
                             @endforeach
                         @endif
                         <a href="{{ route('admin.analytics.create') }}" class="col-12 px-0">
-                            <div class="col-12 add-site-button px-0 d-flex">
-                                <div style="width: 50px" class="px-3 text-center d-flex align-items-center justify-content-center">
-                                    <span class="fal fa-plus font-2"></span>
+                            <div class="col-12 add-site-button px-0 d-flex align-items-center">
+                                <div style="width: 40px; flex-shrink: 0;" class="px-2 text-center d-flex align-items-center justify-content-center">
+                                    <span class="fal fa-plus font-2" style="font-size: 14px;"></span>
                                 </div>
-                                <div style="width: calc(100% - 50px)" class="px-2 item-container-title">
+                                <div style="width: calc(100% - 40px); min-width: 0;" class="px-2 item-container-title">
                                     إضافة موقع جديد
                                 </div>
                             </div>
