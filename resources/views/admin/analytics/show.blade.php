@@ -187,6 +187,8 @@
         height: 100%;
         display: flex;
         flex-direction: column;
+        overflow: visible;
+        z-index: 1;
     }
     
     .site-card:hover {
@@ -1067,18 +1069,18 @@
                         : route('user.analytics.destroy', ['site' => $site->site_key]);
                 @endphp
                 
-                <div class="dropdown" style="display: inline-block; position: relative; z-index: 1050;">
+                <div class="dropdown" style="display: inline-block; position: relative; z-index: 2000;">
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fa fa-cog" style="margin-left: 6px;"></i>
                         الإجراءات
                     </button>
-                    <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown" style="z-index: 1051; position: absolute;">
+                    <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown" style="z-index: 2001; position: absolute;">
                         <a class="dropdown-item" href="{{ $trackingCodeRoute }}">
                             <i class="fa fa-code"></i> كود التتبع
                         </a>
                         @if($canManage)
-                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editTitleModal">
-                                <i class="fa fa-edit"></i> تعديل العنوان
+                            <a class="dropdown-item" href="{{ request()->routeIs('admin.*') ? route('admin.analytics.edit', ['site' => $site->site_key]) : route('user.analytics.edit', ['site' => $site->site_key]) }}">
+                                <i class="fa fa-edit"></i> تعديل الموقع
                             </a>
                             <a class="dropdown-item" href="{{ $membersRoute }}">
                                 <i class="fa fa-users"></i> إدارة الفريق
@@ -1090,33 +1092,6 @@
                         @endif
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal for Edit Title - Outside header -->
-    <div class="modal fade" id="editTitleModal" tabindex="-1" aria-labelledby="editTitleModalLabel" aria-hidden="true" style="z-index: 1060;">
-        <div class="modal-dialog" style="z-index: 1061;">
-            <div class="modal-content" style="z-index: 1062;">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editTitleModalLabel">تعديل عنوان الموقع</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="editTitleForm" method="POST" action="{{ request()->routeIs('admin.*') ? route('admin.analytics.update-title', ['site' => $site->site_key]) : route('user.analytics.update-title', ['site' => $site->site_key]) }}">
-                    @csrf
-                    @method('PUT')
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="siteTitleInput">عنوان الموقع</label>
-                            <input type="text" class="form-control" id="siteTitleInput" name="title" value="{{ $site->title ?? '' }}" placeholder="{{ $site->domain }}">
-                            <small class="form-text text-muted">اتركه فارغاً للعودة إلى اسم النطاق الافتراضي</small>
-                        </div>
-                    </div>
-                    <div class="modal-footer px-4 py-2" >
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                        <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -1145,55 +1120,6 @@
                     form.submit();
                 }
             }
-            
-            // Handle edit title form submission
-            document.getElementById('editTitleForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                var form = this;
-                var formData = new FormData(form);
-                var submitBtn = form.querySelector('button[type="submit"]');
-                var originalText = submitBtn.textContent;
-                
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'جاري الحفظ...';
-                
-                fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData
-                })
-                .then(function(response) {
-                    return response.json();
-                })
-                .then(function(data) {
-                    if (data.success) {
-                        alert('تم تحديث عنوان الموقع بنجاح!');
-                        // Close modal
-                        var modalElement = document.getElementById('editTitleModal');
-                        var modal = bootstrap.Modal.getInstance(modalElement);
-                        if (modal) {
-                            modal.hide();
-                        }
-                        // Reload page to show updated title
-                        window.location.reload();
-                    } else {
-                        alert('حدث خطأ أثناء تحديث العنوان');
-                    }
-                })
-                .catch(function(error) {
-                    console.error('Error:', error);
-                    alert('حدث خطأ أثناء تحديث العنوان');
-                })
-                .finally(function() {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = originalText;
-                });
-            });
             </script>
         </div>
     </div>

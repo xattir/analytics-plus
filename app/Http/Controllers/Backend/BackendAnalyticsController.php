@@ -1161,9 +1161,22 @@ HTML;
     }
     
     /**
-     * Update site title
+     * Show the form for editing the specified site
      */
-    public function updateTitle(Request $request, AnalyticsSite $site)
+    public function edit(AnalyticsSite $site)
+    {
+        // Check authorization
+        if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
+            abort(403, 'You do not have access to this site.');
+        }
+        
+        return view('admin.analytics.edit', compact('site'));
+    }
+    
+    /**
+     * Update the specified site
+     */
+    public function update(Request $request, AnalyticsSite $site)
     {
         // Check authorization
         if (!$this->isSuperAdmin() && !$site->canAccess(auth()->id())) {
@@ -1171,21 +1184,20 @@ HTML;
         }
         
         $request->validate([
+            'domain' => 'required|string|max:255',
             'title' => 'nullable|string|max:255',
         ]);
         
+        $site->domain = $request->domain;
         $site->title = $request->input('title') ?: null;
         $site->save();
         
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'title' => $site->title,
-                'domain' => $site->domain,
-            ]);
-        }
+        $redirectRoute = request()->routeIs('admin.*') 
+            ? route('admin.analytics.show', $site->site_key)
+            : route('user.analytics.show', $site->site_key);
         
-        return back()->with('success', 'تم تحديث عنوان الموقع بنجاح.');
+        return redirect($redirectRoute)
+            ->with('success', 'تم تحديث الموقع بنجاح.');
     }
     
     /**
