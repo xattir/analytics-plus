@@ -554,6 +554,12 @@
     <form method="POST" action="{{route('logout')}}" id="logout-form" class="d-none">@csrf</form>
     <div class="col-12 d-flex">
         <div style="width: 260px;background: #ffffff;min-height: 100vh;position: fixed;z-index: 900;box-shadow: 0 0 1rem rgba(0,0,0,.1)!important;" class="aside active">
+            <!-- Mobile Close Button -->
+            <div class="aside-mobile-close d-flex d-md-none justify-content-end align-items-center px-3 py-2" style="border-bottom: 1px solid rgba(0, 0, 0, 0.08);">
+                <button class="asideToggle d-flex justify-content-center align-items-center" style="width: 36px;height: 36px;border: none;background: transparent;border-radius: 8px;cursor: pointer;transition: all 0.3s ease;">
+                    <span class="fal fa-times font-4" style="color: var(--color-2);"></span>
+                </button>
+            </div>
         <div class="col-12 px-0 user-profile-section">
             <a href="{{route('admin.profile.edit')}}">
                 <img src="{{auth()->user()->getUserAvatar()}}" class="d-inline-block">

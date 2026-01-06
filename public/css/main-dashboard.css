@@ -160,13 +160,13 @@ thead th {
         width: 100% !important;
     }
     .aside {
-        right: -260px;
+        right: -280px;
     }
     .aside.active {
-        right: 0px;
+        right: -280px;
     }
     .aside.in-active {
-        right: -260px;
+        right: 0px;
     }
     #loading-image-container{
         width: 100%;
