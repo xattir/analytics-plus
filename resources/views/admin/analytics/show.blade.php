@@ -1687,53 +1687,38 @@
                                         @php
                                             $browser = strtolower($visit['browser'] ?? '');
                                             $version = $visit['browser_version'] ?? '';
-                                            $browserIconUrl = '';
+                                            $browserIcon = '';
                                             $browserName = '';
-                                            $browserColor = '#6b7280';
                                             
                                             if (strpos($browser, 'chrome') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg';
                                                 $browserName = 'Chrome';
-                                                $browserColor = '#4285F4';
-                                                $browserIconUrl = 'https://cdn.jsdelivr.net/npm/browser-logos@2.1.0/src/chrome/chrome_48x48.png';
                                             } elseif (strpos($browser, 'safari') !== false && strpos($browser, 'chrome') === false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/safari.svg';
                                                 $browserName = 'Safari';
-                                                $browserColor = '#000000';
-                                                $browserIconUrl = 'https://cdn.jsdelivr.net/npm/browser-logos@2.1.0/src/safari/safari_48x48.png';
                                             } elseif (strpos($browser, 'firefox') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/firefox.svg';
                                                 $browserName = 'Firefox';
-                                                $browserColor = '#FF7139';
-                                                $browserIconUrl = 'https://cdn.jsdelivr.net/npm/browser-logos@2.1.0/src/firefox/firefox_48x48.png';
                                             } elseif (strpos($browser, 'edge') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/microsoftedge.svg';
                                                 $browserName = 'Edge';
-                                                $browserColor = '#0078D4';
-                                                $browserIconUrl = 'https://cdn.jsdelivr.net/npm/browser-logos@2.1.0/src/edge/edge_48x48.png';
                                             } elseif (strpos($browser, 'opera') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/opera.svg';
                                                 $browserName = 'Opera';
-                                                $browserColor = '#FF1B2D';
-                                                $browserIconUrl = 'https://cdn.jsdelivr.net/npm/browser-logos@2.1.0/src/opera/opera_48x48.png';
-                                            } elseif (strpos($browser, 'internet explorer') !== false || strpos($browser, 'ie') !== false) {
+                                            } elseif (strpos($browser, 'internet explorer') !== false) {
+                                                $browserIcon = 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/internetexplorer.svg';
                                                 $browserName = 'Internet Explorer';
-                                                $browserColor = '#0076D6';
-                                                $browserIconUrl = 'https://cdn.jsdelivr.net/npm/browser-logos@2.1.0/src/archive/internet-explorer_9-11/internet-explorer_9-11_48x48.png';
                                             } else {
                                                 $browserName = $visit['browser'] ?? 'Unknown';
                                             }
                                         @endphp
-                                        @if($browserIconUrl)
-                                            <span title="{{ $browserName }} {{ $version }}" style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
-                                                <img src="{{ $browserIconUrl }}" alt="{{ $browserName }}" style="width: 20px; height: 20px; flex-shrink: 0; object-fit: contain;" onerror="this.style.display='none'">
-                                                <span style="font-weight: 600; color: {{ $browserColor }};">{{ $browserName }}</span>
-                                                @if($version)
-                                                <span style="font-size: 11px; color: var(--analytics-text-muted, #6b7280); font-weight: 400;">{{ $version }}</span>
-                                                @endif
+                                        @if($browserIcon)
+                                            <span title="{{ $browserName }} {{ $version }}" style="display: inline-flex; align-items: center; gap: 6px;">
+                                                <img src="{{ $browserIcon }}" alt="{{ $browserName }}" style="width: 18px; height: 18px;" onerror="this.style.display='none'">
+                                                <span>{{ $browserName }}</span>
                                             </span>
                                         @else
-                                            <span title="{{ $browserName }} {{ $version }}" style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
-                                                <span style="font-weight: 600; color: var(--analytics-text-muted, #6b7280);">{{ $browserName }}</span>
-                                                @if($version)
-                                                <span style="font-size: 11px; color: var(--analytics-text-muted, #6b7280); font-weight: 400;">{{ $version }}</span>
-                                                @endif
-                                            </span>
+                                            <span title="{{ $browserName }} {{ $version }}">{{ $browserName }}</span>
                                         @endif
                                     </td>
                                     <td class="visits-table-paths-count">
