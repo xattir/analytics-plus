@@ -252,7 +252,10 @@
                         @if($analyticsSites->count() > 0)
                             @foreach($analyticsSites as $site)
                                 <a href="{{ route('admin.analytics.show', ['site' => $site->site_key]) }}" class="col-12 px-0">
-                                    <div class="col-12 item-container px-0 d-flex {{ request()->routeIs('admin.analytics.show') && request()->route('site') == $site->site_key ? 'active' : '' }}">
+                                    @php
+                                        $isActive = request()->routeIs('admin.analytics.show') && request()->route('site') && (is_string(request()->route('site')) ? request()->route('site') == $site->site_key : request()->route('site')->site_key == $site->site_key);
+                                    @endphp
+                                    <div class="col-12 item-container px-0 d-flex {{ $isActive ? 'active' : '' }}">
                                         <div style="width: 50px" class="px-3 text-center">
                                             <img src="https://icons.duckduckgo.com/ip3/{{ $site->domain }}.ico" 
                                                  alt="" 
