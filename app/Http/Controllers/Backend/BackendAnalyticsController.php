@@ -1293,16 +1293,17 @@ HTML;
             }
             
             // Get session IDs from paths
-            $pathsQuery = AnalyticsSessionPath::where('site_id', $siteId)
-                ->whereBetween('created_at', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()]);
+            $pathsQuery = AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
+                ->join('analytics_sessions', 'analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
+                ->whereBetween('analytics_sessions.first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()]);
             
             if ($matchType === 'exact') {
-                $pathsQuery->where('path', $searchPath);
+                $pathsQuery->where('analytics_session_paths.path', $searchPath);
             } else { // prefix
-                $pathsQuery->where('path', 'LIKE', $searchPath . '%');
+                $pathsQuery->where('analytics_session_paths.path', 'LIKE', $searchPath . '%');
             }
             
-            $sessionIds = $pathsQuery->pluck('session_id')->unique();
+            $sessionIds = $pathsQuery->pluck('analytics_session_paths.session_id')->unique();
         }
         
         if ($sessionIds->isEmpty()) {
@@ -1451,7 +1452,8 @@ HTML;
     {
         return AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
             ->whereIn('analytics_session_paths.session_id', $sessionIds)
-            ->whereBetween('analytics_session_paths.created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            ->join('analytics_sessions', 'analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
+            ->whereBetween('analytics_sessions.first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
