@@ -17,16 +17,15 @@
         background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
         padding: 0;
         margin: 0;
-        margin-top: -55px !important;
     }
     
     .analytics-header {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
         backdrop-filter: blur(20px);
         border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-        padding: 24px 40px;
+        padding: 32px 40px;
         margin-bottom: 32px;
-        margin-top: 55px;
+        margin-top: 0;
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
         position: relative;
         z-index: 1;
@@ -185,11 +184,23 @@
         transition: box-shadow 0.2s, border-color 0.2s;
         position: relative;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
     
     .site-card:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         border-color: var(--analytics-primary, #7b60fb);
+    }
+    
+    .site-card-stats {
+        flex-shrink: 0;
+    }
+    
+    .site-card-chart {
+        flex: 1;
+        min-height: 80px;
     }
     
     .site-card-header {
@@ -457,6 +468,19 @@
         color: var(--analytics-active);
     }
     
+    /* First 3 sections equal height */
+    .row.mb-5 > div {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .row.mb-5 > div > .site-card,
+    .row.mb-5 > div > .section-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
     .section-card {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
         backdrop-filter: blur(10px);
@@ -474,6 +498,20 @@
     .section-card.sources-scrollable {
         display: flex;
         flex-direction: column;
+    }
+    
+    .section-card .section-title {
+        flex-shrink: 0;
+    }
+    
+    .section-card .chart-container {
+        flex: 1;
+        min-height: 200px;
+    }
+    
+    .section-card.sources-scrollable .sources-content {
+        flex: 1;
+        min-height: 0;
     }
     
     .section-card.sources-scrollable .sources-content {
@@ -1162,7 +1200,7 @@
     
     <div style="padding: 0 40px 40px;">
         <!-- HERO SECTION -->
-        <div class="row mb-5">
+        <div class="row mb-5" style="display: flex; align-items: stretch;">
             <!-- ACTIVE USERS (HERO) - نصف الشاشة -->
             <div class="col-lg-6 mb-4">
                 <div class="site-card">
