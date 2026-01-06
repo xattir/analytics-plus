@@ -27,6 +27,8 @@
         margin-bottom: 32px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
         position: relative;
+        z-index: 1;
+        overflow: visible;
     }
     
     .analytics-header::before {
@@ -767,7 +769,7 @@
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="siteActionsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%); border: 1px solid rgba(123, 96, 251, 0.2); border-radius: 10px; padding: 10px 20px; font-weight: 600; color: var(--analytics-primary); transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(123, 96, 251, 0.1);">
                         الإجراءات
                     </button>
-                    <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown" style="z-index: 1051;">
+                    <div class="dropdown-menu dropdown-menu-left" aria-labelledby="siteActionsDropdown" style="z-index: 1051; position: absolute;">
                         <a class="dropdown-item" href="{{ $trackingCodeRoute }}">
                             <i class="fa fa-code"></i> كود التتبع
                         </a>
@@ -1290,12 +1292,12 @@
 @section('scripts')
 <script src="/js/chartjs.min.js"></script>
 <script>
-// Active Users Chart (Hero - Last 30 minutes)
+// Active Users Chart (Hero - Last 30 minutes) - Bar Chart with 24 bars
 @if(isset($activeUsersData) && count($activeUsersData) > 0)
 const activeUsersCtx = document.getElementById('activeUsersChart');
 if (activeUsersCtx) {
     new Chart(activeUsersCtx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: [
                 @foreach($activeUsersData as $point)
@@ -1309,16 +1311,11 @@ if (activeUsersCtx) {
                     {{ $point['count'] }},
                     @endforeach
                 ],
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                backgroundColor: 'rgba(16, 185, 129, 0.6)',
                 borderColor: '#10b981',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                pointBackgroundColor: '#10b981',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2
+                borderWidth: 1,
+                borderRadius: 3,
+                borderSkipped: false
             }]
         },
         options: {
@@ -1327,19 +1324,30 @@ if (activeUsersCtx) {
             plugins: {
                 legend: {
                     display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        title: function(context) {
+                            var index = context[0].dataIndex;
+                            var chartData = @json($activeUsersData);
+                            return chartData[index] ? chartData[index].time : '';
+                        },
+                        label: function(context) {
+                            return 'المستخدمون: ' + context.parsed.y;
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
+                        display: false
                     },
                     ticks: {
-                        font: {
-                            size: 11
-                        },
-                        stepSize: 1
+                        display: false
                     }
                 },
                 x: {
@@ -1347,9 +1355,7 @@ if (activeUsersCtx) {
                         display: false
                     },
                     ticks: {
-                        font: {
-                            size: 11
-                        }
+                        display: false
                     }
                 }
             }

@@ -668,14 +668,14 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
-     * Get active users chart data (last 30 minutes, 6 data points)
+     * Get active users chart data (last 30 minutes, 24 data points - every 1.25 minutes)
      */
     private function getActiveUsersChartData($siteId, $startTime)
     {
         $data = [];
-        $interval = 5; // 5-minute intervals (6 points for 30 minutes)
+        $interval = 1.25; // 1.25-minute intervals (24 points for 30 minutes)
         
-        for ($i = 0; $i < 6; $i++) {
+        for ($i = 0; $i < 24; $i++) {
             $pointStart = $startTime->copy()->addMinutes($i * $interval);
             $pointEnd = $pointStart->copy()->addMinutes($interval);
             
