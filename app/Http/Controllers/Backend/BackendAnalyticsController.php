@@ -348,11 +348,11 @@ class BackendAnalyticsController extends Controller
         ]);
         
         $redirectRoute = request()->routeIs('admin.*') 
-            ? route('admin.analytics.show', $site->site_key)
-            : route('user.analytics.show', $site->site_key);
+            ? route('admin.analytics.tracking-code', $site->site_key)
+            : route('user.analytics.tracking-code', $site->site_key);
         
         return redirect($redirectRoute)
-            ->with('success', 'Analytics site created successfully. Use the tracking code below.');
+            ->with('success', 'تم إنشاء موقع التحليلات بنجاح. استخدم كود التتبع أدناه.');
     }
     
     /**
