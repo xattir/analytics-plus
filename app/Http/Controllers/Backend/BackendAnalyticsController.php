@@ -1256,7 +1256,7 @@ HTML;
         }
         
         // Check if there's a pending invitation
-        $existingInvitation = AnalyticsSiteInvitation::where('site_id', $siteId)
+        $existingInvitation = AnalyticsSiteInvitation::where('site_id', $site->id)
             ->where('email', $email)
             ->where('status', 'pending')
             ->first();
@@ -1267,7 +1267,7 @@ HTML;
         
         // Create invitation
         $invitation = AnalyticsSiteInvitation::create([
-            'site_id' => $siteId,
+            'site_id' => $site->id,
             'invited_by' => auth()->id(),
             'email' => $email,
             'token' => AnalyticsSiteInvitation::generateToken(),
@@ -1284,7 +1284,7 @@ HTML;
     /**
      * Accept invitation
      */
-    public function acceptInvitation($token)
+    public function acceptInvitation(Request $request, $token)
     {
         $invitation = AnalyticsSiteInvitation::where('token', $token)
             ->where('status', 'pending')
@@ -1292,7 +1292,9 @@ HTML;
             ->firstOrFail();
         
         if ($invitation->isExpired()) {
-            return redirect()->route('user.analytics.index')
+            $isAdminRoute = request()->routeIs('admin.*');
+            $route = $isAdminRoute ? 'admin.analytics.index' : 'user.analytics.index';
+            return redirect()->route($route)
                 ->with('error', 'This invitation has expired.');
         }
         
@@ -1304,6 +1306,18 @@ HTML;
         
         $user = auth()->user();
         
+        // Check if user is already a member
+        if ($invitation->site->canAccess($user->id)) {
+            $invitation->update([
+                'status' => 'accepted',
+                'accepted_at' => Carbon::now(),
+            ]);
+            $isAdminRoute = request()->routeIs('admin.*');
+            $route = $isAdminRoute ? 'admin.analytics.index' : 'user.analytics.index';
+            return redirect()->route($route)
+                ->with('info', 'You already have access to this site.');
+        }
+        
         // Add user to site
         $invitation->site->users()->attach($user->id);
         
@@ -1313,24 +1327,33 @@ HTML;
             'accepted_at' => Carbon::now(),
         ]);
         
-        return redirect()->route('user.analytics.show', $invitation->site->site_key)
-            ->with('success', 'Invitation accepted! You now have access to this site.');
+        $isAdminRoute = request()->routeIs('admin.*');
+        $route = $isAdminRoute ? 'admin.analytics.index' : 'user.analytics.index';
+        return redirect()->route($route)
+            ->with('success', 'Invitation accepted! You now have access to ' . ($invitation->site->title ?? $invitation->site->domain) . '.');
     }
     
     /**
      * Reject invitation
      */
-    public function rejectInvitation($token)
+    public function rejectInvitation(Request $request, $token)
     {
         $invitation = AnalyticsSiteInvitation::where('token', $token)
             ->where('status', 'pending')
             ->firstOrFail();
         
+        // Check if user is logged in and email matches
+        if (!auth()->check() || auth()->user()->email !== $invitation->email) {
+            abort(403, 'You can only reject invitations sent to your email.');
+        }
+        
         $invitation->update([
             'status' => 'rejected',
         ]);
         
-        return redirect()->route('user.analytics.index')
+        $isAdminRoute = request()->routeIs('admin.*');
+        $route = $isAdminRoute ? 'admin.analytics.index' : 'user.analytics.index';
+        return redirect()->route($route)
             ->with('success', 'Invitation rejected.');
     }
     

@@ -371,17 +371,57 @@
 <div class="col-12 p-3">
     
     @if(isset($pendingInvitations) && $pendingInvitations->count() > 0)
-    <div class="alert alert-info mb-3">
-        <h5>الدعوات المعلقة</h5>
-        <ul class="mb-0">
-            @foreach($pendingInvitations as $invitation)
-            <li>
-                تمت دعوتك لإدارة <strong>{{ $invitation->site->domain }}</strong>
-                <a href="{{ route('user.analytics.accept-invitation', $invitation->token) }}" class="btn btn-sm btn-success ml-2">قبول</a>
-                <a href="{{ route('user.analytics.reject-invitation', $invitation->token) }}" class="btn btn-sm btn-danger ml-2">رفض</a>
-            </li>
-            @endforeach
-        </ul>
+    <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px;">
+            <div class="card-body p-4">
+                <h5 class="mb-3" style="color: white; font-weight: 600;">
+                    <i class="fas fa-envelope-open-text"></i> الدعوات المعلقة ({{ $pendingInvitations->count() }})
+                </h5>
+                <div class="row">
+                    @foreach($pendingInvitations as $invitation)
+                    <div class="col-12 col-md-6 mb-3">
+                        <div class="card" style="background: rgba(255,255,255,0.95); border-radius: 8px;">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1" style="font-weight: 600; color: #333;">
+                                            <i class="fas fa-globe text-primary"></i> {{ $invitation->site->title ?? $invitation->site->domain }}
+                                        </h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar"></i> {{ $invitation->created_at->diffForHumans() }}
+                                        </small>
+                                        @if($invitation->isExpired())
+                                        <span class="badge bg-warning text-dark ms-2">منتهية الصلاحية</span>
+                                        @endif
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        @php
+                                            $isAdminRoute = isset($isSuperAdmin) && $isSuperAdmin;
+                                            $acceptRoute = $isAdminRoute ? 'admin.analytics.accept-invitation' : 'user.analytics.accept-invitation';
+                                            $rejectRoute = $isAdminRoute ? 'admin.analytics.reject-invitation' : 'user.analytics.reject-invitation';
+                                        @endphp
+                                        <form action="{{ route($acceptRoute, $invitation->token) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success" style="border-radius: 6px;">
+                                                <i class="fas fa-check"></i> قبول
+                                            </button>
+                                        </form>
+                                        <form action="{{ route($rejectRoute, $invitation->token) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('POST')
+                                            <button type="submit" class="btn btn-sm btn-danger" style="border-radius: 6px;" onclick="return confirm('هل أنت متأكد من رفض هذه الدعوة؟')">
+                                                <i class="fas fa-times"></i> رفض
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
     </div>
     @endif
     

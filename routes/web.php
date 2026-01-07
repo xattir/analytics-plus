@@ -139,6 +139,8 @@ Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->gr
         Route::post('analytics/{site}/invite', [BackendAnalyticsController::class, 'sendInvitation'])->name('analytics.invite');
         Route::post('analytics/{site}/remove-member', [BackendAnalyticsController::class, 'removeMember'])->name('analytics.remove-member');
         Route::delete('analytics/invitations/{invitation}', [BackendAnalyticsController::class, 'cancelInvitation'])->name('analytics.cancel-invitation');
+        Route::post('analytics/invitations/{token}/accept', [BackendAnalyticsController::class, 'acceptInvitation'])->name('analytics.accept-invitation');
+        Route::post('analytics/invitations/{token}/reject', [BackendAnalyticsController::class, 'rejectInvitation'])->name('analytics.reject-invitation');
         
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/',[BackendSettingController::class,'index'])->name('index');
