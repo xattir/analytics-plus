@@ -319,9 +319,9 @@ class BackendAnalyticsController extends Controller
             ->where('is_bot', false)
             ->exists();
         
-        // Visits & Paths (TEMPORARILY DISABLED for performance testing)
+        // Visits & Paths (for expandable paths section)
         $referrerFilter = $request->get('referrer_filter', 'external'); // Default: external only
-        $visitsWithPaths = collect([]); // $this->getVisitsWithPaths($siteId, $dateFromCarbon, $dateToCarbon, $site, 20, $referrerFilter);
+        $visitsWithPaths = $this->getVisitsWithPaths($siteId, $dateFromCarbon, $dateToCarbon, $site, 20, $referrerFilter);
         
         // Last 7 days visitors chart
         $visitorsLast7Days = $this->getVisitorsLast7Days($siteId);
@@ -333,8 +333,8 @@ class BackendAnalyticsController extends Controller
         $last30MinStart = Carbon::now()->subMinutes(30);
         $topCountriesLast30Min = $this->getTopCountries($siteId, $last30MinStart, Carbon::now());
         
-        // Top pages - Last 30 minutes (TEMPORARILY DISABLED for performance testing)
-        $topPagesLast30Min = collect([]); // $this->getTopPagesLast30Minutes($siteId, $last30MinStart);
+        // Top pages - Last 30 minutes
+        $topPagesLast30Min = $this->getTopPagesLast30Minutes($siteId, $last30MinStart);
         
         // Top countries - Last 7 days
         $topCountriesLast7Days = $this->getTopCountries($siteId, $last7DaysStart, $last7DaysEnd);
