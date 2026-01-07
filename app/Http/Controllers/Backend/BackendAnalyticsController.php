@@ -596,7 +596,7 @@ class BackendAnalyticsController extends Controller
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->where('is_bot', false)
             ->whereNotNull('browser')
-            ->select('browser', DB::raw('COUNT(*) as count'))
+            ->select('browser', DB::raw('SUM(1) as count'))
             ->groupBy('browser')
             ->orderByDesc('count')
             ->limit(10)
@@ -719,7 +719,7 @@ class BackendAnalyticsController extends Controller
         // Get entry paths and their next paths
         $entryPaths = AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
-            ->select('entry_path', DB::raw('COUNT(*) as count'))
+            ->select('entry_path', DB::raw('SUM(1) as count'))
             ->groupBy('entry_path')
             ->orderByDesc('count')
             ->limit(10)
@@ -736,7 +736,7 @@ class BackendAnalyticsController extends Controller
                 })
                 ->where('analytics_sessions.entry_path', $entry->entry_path)
                 ->where('analytics_session_paths.position', 2)
-                ->select('analytics_session_paths.path', DB::raw('COUNT(*) as count'))
+                ->select('analytics_session_paths.path', DB::raw('SUM(1) as count'))
                 ->groupBy('analytics_session_paths.path')
                 ->orderByDesc('count')
                 ->limit(5)
@@ -764,7 +764,7 @@ class BackendAnalyticsController extends Controller
                 'utm_source',
                 'utm_medium',
                 'utm_campaign',
-                DB::raw('COUNT(*) as sessions'),
+                DB::raw('SUM(1) as sessions'),
                 DB::raw('AVG(duration_ms) as avg_duration'),
                 DB::raw('AVG(pages_count) as avg_pages'),
                 DB::raw('SUM(CASE WHEN is_bounce = 1 THEN 1 ELSE 0 END) as bounces'),
@@ -1127,7 +1127,7 @@ class BackendAnalyticsController extends Controller
             ->whereBetween('first_seen', [$startDate, $endDate])
             ->whereNotNull('utm_source')
             ->where('is_bot', false)
-            ->select('utm_source', DB::raw('COUNT(*) as count'))
+            ->select('utm_source', DB::raw('SUM(1) as count'))
             ->groupBy('utm_source')
             ->orderByDesc('count')
             ->limit(10)
@@ -1751,7 +1751,7 @@ HTML;
             ->whereIn('session_id', $sessionIds)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->whereNotNull('browser')
-            ->select('browser', DB::raw('COUNT(*) as count'))
+            ->select('browser', DB::raw('SUM(1) as count'))
             ->groupBy('browser')
             ->orderByDesc('count')
             ->limit(10)
@@ -1771,7 +1771,7 @@ HTML;
             ->whereBetween('first_seen', [$startDate, $endDate])
             ->whereNotNull('referrer_source')
             ->where('is_bot', false)
-            ->select('referrer_source', 'referrer', DB::raw('COUNT(*) as count'))
+            ->select('referrer_source', 'referrer', DB::raw('SUM(1) as count'))
             ->groupBy('referrer_source', 'referrer')
             ->orderByDesc('count')
             ->get();
@@ -1802,7 +1802,7 @@ HTML;
             ->whereBetween('first_seen', [$startDate, $endDate])
             ->whereNotNull('utm_source')
             ->where('is_bot', false)
-            ->select('utm_source', DB::raw('COUNT(*) as count'))
+            ->select('utm_source', DB::raw('SUM(1) as count'))
             ->groupBy('utm_source')
             ->orderByDesc('count')
             ->limit(10)
