@@ -506,15 +506,12 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top pages (TEMPORARILY DISABLED for performance testing)
+     * Get top pages (optimized with whereExists for better index usage)
      */
     private function getTopPages($siteId, $dateFrom, $dateTo)
     {
-        // TEMPORARILY DISABLED - Return empty collection for performance testing
-        return collect([]);
-        
-        // Original code (commented out for performance testing):
-        /*
+        // Optimized: Use whereExists instead of JOIN for better index utilization
+        // This allows MySQL to use covering index idx_site_session_path efficiently
         return DB::table('analytics_session_paths')
             ->where('analytics_session_paths.site_id', $siteId)
             ->whereExists(function($query) use ($siteId, $dateFrom, $dateTo) {
@@ -530,7 +527,6 @@ class BackendAnalyticsController extends Controller
             ->orderByDesc('views')
             ->limit(30)
             ->get();
-        */
     }
     
     /**
@@ -557,15 +553,10 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top entry pages (TEMPORARILY DISABLED for performance testing)
+     * Get top entry pages
      */
     private function getTopEntryPages($siteId, $dateFrom, $dateTo)
     {
-        // TEMPORARILY DISABLED - Return empty collection for performance testing
-        return collect([]);
-        
-        // Original code (commented out for performance testing):
-        /*
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->select('entry_path', DB::raw('COUNT(*) as entries'))
@@ -573,19 +564,13 @@ class BackendAnalyticsController extends Controller
             ->orderByDesc('entries')
             ->limit(10)
             ->get();
-        */
     }
 
     /**
-     * Get top exit pages (TEMPORARILY DISABLED for performance testing)
+     * Get top exit pages
      */
     private function getTopExitPages($siteId, $dateFrom, $dateTo)
     {
-        // TEMPORARILY DISABLED - Return empty collection for performance testing
-        return collect([]);
-        
-        // Original code (commented out for performance testing):
-        /*
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('last_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->select('exit_path', DB::raw('COUNT(*) as exits'))
@@ -593,7 +578,6 @@ class BackendAnalyticsController extends Controller
             ->orderByDesc('exits')
             ->limit(10)
             ->get();
-        */
     }
 
     /**
