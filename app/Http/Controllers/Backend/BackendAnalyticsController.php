@@ -181,58 +181,103 @@ class BackendAnalyticsController extends Controller
             ->where('last_seen', '>=', $activeUsersStart)
             ->where('is_bot', false);
         
-        // Optimized: Split query to optimize COUNT(DISTINCT) performance
-        // First get aggregations without DISTINCT (faster)
-        $statsRaw = DB::table('analytics_sessions')
-            ->where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
-            ->selectRaw('
-                COUNT(*) as total_sessions,
-                SUM(pages_count) as total_pageviews,
-                AVG(duration_ms) as avg_duration,
-                AVG(pages_count) as avg_pages_per_session,
-                SUM(CASE WHEN is_bounce = 1 THEN 1 ELSE 0 END) as bounce_count,
-                SUM(CASE WHEN is_returning = 0 THEN 1 ELSE 0 END) as new_visitors,
-                SUM(CASE WHEN is_returning = 1 THEN 1 ELSE 0 END) as returning_visitors
-            ')
-            ->first();
+        // Optimized: Use Summary Tables for old data (older than 7 days)
+        // For recent data, use direct queries
+        $useSummary = $dateToCarbon->lt(Carbon::now()->subDays(7));
         
-        // Separate query for COUNT(DISTINCT) - can use covering index idx_site_first_seen_fingerprint
-        $uniqueVisitors = DB::table('analytics_sessions')
-            ->where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
-            ->distinct('device_fingerprint')
-            ->count('device_fingerprint');
+        if ($useSummary) {
+            // Use Summary Table for old data
+            $statsRaw = DB::table('analytics_daily_summary')
+                ->where('site_id', $siteId)
+                ->whereBetween('date', [$dateFromCarbon->format('Y-m-d'), $dateToCarbon->format('Y-m-d')])
+                ->selectRaw('
+                    SUM(total_sessions) as total_sessions,
+                    SUM(unique_visitors) as unique_visitors,
+                    SUM(total_pageviews) as total_pageviews,
+                    AVG(avg_duration) as avg_duration,
+                    AVG(avg_pages_per_session) as avg_pages_per_session,
+                    SUM(bounce_count) as bounce_count,
+                    SUM(new_visitors) as new_visitors,
+                    SUM(returning_visitors) as returning_visitors
+                ')
+                ->first();
+            
+            $stats = [
+                'total_sessions' => $statsRaw->total_sessions ?? 0,
+                'unique_visitors' => $statsRaw->unique_visitors ?? 0,
+                'total_pageviews' => $statsRaw->total_pageviews ?? 0,
+                'bounce_rate' => $statsRaw->total_sessions > 0 ? round(($statsRaw->bounce_count / $statsRaw->total_sessions) * 100, 2) : 0,
+                'avg_duration' => round($statsRaw->avg_duration ?? 0, 2),
+                'avg_pages_per_session' => round($statsRaw->avg_pages_per_session ?? 0, 2),
+                'new_visitors' => $statsRaw->new_visitors ?? 0,
+                'returning_visitors' => $statsRaw->returning_visitors ?? 0,
+            ];
+        } else {
+            // Use direct queries for recent data
+            $statsRaw = DB::table('analytics_sessions')
+                ->where('site_id', $siteId)
+                ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+                ->selectRaw('
+                    COUNT(*) as total_sessions,
+                    SUM(pages_count) as total_pageviews,
+                    AVG(duration_ms) as avg_duration,
+                    AVG(pages_count) as avg_pages_per_session,
+                    SUM(CASE WHEN is_bounce = 1 THEN 1 ELSE 0 END) as bounce_count,
+                    SUM(CASE WHEN is_returning = 0 THEN 1 ELSE 0 END) as new_visitors,
+                    SUM(CASE WHEN is_returning = 1 THEN 1 ELSE 0 END) as returning_visitors
+                ')
+                ->first();
+            
+            // Separate query for COUNT(DISTINCT) - can use covering index idx_site_first_seen_fingerprint
+            $uniqueVisitors = DB::table('analytics_sessions')
+                ->where('site_id', $siteId)
+                ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+                ->distinct('device_fingerprint')
+                ->count('device_fingerprint');
+            
+            $stats = [
+                'total_sessions' => $statsRaw->total_sessions ?? 0,
+                'unique_visitors' => $uniqueVisitors,
+                'total_pageviews' => $statsRaw->total_pageviews ?? 0,
+                'bounce_rate' => $statsRaw->total_sessions > 0 ? round(($statsRaw->bounce_count / $statsRaw->total_sessions) * 100, 2) : 0,
+                'avg_duration' => round($statsRaw->avg_duration ?? 0, 2),
+                'avg_pages_per_session' => round($statsRaw->avg_pages_per_session ?? 0, 2),
+                'new_visitors' => $statsRaw->new_visitors ?? 0,
+                'returning_visitors' => $statsRaw->returning_visitors ?? 0,
+            ];
+        }
         
-        $stats = [
-            'total_sessions' => $statsRaw->total_sessions ?? 0,
-            'unique_visitors' => $uniqueVisitors,
-            'total_pageviews' => $statsRaw->total_pageviews ?? 0,
-            'bounce_rate' => $statsRaw->total_sessions > 0 ? round(($statsRaw->bounce_count / $statsRaw->total_sessions) * 100, 2) : 0,
-            'avg_duration' => round($statsRaw->avg_duration ?? 0, 2),
-            'avg_pages_per_session' => round($statsRaw->avg_pages_per_session ?? 0, 2),
-            'new_visitors' => $statsRaw->new_visitors ?? 0,
-            'returning_visitors' => $statsRaw->returning_visitors ?? 0,
-        ];
-        
-        // Get time series data
-        $timeSeries = $this->getTimeSeries($siteId, $dateFromCarbon, $dateToCarbon);
+        // Get time series data (optimized - uses Summary Table for old data)
+        $timeSeries = $this->getTimeSeries($siteId, $dateFromCarbon, $dateToCarbon, $useSummary);
         
         // Last 7 days date range (reused multiple times)
         $last7DaysStart = Carbon::now()->subDays(7)->startOfDay();
         $last7DaysEnd = Carbon::now()->endOfDay();
         
-        // Optimized: Get traffic quality metrics in a single query
-        $qualityRaw = DB::table('analytics_sessions')
-            ->where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
-            ->selectRaw('
-                SUM(CASE WHEN is_bot = 1 THEN 1 ELSE 0 END) as bot_sessions,
-                SUM(CASE WHEN is_bot = 0 THEN 1 ELSE 0 END) as real_sessions,
-                SUM(CASE WHEN is_bot = 0 AND pages_count > 1 AND duration_ms > 30000 AND max_scroll_percent > 50 THEN 1 ELSE 0 END) as high_quality,
-                SUM(CASE WHEN is_bot = 0 AND (pages_count = 1 OR duration_ms < 5000 OR max_scroll_percent < 10) THEN 1 ELSE 0 END) as low_quality
-            ')
-            ->first();
+        // Optimized: Get traffic quality metrics - use Summary Table for old data
+        if ($useSummary) {
+            $qualityRaw = DB::table('analytics_daily_summary')
+                ->where('site_id', $siteId)
+                ->whereBetween('date', [$dateFromCarbon->format('Y-m-d'), $dateToCarbon->format('Y-m-d')])
+                ->selectRaw('
+                    SUM(bot_sessions) as bot_sessions,
+                    SUM(real_sessions) as real_sessions,
+                    SUM(high_quality) as high_quality,
+                    SUM(low_quality) as low_quality
+                ')
+                ->first();
+        } else {
+            $qualityRaw = DB::table('analytics_sessions')
+                ->where('site_id', $siteId)
+                ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+                ->selectRaw('
+                    SUM(CASE WHEN is_bot = 1 THEN 1 ELSE 0 END) as bot_sessions,
+                    SUM(CASE WHEN is_bot = 0 THEN 1 ELSE 0 END) as real_sessions,
+                    SUM(CASE WHEN is_bot = 0 AND pages_count > 1 AND duration_ms > 30000 AND max_scroll_percent > 50 THEN 1 ELSE 0 END) as high_quality,
+                    SUM(CASE WHEN is_bot = 0 AND (pages_count = 1 OR duration_ms < 5000 OR max_scroll_percent < 10) THEN 1 ELSE 0 END) as low_quality
+                ')
+                ->first();
+        }
         
         $trafficQuality = [
             'total_sessions' => $stats['total_sessions'],
@@ -472,11 +517,25 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get time series data (optimized - DATE() can still use index for WHERE clause)
+     * Get time series data (optimized - uses Summary Table for old data)
      */
-    private function getTimeSeries($siteId, $dateFrom, $dateTo)
+    private function getTimeSeries($siteId, $dateFrom, $dateTo, $useSummary = false)
     {
         $days = $dateFrom->diffInDays($dateTo) + 1;
+        
+        if ($useSummary) {
+            // Use Summary Table for old data
+            return DB::table('analytics_daily_summary')
+                ->where('site_id', $siteId)
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
+                ->select(
+                    'date',
+                    'total_sessions as sessions',
+                    'total_pageviews as pageviews'
+                )
+                ->orderBy('date')
+                ->get();
+        }
         
         if ($days <= 31) {
             // Daily data - DATE() in GROUP BY but WHERE clause can use index
@@ -491,27 +550,41 @@ class BackendAnalyticsController extends Controller
                 ->orderBy('date')
                 ->get();
         } else {
-            // Weekly data
-            return AnalyticsSession::where('site_id', $siteId)
-                ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+            // Weekly data - use Summary Table aggregated by week
+            return DB::table('analytics_daily_summary')
+                ->where('site_id', $siteId)
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
                 ->select(
-                    DB::raw('YEARWEEK(first_seen) as week'),
-                    DB::raw('COUNT(*) as sessions'),
-                    DB::raw('SUM(pages_count) as pageviews')
+                    DB::raw('YEARWEEK(date) as week'),
+                    DB::raw('SUM(total_sessions) as sessions'),
+                    DB::raw('SUM(total_pageviews) as pageviews')
                 )
-                ->groupBy('week')
+                ->groupBy(DB::raw('YEARWEEK(date)'))
                 ->orderBy('week')
                 ->get();
         }
     }
 
     /**
-     * Get top pages (optimized with whereExists for better index usage)
+     * Get top pages (optimized - uses Summary Table for old data)
      */
     private function getTopPages($siteId, $dateFrom, $dateTo)
     {
-        // Optimized: Use whereExists instead of JOIN for better index utilization
-        // This allows MySQL to use covering index idx_site_session_path efficiently
+        // Use Summary Table for data older than 7 days
+        $useSummary = $dateTo->lt(Carbon::now()->subDays(7));
+        
+        if ($useSummary) {
+            return DB::table('analytics_top_pages_daily')
+                ->where('site_id', $siteId)
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
+                ->select('path', DB::raw('SUM(views) as views'))
+                ->groupBy('path')
+                ->orderByDesc('views')
+                ->limit(30)
+                ->get();
+        }
+        
+        // Use direct query for recent data
         return DB::table('analytics_session_paths')
             ->where('analytics_session_paths.site_id', $siteId)
             ->whereExists(function($query) use ($siteId, $dateFrom, $dateTo) {
@@ -553,10 +626,24 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top entry pages
+     * Get top entry pages (optimized - uses Summary Table for old data)
      */
     private function getTopEntryPages($siteId, $dateFrom, $dateTo)
     {
+        $useSummary = $dateTo->lt(Carbon::now()->subDays(7));
+        
+        if ($useSummary) {
+            return DB::table('analytics_entry_exit_daily')
+                ->where('site_id', $siteId)
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
+                ->whereNotNull('entry_path')
+                ->select('entry_path', DB::raw('SUM(entry_count) as entries'))
+                ->groupBy('entry_path')
+                ->orderByDesc('entries')
+                ->limit(10)
+                ->get();
+        }
+        
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->select('entry_path', DB::raw('COUNT(*) as entries'))
@@ -567,10 +654,24 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top exit pages
+     * Get top exit pages (optimized - uses Summary Table for old data)
      */
     private function getTopExitPages($siteId, $dateFrom, $dateTo)
     {
+        $useSummary = $dateTo->lt(Carbon::now()->subDays(7));
+        
+        if ($useSummary) {
+            return DB::table('analytics_entry_exit_daily')
+                ->where('site_id', $siteId)
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
+                ->whereNotNull('exit_path')
+                ->select('exit_path', DB::raw('SUM(exit_count) as exits'))
+                ->groupBy('exit_path')
+                ->orderByDesc('exits')
+                ->limit(10)
+                ->get();
+        }
+        
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('last_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->select('exit_path', DB::raw('COUNT(*) as exits'))
@@ -581,10 +682,24 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top browsers
+     * Get top browsers (optimized - uses Summary Table for old data)
      */
     private function getTopBrowsers($siteId, $dateFrom, $dateTo)
     {
+        $useSummary = $dateTo->lt(Carbon::now()->subDays(7));
+        
+        if ($useSummary) {
+            return DB::table('analytics_dimensions_daily')
+                ->where('site_id', $siteId)
+                ->where('dimension_type', 'browser')
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
+                ->select('dimension_value as browser', DB::raw('SUM(count) as count'))
+                ->groupBy('dimension_value')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get();
+        }
+        
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->where('is_bot', false)
@@ -597,10 +712,23 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top devices
+     * Get top devices (optimized - uses Summary Table for old data)
      */
     private function getTopDevices($siteId, $dateFrom, $dateTo)
     {
+        $useSummary = $dateTo->lt(Carbon::now()->subDays(7));
+        
+        if ($useSummary) {
+            return DB::table('analytics_dimensions_daily')
+                ->where('site_id', $siteId)
+                ->where('dimension_type', 'device_type')
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
+                ->select('dimension_value as device_type', DB::raw('SUM(count) as count'))
+                ->groupBy('dimension_value')
+                ->orderByDesc('count')
+                ->get();
+        }
+        
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->whereNotNull('device_type')
@@ -611,10 +739,24 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top operating systems
+     * Get top operating systems (optimized - uses Summary Table for old data)
      */
     private function getTopOs($siteId, $dateFrom, $dateTo)
     {
+        $useSummary = $dateTo->lt(Carbon::now()->subDays(7));
+        
+        if ($useSummary) {
+            return DB::table('analytics_dimensions_daily')
+                ->where('site_id', $siteId)
+                ->where('dimension_type', 'os')
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
+                ->select('dimension_value as os', DB::raw('SUM(count) as count'))
+                ->groupBy('dimension_value')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get();
+        }
+        
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->whereNotNull('os')
@@ -626,10 +768,24 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top countries
+     * Get top countries (optimized - uses Summary Table for old data)
      */
     private function getTopCountries($siteId, $dateFrom, $dateTo)
     {
+        $useSummary = $dateTo->lt(Carbon::now()->subDays(7));
+        
+        if ($useSummary) {
+            return DB::table('analytics_dimensions_daily')
+                ->where('site_id', $siteId)
+                ->where('dimension_type', 'country')
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
+                ->select('dimension_value as country', DB::raw('SUM(count) as count'))
+                ->groupBy('dimension_value')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get();
+        }
+        
         return AnalyticsSession::where('site_id', $siteId)
             ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->where('is_bot', false)
@@ -1033,25 +1189,38 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
-     * Get visitors last 7 days data
+     * Get visitors last 7 days data (optimized - uses Summary Table for old data)
      */
     private function getVisitorsLast7Days($siteId)
     {
         $startDate = Carbon::today()->subDays(6)->startOfDay();
         $endDate = Carbon::today()->endOfDay();
         
-        // Single query with GROUP BY DATE for better performance
-        $results = AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$startDate, $endDate])
-            ->where('is_bot', false)
-            ->select(
-                DB::raw('DATE(first_seen) as date'),
-                DB::raw('COUNT(DISTINCT device_fingerprint) as count')
-            )
-            ->groupBy(DB::raw('DATE(first_seen)'))
-            ->orderBy('date')
-            ->get()
-            ->keyBy('date');
+        // Use Summary Table for data older than today
+        $useSummary = true; // Always use summary for last 7 days as it's historical data
+        
+        if ($useSummary) {
+            $results = DB::table('analytics_daily_summary')
+                ->where('site_id', $siteId)
+                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+                ->select('date', 'unique_visitors as count')
+                ->orderBy('date')
+                ->get()
+                ->keyBy('date');
+        } else {
+            // Fallback to direct query if summary not available
+            $results = AnalyticsSession::where('site_id', $siteId)
+                ->whereBetween('first_seen', [$startDate, $endDate])
+                ->where('is_bot', false)
+                ->select(
+                    DB::raw('DATE(first_seen) as date'),
+                    DB::raw('COUNT(DISTINCT device_fingerprint) as count')
+                )
+                ->groupBy(DB::raw('DATE(first_seen)'))
+                ->orderBy('date')
+                ->get()
+                ->keyBy('date');
+        }
         
         // Build data array for all 7 days
         $data = [];
