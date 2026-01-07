@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -13,41 +14,60 @@ return new class extends Migration
     {
         Schema::table('analytics_sessions', function (Blueprint $table) {
             // Composite indexes for common query patterns
-            // site_id + is_bot + first_seen (used in most queries)
-            $table->index(['site_id', 'is_bot', 'first_seen'], 'idx_site_bot_first_seen');
+            // Check if index exists before adding to avoid duplicate key errors
+            $indexes = [
+                ['columns' => ['site_id', 'is_bot', 'first_seen'], 'name' => 'idx_site_bot_first_seen'],
+                ['columns' => ['site_id', 'is_bot', 'last_seen'], 'name' => 'idx_site_bot_last_seen'],
+                ['columns' => ['site_id', 'country', 'first_seen'], 'name' => 'idx_site_country_first_seen'],
+                ['columns' => ['site_id', 'browser', 'first_seen'], 'name' => 'idx_site_browser_first_seen'],
+                ['columns' => ['site_id', 'is_bot', 'device_fingerprint'], 'name' => 'idx_site_bot_fingerprint'],
+                ['columns' => ['site_id', 'is_returning', 'first_seen'], 'name' => 'idx_site_returning_first_seen'],
+                ['columns' => ['site_id', 'referrer_source', 'first_seen'], 'name' => 'idx_site_referrer_first_seen'],
+            ];
             
-            // site_id + is_bot + last_seen (used for active users)
-            $table->index(['site_id', 'is_bot', 'last_seen'], 'idx_site_bot_last_seen');
-            
-            // site_id + country + first_seen (used for country queries)
-            $table->index(['site_id', 'country', 'first_seen'], 'idx_site_country_first_seen');
-            
-            // site_id + browser + first_seen (used for browser queries)
-            $table->index(['site_id', 'browser', 'first_seen'], 'idx_site_browser_first_seen');
-            
-            // site_id + is_bot + device_fingerprint (used for unique visitors)
-            $table->index(['site_id', 'is_bot', 'device_fingerprint'], 'idx_site_bot_fingerprint');
-            
-            // site_id + is_returning + first_seen (used for returning visitors)
-            $table->index(['site_id', 'is_returning', 'first_seen'], 'idx_site_returning_first_seen');
-            
-            // site_id + referrer_source + first_seen (used for traffic sources)
-            $table->index(['site_id', 'referrer_source', 'first_seen'], 'idx_site_referrer_first_seen');
+            foreach ($indexes as $index) {
+                if (!$this->indexExists('analytics_sessions', $index['name'])) {
+                    $table->index($index['columns'], $index['name']);
+                }
+            }
             
             // Note: entry_path and exit_path are VARCHAR(2048), too long for composite indexes
             // They are indexed separately in the original migration
         });
         
         Schema::table('analytics_session_paths', function (Blueprint $table) {
-            // Composite index for session_id + site_id (used in joins)
-            $table->index(['session_id', 'site_id'], 'idx_session_site');
+            $indexes = [
+                ['columns' => ['session_id', 'site_id'], 'name' => 'idx_session_site'],
+                ['columns' => ['site_id', 'session_id', 'created_at'], 'name' => 'idx_site_session_created'],
+                ['columns' => ['site_id', 'created_at'], 'name' => 'idx_site_created'],
+            ];
             
-            // Composite index for site_id + session_id + created_at (used in time-based queries)
-            $table->index(['site_id', 'session_id', 'created_at'], 'idx_site_session_created');
-            
-            // Composite index for site_id + created_at (used in time-based queries)
-            $table->index(['site_id', 'created_at'], 'idx_site_created');
+            foreach ($indexes as $index) {
+                if (!$this->indexExists('analytics_session_paths', $index['name'])) {
+                    $table->index($index['columns'], $index['name']);
+                }
+            }
         });
+    }
+    
+    /**
+     * Check if an index exists on a table
+     */
+    private function indexExists($table, $indexName)
+    {
+        $connection = Schema::getConnection();
+        $databaseName = $connection->getDatabaseName();
+        
+        $result = $connection->selectOne(
+            "SELECT COUNT(*) as count 
+             FROM information_schema.statistics 
+             WHERE table_schema = ? 
+             AND table_name = ? 
+             AND index_name = ?",
+            [$databaseName, $table, $indexName]
+        );
+        
+        return $result->count > 0;
     }
 
     /**

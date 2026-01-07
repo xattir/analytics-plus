@@ -499,21 +499,20 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top pages (optimized with proper index usage)
+     * Get top pages (optimized with JOIN and proper index usage)
      */
     private function getTopPages($siteId, $dateFrom, $dateTo)
     {
-        // Optimized: Use subquery to filter sessions first, then join
-        // This allows MySQL to use idx_site_bot_first_seen index efficiently
+        // Optimized: Use JOIN with index on session_id + site_id
+        // This is faster than whereIn with subquery for large datasets
         return DB::table('analytics_session_paths')
-            ->where('analytics_session_paths.site_id', $siteId)
-            ->whereIn('analytics_session_paths.session_id', function($query) use ($siteId, $dateFrom, $dateTo) {
-                $query->select('session_id')
-                    ->from('analytics_sessions')
-                    ->where('site_id', $siteId)
-                    ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
-                    ->where('is_bot', false);
+            ->join('analytics_sessions', function($join) use ($siteId, $dateFrom, $dateTo) {
+                $join->on('analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
+                     ->where('analytics_sessions.site_id', '=', $siteId)
+                     ->whereBetween('analytics_sessions.first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+                     ->where('analytics_sessions.is_bot', '=', false);
             })
+            ->where('analytics_session_paths.site_id', $siteId)
             ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
@@ -522,20 +521,19 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
-     * Get top pages - Last 30 minutes (optimized)
+     * Get top pages - Last 30 minutes (optimized with JOIN)
      */
     private function getTopPagesLast30Minutes($siteId, $startTime)
     {
-        // Optimized: Use subquery to filter sessions first
+        // Optimized: Use JOIN instead of whereIn subquery
         return DB::table('analytics_session_paths')
-            ->where('analytics_session_paths.site_id', $siteId)
-            ->whereIn('analytics_session_paths.session_id', function($query) use ($siteId, $startTime) {
-                $query->select('session_id')
-                    ->from('analytics_sessions')
-                    ->where('site_id', $siteId)
-                    ->where('last_seen', '>=', $startTime)
-                    ->where('is_bot', false);
+            ->join('analytics_sessions', function($join) use ($siteId, $startTime) {
+                $join->on('analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
+                     ->where('analytics_sessions.site_id', '=', $siteId)
+                     ->where('analytics_sessions.last_seen', '>=', $startTime)
+                     ->where('analytics_sessions.is_bot', '=', false);
             })
+            ->where('analytics_session_paths.site_id', $siteId)
             ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
