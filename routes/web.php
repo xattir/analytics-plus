@@ -71,8 +71,8 @@ Route::prefix('dashboard')->middleware(['auth','ActiveAccount','verified'])->nam
     Route::delete('analytics/invitations/{invitation}', [BackendAnalyticsController::class, 'cancelInvitation'])->name('analytics.cancel-invitation');
     
     // Public invitation routes
-    Route::get('analytics/invitations/{token}/accept', [BackendAnalyticsController::class, 'acceptInvitation'])->name('analytics.accept-invitation');
-    Route::get('analytics/invitations/{token}/reject', [BackendAnalyticsController::class, 'rejectInvitation'])->name('analytics.reject-invitation');
+    Route::post('analytics/invitations/{token}/accept', [BackendAnalyticsController::class, 'acceptInvitation'])->name('analytics.accept-invitation');
+    Route::post('analytics/invitations/{token}/reject', [BackendAnalyticsController::class, 'rejectInvitation'])->name('analytics.reject-invitation');
     
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/settings',[FrontendProfileController::class,'profile_edit'])->name('edit');
