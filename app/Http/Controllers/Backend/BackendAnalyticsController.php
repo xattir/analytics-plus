@@ -77,49 +77,67 @@ class BackendAnalyticsController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         
-        // Get active users data for each site (last 30 minutes for chart)
+        // Get pending invitations for current user
+        $pendingInvitations = AnalyticsSiteInvitation::where('email', auth()->user()->email)
+            ->where('status', 'pending')
+            ->with('site')
+            ->get();
+        
+        if ($sites->isEmpty()) {
+            return view('admin.analytics.index', compact('sites', 'pendingInvitations', 'isSuperAdmin'));
+        }
+        
+        // Optimize: Get all data in bulk queries instead of per-site queries
+        $siteIds = $sites->pluck('id')->toArray();
         $activeUsersStart = Carbon::now()->subMinutes(30);
-        // Check traffic in last 5 minutes for indicator
         $trafficLast5Minutes = Carbon::now()->subMinutes(5);
+        $todayStart = Carbon::today()->startOfDay();
+        $todayEnd = Carbon::today()->endOfDay();
+        
+        // Bulk query: Active users count per site (last 30 minutes)
+        $activeUsersData = AnalyticsSession::whereIn('site_id', $siteIds)
+            ->where('last_seen', '>=', $activeUsersStart)
+            ->where('is_bot', false)
+            ->select('site_id', DB::raw('COUNT(DISTINCT session_id) as count'))
+            ->groupBy('site_id')
+            ->pluck('count', 'site_id');
+        
+        // Bulk query: Has traffic last 5 minutes per site
+        $hasTrafficLast5MinData = AnalyticsSession::whereIn('site_id', $siteIds)
+            ->where('last_seen', '>=', $trafficLast5Minutes)
+            ->where('is_bot', false)
+            ->select('site_id')
+            ->distinct()
+            ->pluck('site_id')
+            ->toArray();
+        
+        // Bulk query: Today's unique users count per site
+        $todayUsersData = AnalyticsSession::whereIn('site_id', $siteIds)
+            ->whereBetween('first_seen', [$todayStart, $todayEnd])
+            ->where('is_bot', false)
+            ->select('site_id', DB::raw('COUNT(DISTINCT device_fingerprint) as count'))
+            ->groupBy('site_id')
+            ->pluck('count', 'site_id');
+        
+        // Bulk query: Active users chart data (last 30 minutes) - Single query with GROUP BY
+        $activeUsersChartData = $this->getBulkActiveUsersChartData($siteIds, $activeUsersStart);
+        
+        // Bulk query: Last 24 hours chart data - Single query with GROUP BY
+        $last24hChartData = $this->getBulkLast24HoursChartData($siteIds);
+        
+        // Assign data to sites
         foreach ($sites as $site) {
-            $activeUsers = AnalyticsSession::where('site_id', $site->id)
-                ->where('last_seen', '>=', $activeUsersStart)
-                ->where('is_bot', false)
-                ->distinct()
-                ->count('session_id');
-            
-            // Check if has traffic in last 5 minutes for indicator
-            $hasTrafficLast5Min = AnalyticsSession::where('site_id', $site->id)
-                ->where('last_seen', '>=', $trafficLast5Minutes)
-                ->where('is_bot', false)
-                ->exists();
-            
-            $site->active_users = $activeUsers;
-            $site->has_traffic_last_5min = $hasTrafficLast5Min;
-            $site->active_users_chart_data = $this->getActiveUsersChartData($site->id, $activeUsersStart);
-            // Get last 24 hours data for bars chart
-            $site->last_24h_chart_data = $this->getLast24HoursChartData($site->id);
-            
-            // Get today's unique users count
-            $todayStart = Carbon::today()->startOfDay();
-            $todayEnd = Carbon::today()->endOfDay();
-            $site->today_users_count = AnalyticsSession::where('site_id', $site->id)
-                ->whereBetween('first_seen', [$todayStart->toDateTimeString(), $todayEnd->toDateTimeString()])
-                ->where('is_bot', false)
-                ->distinct()
-                ->count('device_fingerprint');
+            $site->active_users = $activeUsersData->get($site->id, 0);
+            $site->has_traffic_last_5min = in_array($site->id, $hasTrafficLast5MinData);
+            $site->active_users_chart_data = $activeUsersChartData[$site->id] ?? [];
+            $site->last_24h_chart_data = $last24hChartData[$site->id] ?? [];
+            $site->today_users_count = $todayUsersData->get($site->id, 0);
             
             // Fetch title from website if not set
             if (empty($site->title)) {
                 $this->fetchSiteTitle($site);
             }
         }
-        
-        // Get pending invitations for current user
-        $pendingInvitations = AnalyticsSiteInvitation::where('email', auth()->user()->email)
-            ->where('status', 'pending')
-            ->with('site')
-            ->get();
         
         return view('admin.analytics.index', compact('sites', 'pendingInvitations', 'isSuperAdmin'));
     }
@@ -769,6 +787,122 @@ class BackendAnalyticsController extends Controller
         }
         
         return $data;
+    }
+    
+    /**
+     * Get bulk active users chart data for multiple sites (optimized)
+     */
+    private function getBulkActiveUsersChartData(array $siteIds, Carbon $startTime)
+    {
+        $interval = 1.25; // 1.25-minute intervals (24 points for 30 minutes)
+        $results = [];
+        
+        // Initialize empty arrays for all sites
+        foreach ($siteIds as $siteId) {
+            $results[$siteId] = [];
+            for ($i = 0; $i < 24; $i++) {
+                $pointStart = $startTime->copy()->addMinutes($i * $interval);
+                $results[$siteId][] = [
+                    'time' => $pointStart->format('H:i'),
+                    'count' => 0,
+                ];
+            }
+        }
+        
+        if (empty($siteIds)) {
+            return $results;
+        }
+        
+        // Use UNION ALL queries for each time interval (more efficient than processing in PHP)
+        // But to avoid too many queries, we'll fetch distinct sessions and bucket them
+        $endTime = $startTime->copy()->addMinutes(30);
+        
+        // Get distinct sessions with their last_seen grouped by site
+        $sessions = DB::table('analytics_sessions')
+            ->whereIn('site_id', $siteIds)
+            ->where('last_seen', '>=', $startTime)
+            ->where('last_seen', '<', $endTime)
+            ->where('is_bot', false)
+            ->select('site_id', 'session_id', 'last_seen')
+            ->distinct()
+            ->get()
+            ->groupBy('site_id');
+        
+        // Process data for each site and time interval
+        foreach ($siteIds as $siteId) {
+            if (!isset($sessions[$siteId])) {
+                continue;
+            }
+            
+            $siteSessions = $sessions[$siteId];
+            for ($i = 0; $i < 24; $i++) {
+                $pointStart = $startTime->copy()->addMinutes($i * $interval);
+                $pointEnd = $pointStart->copy()->addMinutes($interval);
+                
+                $count = $siteSessions->filter(function($session) use ($pointStart, $pointEnd) {
+                    $lastSeen = Carbon::parse($session->last_seen);
+                    return $lastSeen->gte($pointStart) && $lastSeen->lt($pointEnd);
+                })->pluck('session_id')->unique()->count();
+                
+                $results[$siteId][$i]['count'] = $count;
+            }
+        }
+        
+        return $results;
+    }
+    
+    /**
+     * Get bulk last 24 hours chart data for multiple sites (optimized)
+     */
+    private function getBulkLast24HoursChartData(array $siteIds)
+    {
+        $startTime = Carbon::now()->subHours(24);
+        $endTime = Carbon::now();
+        
+        // Initialize empty arrays for all sites
+        $results = [];
+        foreach ($siteIds as $siteId) {
+            $results[$siteId] = [];
+            for ($i = 0; $i < 24; $i++) {
+                $hourStart = $startTime->copy()->addHours($i)->startOfHour();
+                $results[$siteId][] = [
+                    'hour' => $hourStart->format('H:i'),
+                    'count' => 0,
+                ];
+            }
+        }
+        
+        // Single query to get all data grouped by site_id and hour
+        $sessions = AnalyticsSession::whereIn('site_id', $siteIds)
+            ->whereBetween('first_seen', [$startTime, $endTime])
+            ->where('is_bot', false)
+            ->select(
+                'site_id',
+                DB::raw('DATE_FORMAT(first_seen, "%Y-%m-%d %H:00:00") as hour'),
+                DB::raw('COUNT(DISTINCT session_id) as count')
+            )
+            ->groupBy('site_id', DB::raw('DATE_FORMAT(first_seen, "%Y-%m-%d %H:00:00")'))
+            ->get()
+            ->groupBy('site_id');
+        
+        // Process data for each site
+        foreach ($siteIds as $siteId) {
+            if (!isset($sessions[$siteId])) {
+                continue;
+            }
+            
+            $siteHourlyData = $sessions[$siteId]->keyBy('hour');
+            for ($i = 0; $i < 24; $i++) {
+                $hourStart = $startTime->copy()->addHours($i)->startOfHour();
+                $hourKey = $hourStart->format('Y-m-d H:00:00');
+                
+                if (isset($siteHourlyData[$hourKey])) {
+                    $results[$siteId][$i]['count'] = $siteHourlyData[$hourKey]->count;
+                }
+            }
+        }
+        
+        return $results;
     }
     
     /**
