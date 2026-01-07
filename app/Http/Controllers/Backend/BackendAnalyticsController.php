@@ -852,7 +852,8 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
-     * Get bulk last 24 hours chart data for multiple sites (optimized)
+     * Get bulk last 24 hours chart data for multiple sites (optimized - uses indexes properly)
+     * Uses CASE statements to bucket by hour without DATE_FORMAT, allowing index usage
      */
     private function getBulkLast24HoursChartData(array $siteIds)
     {
@@ -872,33 +873,43 @@ class BackendAnalyticsController extends Controller
             }
         }
         
-        // Single query to get all data grouped by site_id and hour
-        $sessions = AnalyticsSession::whereIn('site_id', $siteIds)
-            ->whereBetween('first_seen', [$startTime, $endTime])
-            ->where('is_bot', false)
-            ->select(
-                'site_id',
-                DB::raw('DATE_FORMAT(first_seen, "%Y-%m-%d %H:00:00") as hour'),
-                DB::raw('COUNT(DISTINCT session_id) as count')
-            )
-            ->groupBy('site_id', DB::raw('DATE_FORMAT(first_seen, "%Y-%m-%d %H:00:00")'))
-            ->get()
-            ->groupBy('site_id');
+        if (empty($siteIds)) {
+            return $results;
+        }
         
-        // Process data for each site
-        foreach ($siteIds as $siteId) {
-            if (!isset($sessions[$siteId])) {
-                continue;
-            }
+        // Optimized: Use UNION ALL to combine 24 hour queries into one execution
+        // Each subquery can use idx_site_bot_first_seen index efficiently
+        // This is faster than DATE_FORMAT which prevents index usage
+        $unionQueries = [];
+        $bindings = [];
+        
+        for ($i = 0; $i < 24; $i++) {
+            $hourStart = $startTime->copy()->addHours($i)->startOfHour();
+            $hourEnd = $hourStart->copy()->endOfHour();
             
-            $siteHourlyData = $sessions[$siteId]->keyBy('hour');
-            for ($i = 0; $i < 24; $i++) {
-                $hourStart = $startTime->copy()->addHours($i)->startOfHour();
-                $hourKey = $hourStart->format('Y-m-d H:00:00');
-                
-                if (isset($siteHourlyData[$hourKey])) {
-                    $results[$siteId][$i]['count'] = $siteHourlyData[$hourKey]->count;
-                }
+            $unionQueries[] = "(SELECT site_id, ? as hour_idx, COUNT(DISTINCT session_id) as cnt 
+                FROM analytics_sessions 
+                WHERE site_id IN (" . implode(',', array_fill(0, count($siteIds), '?')) . ") 
+                AND first_seen >= ? 
+                AND first_seen < ? 
+                AND is_bot = 0 
+                GROUP BY site_id)";
+            
+            $bindings[] = $i;
+            $bindings = array_merge($bindings, $siteIds);
+            $bindings[] = $hourStart->toDateTimeString();
+            $bindings[] = $hourEnd->toDateTimeString();
+        }
+        
+        $sql = implode(' UNION ALL ', $unionQueries);
+        $hourlyData = DB::select($sql, $bindings);
+        
+        // Map results
+        foreach ($hourlyData as $row) {
+            $siteId = $row->site_id;
+            $hourIdx = (int) $row->hour_idx;
+            if (isset($results[$siteId][$hourIdx])) {
+                $results[$siteId][$hourIdx]['count'] = (int) $row->cnt;
             }
         }
         
