@@ -486,29 +486,68 @@ class BackendAnalyticsController extends Controller
         $days = $dateFrom->diffInDays($dateTo) + 1;
         
         if ($days <= 31) {
-            // Daily data - Use SUM(1) instead of COUNT(*) for better performance
-            return AnalyticsSession::where('site_id', $siteId)
-                ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
-                ->select(
-                    DB::raw('DATE(first_seen) as date'),
-                    DB::raw('SUM(1) as sessions'),
-                    DB::raw('SUM(pages_count) as pageviews')
-                )
-                ->groupBy(DB::raw('DATE(first_seen)'))
-                ->orderBy('date')
-                ->get();
+            // Daily data - Optimized: Use UNION ALL with individual day queries to leverage indexes
+            // This allows MySQL to use idx_site_bot_first_seen for each day query
+            $unionQueries = [];
+            $bindings = [];
+            $currentDate = $dateFrom->copy()->startOfDay();
+            
+            while ($currentDate->lte($dateTo)) {
+                $dayStart = $currentDate->copy()->startOfDay();
+                $dayEnd = $currentDate->copy()->endOfDay();
+                $dateStr = $currentDate->format('Y-m-d');
+                
+                $unionQueries[] = "(SELECT 
+                    ? as date,
+                    SUM(1) as sessions,
+                    SUM(pages_count) as pageviews
+                    FROM analytics_sessions
+                    WHERE site_id = ?
+                    AND first_seen >= ?
+                    AND first_seen <= ?
+                )";
+                
+                $bindings[] = $dateStr;
+                $bindings[] = $siteId;
+                $bindings[] = $dayStart->toDateTimeString();
+                $bindings[] = $dayEnd->toDateTimeString();
+                
+                $currentDate->addDay();
+            }
+            
+            $query = implode(' UNION ALL ', $unionQueries) . ' ORDER BY date';
+            return DB::select($query, $bindings);
         } else {
-            // Weekly data - Use SUM(1) instead of COUNT(*)
-            return AnalyticsSession::where('site_id', $siteId)
-                ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
-                ->select(
-                    DB::raw('YEARWEEK(first_seen) as week'),
-                    DB::raw('SUM(1) as sessions'),
-                    DB::raw('SUM(pages_count) as pageviews')
-                )
-                ->groupBy('week')
-                ->orderBy('week')
-                ->get();
+            // Weekly data - Optimized: Use UNION ALL with individual week queries
+            $unionQueries = [];
+            $bindings = [];
+            $currentDate = $dateFrom->copy()->startOfWeek();
+            
+            while ($currentDate->lte($dateTo)) {
+                $weekStart = $currentDate->copy()->startOfWeek();
+                $weekEnd = $currentDate->copy()->endOfWeek();
+                $weekKey = $currentDate->format('o-W'); // ISO week format
+                
+                $unionQueries[] = "(SELECT 
+                    ? as week,
+                    SUM(1) as sessions,
+                    SUM(pages_count) as pageviews
+                    FROM analytics_sessions
+                    WHERE site_id = ?
+                    AND first_seen >= ?
+                    AND first_seen <= ?
+                )";
+                
+                $bindings[] = $weekKey;
+                $bindings[] = $siteId;
+                $bindings[] = $weekStart->toDateTimeString();
+                $bindings[] = $weekEnd->toDateTimeString();
+                
+                $currentDate->addWeek();
+            }
+            
+            $query = implode(' UNION ALL ', $unionQueries) . ' ORDER BY week';
+            return DB::select($query, $bindings);
         }
     }
 
@@ -1048,21 +1087,35 @@ class BackendAnalyticsController extends Controller
      */
     private function getVisitorsLast7Days($siteId)
     {
-        $startDate = Carbon::today()->subDays(6)->startOfDay();
-        $endDate = Carbon::today()->endOfDay();
+        // Optimized: Use UNION ALL with individual day queries to leverage covering index
+        // This allows MySQL to use idx_site_first_seen_fingerprint for each day query
+        $unionQueries = [];
+        $bindings = [];
         
-        // Single query with GROUP BY DATE for better performance
-        $results = AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$startDate, $endDate])
-            ->where('is_bot', false)
-            ->select(
-                DB::raw('DATE(first_seen) as date'),
-                DB::raw('COUNT(DISTINCT device_fingerprint) as count')
-            )
-            ->groupBy(DB::raw('DATE(first_seen)'))
-            ->orderBy('date')
-            ->get()
-            ->keyBy('date');
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $dayStart = $date->copy()->startOfDay();
+            $dayEnd = $date->copy()->endOfDay();
+            $dateStr = $date->format('Y-m-d');
+            
+            $unionQueries[] = "(SELECT 
+                ? as date,
+                COUNT(DISTINCT device_fingerprint) as count
+                FROM analytics_sessions
+                WHERE site_id = ?
+                AND first_seen >= ?
+                AND first_seen <= ?
+                AND is_bot = 0
+            )";
+            
+            $bindings[] = $dateStr;
+            $bindings[] = $siteId;
+            $bindings[] = $dayStart->toDateTimeString();
+            $bindings[] = $dayEnd->toDateTimeString();
+        }
+        
+        $query = implode(' UNION ALL ', $unionQueries) . ' ORDER BY date';
+        $results = collect(DB::select($query, $bindings))->keyBy('date');
         
         // Build data array for all 7 days
         $data = [];
