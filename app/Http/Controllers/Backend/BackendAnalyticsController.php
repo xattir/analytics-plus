@@ -552,22 +552,24 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top pages (optimized with whereExists for better index usage)
+     * Get top pages (optimized with INNER JOIN for better performance)
      */
     private function getTopPages($siteId, $dateFrom, $dateTo)
     {
-        // Optimized: Use whereExists instead of JOIN for better index utilization
-        // This allows MySQL to use covering index idx_site_session_path efficiently
+        // Optimized: Use INNER JOIN instead of whereExists for much better performance
+        // MySQL can use indexes more efficiently with JOIN, especially idx_site_bot_first_seen
+        // and idx_site_session_path (covering index)
+        $startDate = $dateFrom->startOfDay()->toDateTimeString();
+        $endDate = $dateTo->endOfDay()->toDateTimeString();
+        
         return DB::table('analytics_session_paths')
-            ->where('analytics_session_paths.site_id', $siteId)
-            ->whereExists(function($query) use ($siteId, $dateFrom, $dateTo) {
-                $query->select(DB::raw(1))
-                    ->from('analytics_sessions')
-                    ->whereColumn('analytics_sessions.session_id', 'analytics_session_paths.session_id')
-                    ->where('analytics_sessions.site_id', $siteId)
-                    ->whereBetween('analytics_sessions.first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
-                    ->where('analytics_sessions.is_bot', false);
+            ->join('analytics_sessions', function($join) use ($siteId, $startDate, $endDate) {
+                $join->on('analytics_sessions.session_id', '=', 'analytics_session_paths.session_id')
+                     ->where('analytics_sessions.site_id', '=', $siteId)
+                     ->whereBetween('analytics_sessions.first_seen', [$startDate, $endDate])
+                     ->where('analytics_sessions.is_bot', '=', 0);
             })
+            ->where('analytics_session_paths.site_id', $siteId)
             ->select('analytics_session_paths.path', DB::raw('SUM(1) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
@@ -576,21 +578,20 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
-     * Get top pages - Last 30 minutes (optimized with whereExists)
+     * Get top pages - Last 30 minutes (optimized with INNER JOIN)
      */
     private function getTopPagesLast30Minutes($siteId, $startTime)
     {
-        // Optimized: Use whereExists for better index usage
+        // Optimized: Use INNER JOIN instead of whereExists for better performance
         return DB::table('analytics_session_paths')
-            ->where('analytics_session_paths.site_id', $siteId)
-            ->whereExists(function($query) use ($siteId, $startTime) {
-                $query->select(DB::raw(1))
-                    ->from('analytics_sessions')
-                    ->whereColumn('analytics_sessions.session_id', 'analytics_session_paths.session_id')
-                    ->where('analytics_sessions.site_id', $siteId)
-                    ->where('analytics_sessions.last_seen', '>=', $startTime)
-                    ->where('analytics_sessions.is_bot', false);
+            ->join('analytics_sessions', function($join) use ($siteId, $startTime) {
+                $join->on('analytics_sessions.session_id', '=', 'analytics_session_paths.session_id')
+                     ->on('analytics_sessions.site_id', '=', 'analytics_session_paths.site_id')
+                     ->where('analytics_sessions.site_id', '=', $siteId)
+                     ->where('analytics_sessions.last_seen', '>=', $startTime)
+                     ->where('analytics_sessions.is_bot', '=', 0);
             })
+            ->where('analytics_session_paths.site_id', $siteId)
             ->select('analytics_session_paths.path', DB::raw('SUM(1) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
@@ -1784,10 +1785,10 @@ HTML;
      */
     private function getTopPagesForSessions($siteId, $dateFrom, $dateTo, $sessionIds)
     {
-        return AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
+        // Optimized: Use whereIn on session_id which can use idx_session_site efficiently
+        return DB::table('analytics_session_paths')
+            ->where('analytics_session_paths.site_id', $siteId)
             ->whereIn('analytics_session_paths.session_id', $sessionIds)
-            ->join('analytics_sessions', 'analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
-            ->whereBetween('analytics_sessions.first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->select('analytics_session_paths.path', DB::raw('SUM(1) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
