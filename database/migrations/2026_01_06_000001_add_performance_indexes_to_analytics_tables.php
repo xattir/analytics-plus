@@ -33,6 +33,9 @@ return new class extends Migration
             
             // site_id + referrer_source + first_seen (used for traffic sources)
             $table->index(['site_id', 'referrer_source', 'first_seen'], 'idx_site_referrer_first_seen');
+            
+            // Note: entry_path and exit_path are VARCHAR(2048), too long for composite indexes
+            // They are indexed separately in the original migration
         });
         
         Schema::table('analytics_session_paths', function (Blueprint $table) {

@@ -181,16 +181,31 @@ class BackendAnalyticsController extends Controller
             ->where('last_seen', '>=', $activeUsersStart)
             ->where('is_bot', false);
         
-        // Get statistics
+        // Optimized: Get all statistics in a single query using raw SQL
+        $statsRaw = DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+            ->selectRaw('
+                COUNT(*) as total_sessions,
+                COUNT(DISTINCT device_fingerprint) as unique_visitors,
+                SUM(pages_count) as total_pageviews,
+                AVG(duration_ms) as avg_duration,
+                AVG(pages_count) as avg_pages_per_session,
+                SUM(CASE WHEN is_bounce = 1 THEN 1 ELSE 0 END) as bounce_count,
+                SUM(CASE WHEN is_returning = 0 THEN 1 ELSE 0 END) as new_visitors,
+                SUM(CASE WHEN is_returning = 1 THEN 1 ELSE 0 END) as returning_visitors
+            ')
+            ->first();
+        
         $stats = [
-            'total_sessions' => (clone $query)->count(),
-            'unique_visitors' => (clone $query)->distinct('device_fingerprint')->count('device_fingerprint'),
-            'total_pageviews' => (clone $query)->sum('pages_count'),
-            'bounce_rate' => $this->calculateBounceRate($query),
-            'avg_duration' => (clone $query)->avg('duration_ms'),
-            'avg_pages_per_session' => (clone $query)->avg('pages_count'),
-            'new_visitors' => (clone $query)->where('is_returning', false)->count(),
-            'returning_visitors' => (clone $query)->where('is_returning', true)->count(),
+            'total_sessions' => $statsRaw->total_sessions ?? 0,
+            'unique_visitors' => $statsRaw->unique_visitors ?? 0,
+            'total_pageviews' => $statsRaw->total_pageviews ?? 0,
+            'bounce_rate' => $statsRaw->total_sessions > 0 ? round(($statsRaw->bounce_count / $statsRaw->total_sessions) * 100, 2) : 0,
+            'avg_duration' => round($statsRaw->avg_duration ?? 0, 2),
+            'avg_pages_per_session' => round($statsRaw->avg_pages_per_session ?? 0, 2),
+            'new_visitors' => $statsRaw->new_visitors ?? 0,
+            'returning_visitors' => $statsRaw->returning_visitors ?? 0,
         ];
         
         // Get time series data
@@ -200,24 +215,24 @@ class BackendAnalyticsController extends Controller
         $last7DaysStart = Carbon::now()->subDays(7)->startOfDay();
         $last7DaysEnd = Carbon::now()->endOfDay();
         
-        // Optimize: Use single query for traffic quality metrics
-        $baseQueryForQuality = (clone $query)->where('is_bot', false);
+        // Optimized: Get traffic quality metrics in a single query
+        $qualityRaw = DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+            ->selectRaw('
+                SUM(CASE WHEN is_bot = 1 THEN 1 ELSE 0 END) as bot_sessions,
+                SUM(CASE WHEN is_bot = 0 THEN 1 ELSE 0 END) as real_sessions,
+                SUM(CASE WHEN is_bot = 0 AND pages_count > 1 AND duration_ms > 30000 AND max_scroll_percent > 50 THEN 1 ELSE 0 END) as high_quality,
+                SUM(CASE WHEN is_bot = 0 AND (pages_count = 1 OR duration_ms < 5000 OR max_scroll_percent < 10) THEN 1 ELSE 0 END) as low_quality
+            ')
+            ->first();
+        
         $trafficQuality = [
             'total_sessions' => $stats['total_sessions'],
-            'bot_sessions' => (clone $query)->where('is_bot', true)->count(),
-            'real_sessions' => (clone $baseQueryForQuality)->count(),
-            'high_quality' => (clone $baseQueryForQuality)
-                ->where('pages_count', '>', 1)
-                ->where('duration_ms', '>', 30000)
-                ->where('max_scroll_percent', '>', 50)
-                ->count(),
-            'low_quality' => (clone $baseQueryForQuality)
-                ->where(function($q) {
-                    $q->where('pages_count', 1)
-                      ->orWhere('duration_ms', '<', 5000)
-                      ->orWhere('max_scroll_percent', '<', 10);
-                })
-                ->count(),
+            'bot_sessions' => $qualityRaw->bot_sessions ?? 0,
+            'real_sessions' => $qualityRaw->real_sessions ?? 0,
+            'high_quality' => $qualityRaw->high_quality ?? 0,
+            'low_quality' => $qualityRaw->low_quality ?? 0,
         ];
         
         // Get top pages - Last 7 days (only once, reused later)
@@ -261,14 +276,24 @@ class BackendAnalyticsController extends Controller
             ? round(($stats['returning_visitors'] / $stats['total_sessions']) * 100, 1)
             : 0;
         
-        // TODAY'S METRICS (for hero section)
+        // Optimized: Get today's metrics in a single query
+        $todayStatsRaw = DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen', [$todayStart, $todayEnd])
+            ->selectRaw('
+                COUNT(DISTINCT device_fingerprint) as visitors,
+                SUM(pages_count) as pageviews,
+                COUNT(DISTINCT CASE WHEN is_bot = 0 THEN device_fingerprint END) as users_count
+            ')
+            ->first();
+        
         $todayStats = [
-            'visitors' => (clone $todayQuery)->distinct('device_fingerprint')->count('device_fingerprint'),
-            'pageviews' => (clone $todayQuery)->sum('pages_count'),
+            'visitors' => $todayStatsRaw->visitors ?? 0,
+            'pageviews' => $todayStatsRaw->pageviews ?? 0,
         ];
         
         // TODAY'S USERS COUNT (for card matching index page)
-        $todayUsersCount = (clone $todayQuery)->where('is_bot', false)->distinct('device_fingerprint')->count('device_fingerprint');
+        $todayUsersCount = $todayStatsRaw->users_count ?? 0;
         
         // ACTIVE USERS (last 30 minutes) - Hero metric
         $activeUsersCount = (clone $activeUsersQuery)->distinct('session_id')->count('session_id');
@@ -426,10 +451,12 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Calculate bounce rate
+     * Calculate bounce rate (deprecated - now calculated in stats query)
      */
     private function calculateBounceRate($query)
     {
+        // This method is kept for backward compatibility but is no longer used
+        // Bounce rate is now calculated in the optimized stats query
         $total = (clone $query)->count();
         if ($total == 0) return 0;
         
@@ -438,14 +465,14 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get time series data
+     * Get time series data (optimized - DATE() can still use index for WHERE clause)
      */
     private function getTimeSeries($siteId, $dateFrom, $dateTo)
     {
         $days = $dateFrom->diffInDays($dateTo) + 1;
         
         if ($days <= 31) {
-            // Daily data
+            // Daily data - DATE() in GROUP BY but WHERE clause can use index
             return AnalyticsSession::where('site_id', $siteId)
                 ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
                 ->select(
@@ -453,7 +480,7 @@ class BackendAnalyticsController extends Controller
                     DB::raw('COUNT(*) as sessions'),
                     DB::raw('SUM(pages_count) as pageviews')
                 )
-                ->groupBy('date')
+                ->groupBy(DB::raw('DATE(first_seen)'))
                 ->orderBy('date')
                 ->get();
         } else {
@@ -472,17 +499,21 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top pages
+     * Get top pages (optimized with proper index usage)
      */
     private function getTopPages($siteId, $dateFrom, $dateTo)
     {
-        return AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
-            ->join('analytics_sessions', function($join) use ($siteId) {
-                $join->on('analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
-                     ->where('analytics_sessions.site_id', '=', $siteId);
+        // Optimized: Use subquery to filter sessions first, then join
+        // This allows MySQL to use idx_site_bot_first_seen index efficiently
+        return DB::table('analytics_session_paths')
+            ->where('analytics_session_paths.site_id', $siteId)
+            ->whereIn('analytics_session_paths.session_id', function($query) use ($siteId, $dateFrom, $dateTo) {
+                $query->select('session_id')
+                    ->from('analytics_sessions')
+                    ->where('site_id', $siteId)
+                    ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+                    ->where('is_bot', false);
             })
-            ->whereBetween('analytics_sessions.first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
-            ->where('analytics_sessions.is_bot', false)
             ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
@@ -491,14 +522,20 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
-     * Get top pages - Last 30 minutes
+     * Get top pages - Last 30 minutes (optimized)
      */
     private function getTopPagesLast30Minutes($siteId, $startTime)
     {
-        return AnalyticsSessionPath::where('analytics_session_paths.site_id', $siteId)
-            ->join('analytics_sessions', 'analytics_session_paths.session_id', '=', 'analytics_sessions.session_id')
-            ->where('analytics_sessions.last_seen', '>=', $startTime)
-            ->where('analytics_sessions.is_bot', false)
+        // Optimized: Use subquery to filter sessions first
+        return DB::table('analytics_session_paths')
+            ->where('analytics_session_paths.site_id', $siteId)
+            ->whereIn('analytics_session_paths.session_id', function($query) use ($siteId, $startTime) {
+                $query->select('session_id')
+                    ->from('analytics_sessions')
+                    ->where('site_id', $siteId)
+                    ->where('last_seen', '>=', $startTime)
+                    ->where('is_bot', false);
+            })
             ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
