@@ -106,7 +106,7 @@ class LoginController extends Controller
 
         if(null!==$is_registered){
             auth()->loginUsingId($is_registered['id'], true);
-            return redirect('/dashboard');
+            return redirect('/admin');
         }
         else
         {
@@ -122,7 +122,7 @@ class LoginController extends Controller
                 $created_user->update(['avatar'=>$avatar->id .'/'.$avatar->file_name]);
             }
             auth()->loginUsingId($created_user->id, true);
-            return redirect('/dashboard')->with([
+            return redirect('/admin')->with([
                 'message'=>"تم انشاء الحساب الخاص بك بنجاح",
                 "alert-type"=>"success"
             ]);
@@ -141,7 +141,7 @@ class LoginController extends Controller
 
         if(null!==$is_registered){
             auth()->loginUsingId($is_registered['id'], true);
-            return redirect('/dashboard');
+            return redirect('/admin');
         }
         else
         {
@@ -157,7 +157,7 @@ class LoginController extends Controller
                 $created_user->update(['avatar'=>$avatar->id .'/'.$avatar->file_name]);
             }
             auth()->loginUsingId($created_user->id, true);
-            return redirect('/dashboard')->with([
+            return redirect('/admin')->with([
                 'message'=>"تم انشاء الحساب الخاص بك بنجاح",
                 "alert-type"=>"success"
             ]);

@@ -16,7 +16,11 @@ class FrontController extends Controller
     
     public function index(Request $request)
     {
-        return view('front.index');
+        // Redirect authenticated users to admin
+        if(auth()->check()) {
+            return redirect('/admin');
+        }
+        return view('welcome');
     }
     
     public function comment_post(Request $request)
