@@ -30,6 +30,8 @@ class AnalyticsController extends Controller
             if (!$siteKey) {
                 return response()->json(['error' => 'site_key is required'], 400, [
                     'Access-Control-Allow-Origin' => '*',
+                    'Access-Control-Allow-Methods' => 'POST,OPTIONS',
+                    'Access-Control-Allow-Headers' => 'Content-Type',
                     'Content-Type' => 'application/json',
                 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             }
@@ -57,9 +59,8 @@ class AnalyticsController extends Controller
                     'is_bot' => false,
                 ]
             );
-            dd($session);
 
-            $isNewSession = !$session->exists || $session->wasRecentlyCreated;
+            $isNewSession = $session->wasRecentlyCreated;
             $now = now();
 
             // Get request data
@@ -120,9 +121,12 @@ class AnalyticsController extends Controller
                     'success' => true,
                     'session_id' => $sessionId,
                     'skipped' => true,
-                ])->header('Access-Control-Allow-Origin', '*')
-                  ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-                  ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+                ], 200, [
+                    'Access-Control-Allow-Origin' => '*',
+                    'Access-Control-Allow-Methods' => 'POST,OPTIONS',
+                    'Access-Control-Allow-Headers' => 'Content-Type',
+                    'Content-Type' => 'application/json',
+                ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             }
             
             // Update or create session (ONLY on initial page view - no engagement metrics)
@@ -313,20 +317,24 @@ class AnalyticsController extends Controller
                 // Don't log to prevent storage/logs growth
             }
             
-            // Return minimal response with minimal headers to avoid nginx buffer issues
+            // Return minimal response with CORS headers to avoid nginx buffer issues
             return response()->json([
                 'success' => true,
                 'session_id' => $sessionId,
             ], 200, [
                 'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'POST,OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type',
                 'Content-Type' => 'application/json',
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             
         } catch (\Exception $e) {
             // Don't log errors to prevent storage/logs growth
-            // Return minimal error response with minimal headers
+            // Return minimal error response with CORS headers
             return response()->json(['error' => 'Tracking failed'], 500, [
                 'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'POST,OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type',
                 'Content-Type' => 'application/json',
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         }
