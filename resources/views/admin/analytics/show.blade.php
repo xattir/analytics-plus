@@ -1566,8 +1566,30 @@
                                 @endphp
                                 @php
                                     // Decode URL-encoded paths
-                                    $decodedEntryPath = urldecode($visit['entry_path']);
-                                    $decodedExitPath = urldecode($visit['exit_path']);
+                                    $decodedEntryPath = urldecode($visit['entry_path'] ?? '');
+                                    $decodedExitPath = urldecode($visit['exit_path'] ?? '');
+                                    
+                                    // Check if entry_path/exit_path are full URLs or just paths
+                                    // If they start with http:// or https://, they are full URLs
+                                    $entryIsFullUrl = !empty($decodedEntryPath) && (str_starts_with($decodedEntryPath, 'http://') || str_starts_with($decodedEntryPath, 'https://'));
+                                    $exitIsFullUrl = !empty($decodedExitPath) && (str_starts_with($decodedExitPath, 'http://') || str_starts_with($decodedExitPath, 'https://'));
+                                    
+                                    // Build full URLs for clickable links
+                                    if ($entryIsFullUrl) {
+                                        $entryUrl = $decodedEntryPath;
+                                        $entryDisplay = $decodedEntryPath;
+                                    } else {
+                                        $entryUrl = 'https://' . $site->domain . ($decodedEntryPath ?: '/');
+                                        $entryDisplay = $decodedEntryPath ?: '/';
+                                    }
+                                    
+                                    if ($exitIsFullUrl) {
+                                        $exitUrl = $decodedExitPath;
+                                        $exitDisplay = $decodedExitPath;
+                                    } else {
+                                        $exitUrl = 'https://' . $site->domain . ($decodedExitPath ?: '/');
+                                        $exitDisplay = $decodedExitPath ?: '/';
+                                    }
                                     
                                     // Determine source to display
                                     $referrerUrl = $visit['referrer'] ?? null;
@@ -1590,8 +1612,8 @@
                                     $sourceIconDomain = '';
                                     if ($isSameDomain || $referrerSource === 'Direct') {
                                         // Same domain or direct: show entry path
-                                        $sourceDisplay = $decodedEntryPath;
-                                        $sourceUrl = 'https://' . $site->domain . $decodedEntryPath;
+                                        $sourceDisplay = $entryDisplay;
+                                        $sourceUrl = $entryUrl;
                                         $sourceIconDomain = $site->domain;
                                     } else {
                                         // External source: show referrer source name
@@ -1617,10 +1639,6 @@
                                     if ($sourceIconDomain) {
                                         $sourceIconUrl = 'https://icons.duckduckgo.com/ip3/' . $sourceIconDomain . '.ico';
                                     }
-                                    
-                                    // Build full URLs for clickable links
-                                    $entryUrl = $site->domain . $decodedEntryPath;
-                                    $exitUrl = $site->domain . $decodedExitPath;
                                 @endphp
                                 <tr class="visits-table-row">
                                     <td class="visits-table-path">
@@ -1641,8 +1659,8 @@
                                         @endif
                                     </td>
                                     <td class="visits-table-path">
-                                        <a href="https://{{ $exitUrl }}" target="_blank" class="path-link-clickable" title="{{ $decodedExitPath }}">
-                                            <code>{{ Str::limit($decodedExitPath, 40) }}</code>
+                                        <a href="{{ $exitUrl }}" target="_blank" class="path-link-clickable" title="{{ $exitDisplay }}">
+                                            <code>{{ Str::limit($exitDisplay, 40) }}</code>
                                         </a>
                                     </td>
                                     <td class="visits-table-time">
