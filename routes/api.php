@@ -24,11 +24,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // OPTIONS route removed because FormData POST requests are "simple requests" that don't trigger preflight
 // If browser still sends OPTIONS (some edge cases), handle it gracefully
 Route::options('/analytics/track', function() {
-    // Handle OPTIONS only if browser sends it (unlikely with FormData, but handle gracefully)
-    return response('', 204)
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'POST')
-        ->header('Access-Control-Max-Age', '86400');
+    // Handle OPTIONS preflight request - nginx will add CORS headers
+    // Don't add CORS headers here to avoid duplicate headers
+    return response('', 204);
 })->withoutMiddleware(['throttle:api', 'cors']);
 
 Route::post('/analytics/track', [AnalyticsController::class, 'track']);

@@ -30,7 +30,6 @@ class AnalyticsController extends Controller
             $siteKey = $request->input('site_key') ?? $request->json('site_key');
             if (!$siteKey) {
                 return response()->json(['error' => 'site_key is required'], 400, [
-                    'Access-Control-Allow-Origin' => '*',
                     'Content-Type' => 'application/json',
                 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             }
@@ -121,9 +120,6 @@ class AnalyticsController extends Controller
                     'session_id' => $sessionId,
                     'skipped' => true,
                 ], 200, [
-                    'Access-Control-Allow-Origin' => '*',
-                    'Access-Control-Allow-Methods' => 'POST,OPTIONS',
-                    'Access-Control-Allow-Headers' => 'Content-Type',
                     'Content-Type' => 'application/json',
                 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             }
@@ -316,24 +312,18 @@ class AnalyticsController extends Controller
                 // Don't log to prevent storage/logs growth
             }
             
-            // Return minimal response with CORS headers to avoid nginx buffer issues
+            // Return minimal response - nginx will add CORS headers
             return response()->json([
                 'success' => true,
                 'session_id' => $sessionId,
             ], 200, [
-                'Access-Control-Allow-Origin' => '*',
-                'Access-Control-Allow-Methods' => 'POST,OPTIONS',
-                'Access-Control-Allow-Headers' => 'Content-Type',
                 'Content-Type' => 'application/json',
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             
         } catch (\Exception $e) {
             // Don't log errors to prevent storage/logs growth
-            // Return minimal error response with CORS headers
+            // Return minimal error response - nginx will add CORS headers
             return response()->json(['error' => 'Tracking failed'], 500, [
-                'Access-Control-Allow-Origin' => '*',
-                'Access-Control-Allow-Methods' => 'POST,OPTIONS',
-                'Access-Control-Allow-Headers' => 'Content-Type',
                 'Content-Type' => 'application/json',
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         }
