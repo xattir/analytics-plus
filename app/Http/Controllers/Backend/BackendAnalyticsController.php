@@ -2278,166 +2278,170 @@ HTML;
      */
     public function extractUrlPatternsForSite(int $siteId, int $limit = 10000): array
     {
-        // 1️⃣ Collect paths from both sources
-        $entryPaths = AnalyticsSession::where('site_id', $siteId)
-            ->whereNotNull('entry_path')
-            ->where('entry_path', '!=', '')
-            ->orderByDesc('id')
-            ->limit($limit)
-            ->pluck('entry_path');
-
-        $sessionPaths = AnalyticsSessionPath::where('site_id', $siteId)
-            ->whereNotNull('path')
-            ->where('path', '!=', '')
-            ->orderByDesc('id')
-            ->limit($limit)
-            ->pluck('path');
-
-        $allPaths = $entryPaths->concat($sessionPaths);
-
-        /**
-         * CHILD MAP
-         * [domain][depth][parent][child] => count
-         */
-        $childMap = [];
+        $paths = collect()
+            ->merge(
+                AnalyticsSession::where('site_id', $siteId)
+                    ->whereNotNull('entry_path')
+                    ->where('entry_path', '!=', '')
+                    ->orderByDesc('id')
+                    ->limit($limit)
+                    ->pluck('entry_path')
+            )
+            ->merge(
+                AnalyticsSessionPath::where('site_id', $siteId)
+                    ->whereNotNull('path')
+                    ->where('path', '!=', '')
+                    ->orderByDesc('id')
+                    ->limit($limit)
+                    ->pluck('path')
+            );
 
         /**
-         * RAW PATHS
-         * [domain][] = segments[]
+         * DOMAIN TREE
+         * [domain][depth][segment] => count
          */
-        $domainPaths = [];
+        $tree = [];
 
-        foreach ($allPaths as $url) {
+        /**
+         * PATH LIST
+         * [domain][] = [segments]
+         */
+        $pathsByDomain = [];
+
+        foreach ($paths as $url) {
             $parts = parse_url($url);
             if (empty($parts['host'])) {
                 continue;
             }
 
             $domain = $parts['host'];
-            $path   = trim($parts['path'] ?? '/', '/');
-            $segments = $path === '' ? [] : array_values(array_filter(explode('/', $path)));
 
-            $domainPaths[$domain][] = $segments;
+            $path = rtrim($parts['path'] ?? '/', '/');
+            if ($path === '') {
+                $path = '/';
+            }
 
-            $parent = '__root__';
+            $segments = $path === '/'
+                ? []
+                : array_values(array_filter(explode('/', $path)));
+
+            // store path
+            $pathsByDomain[$domain][] = $segments;
+
+            // build depth tree
             foreach ($segments as $depth => $segment) {
-                $childMap[$domain][$depth][$parent][$segment] =
-                    ($childMap[$domain][$depth][$parent][$segment] ?? 0) + 1;
-                $parent = $segment;
+                $tree[$domain][$depth][$segment] =
+                    ($tree[$domain][$depth][$segment] ?? 0) + 1;
             }
         }
 
-        // 2️⃣ Detect dynamic children (parent-aware)
-        $dynamicChild = []; // [domain][depth][parent] = true
-        $DYNAMIC_THRESHOLD = 3;
+        /**
+         * 2️⃣ Decide dynamic depths per domain
+         * Rule: a depth is dynamic if:
+         * - many distinct values
+         * - OR segments look slug-like
+         */
+        $dynamicDepths = [];
 
-        foreach ($childMap as $domain => $depths) {
-            foreach ($depths as $depth => $parents) {
-                foreach ($parents as $parent => $children) {
-                    if (count($children) >= $DYNAMIC_THRESHOLD) {
-                        $dynamicChild[$domain][$depth][$parent] = true;
-                    }
-                }
-            }
-        }
+        foreach ($tree as $domain => $depths) {
+            foreach ($depths as $depth => $segments) {
+                $distinct = count($segments);
 
-        // 3️⃣ Generate candidate patterns
-        $candidatePatterns = [];
-
-        foreach ($domainPaths as $domain => $paths) {
-            foreach ($paths as $segments) {
-                if (empty($segments)) {
-                    $candidatePatterns[$domain]['/'] = true;
-                    continue;
-                }
-
-                $pattern = [];
-                $parent  = '__root__';
-
-                foreach ($segments as $depth => $segment) {
-                    if (!empty($dynamicChild[$domain][$depth][$parent])) {
-                        $pattern[] = '*';
-                        $parent = '*';
-                    } else {
-                        $pattern[] = $segment;
-                        $parent = $segment;
-                    }
-                }
-
-                $candidatePatterns[$domain]['/' . implode('/', $pattern)] = true;
-            }
-        }
-
-        // 4️⃣ Reduce patterns (remove redundant ones)
-        $finalPatterns = [];
-
-        foreach ($candidatePatterns as $domain => $patterns) {
-            $patterns = array_keys($patterns);
-
-            usort($patterns, fn($a, $b) => substr_count($a, '*') <=> substr_count($b, '*'));
-
-            $kept = [];
-
-            foreach ($patterns as $pattern) {
-                $segments = explode('/', trim($pattern, '/'));
-                $isRedundant = false;
-
-                foreach ($kept as $existing) {
-                    $eSegments = explode('/', trim($existing, '/'));
-
-                    if (count($eSegments) !== count($segments)) {
-                        continue;
-                    }
-
-                    $covers = true;
-                    $moreGeneral = false;
-
-                    foreach ($segments as $i => $seg) {
-                        if ($eSegments[$i] === '*') {
-                            $moreGeneral = true;
-                            continue;
-                        }
-                        if ($eSegments[$i] !== $seg) {
-                            $covers = false;
-                            break;
-                        }
-                    }
-
-                    if ($covers && $moreGeneral) {
-                        $isRedundant = true;
+                $slugLike = false;
+                foreach (array_keys($segments) as $seg) {
+                    if (
+                        strlen($seg) >= 20 ||
+                        preg_match('/[%0-9]/', $seg)
+                    ) {
+                        $slugLike = true;
                         break;
                     }
                 }
 
-                if (!$isRedundant) {
-                    $kept[] = $pattern;
+                if ($distinct > 3 || $slugLike) {
+                    $dynamicDepths[$domain][$depth] = true;
                 }
             }
+        }
 
-            foreach ($kept as $p) {
-                $finalPatterns[] = [
+        /**
+         * 3️⃣ Generate canonical patterns
+         */
+        $candidatePatterns = [];
+
+        foreach ($pathsByDomain as $domain => $paths) {
+            foreach ($paths as $segments) {
+                if (empty($segments)) {
+                    $candidatePatterns[$domain][] = '/';
+                    continue;
+                }
+
+                $pattern = [];
+                foreach ($segments as $depth => $segment) {
+                    if (!empty($dynamicDepths[$domain][$depth])) {
+                        $pattern[] = '*';
+                    } else {
+                        $pattern[] = $segment;
+                    }
+                }
+
+                $candidatePatterns[$domain][] = '/' . implode('/', $pattern);
+            }
+        }
+
+        /**
+         * 4️⃣ Deduplicate + collapse redundant patterns
+         */
+        $finalPatterns = [];
+
+        foreach ($candidatePatterns as $domain => $patterns) {
+            $patterns = array_values(array_unique($patterns));
+
+            usort($patterns, fn ($a, $b) => substr_count($a, '*') <=> substr_count($b, '*'));
+
+            foreach ($patterns as $pattern) {
+                $redundant = false;
+
+                foreach ($finalPatterns[$domain] ?? [] as $kept) {
+                    if ($this->patternCovers($kept, $pattern)) {
+                        $redundant = true;
+                        break;
+                    }
+                }
+
+                if (!$redundant) {
+                    $finalPatterns[$domain][] = $pattern;
+                }
+            }
+        }
+
+        /**
+         * 5️⃣ Persist
+         */
+        $result = [];
+
+        foreach ($finalPatterns as $domain => $patterns) {
+            foreach ($patterns as $pattern) {
+                DB::table('analytics_url_patterns')->updateOrInsert(
+                    [
+                        'site_id' => $siteId,
+                        'domain'  => $domain,
+                        'pattern' => $pattern,
+                    ],
+                    [
+                        'generated_at' => now(),
+                    ]
+                );
+
+                $result[] = [
                     'site_id' => $siteId,
                     'domain'  => $domain,
-                    'pattern' => $p,
+                    'pattern' => $pattern,
                 ];
             }
         }
 
-        // 5️⃣ Persist
-        foreach ($finalPatterns as $row) {
-            DB::table('analytics_url_patterns')->updateOrInsert(
-                [
-                    'site_id' => $row['site_id'],
-                    'domain'  => $row['domain'],
-                    'pattern' => $row['pattern'],
-                ],
-                [
-                    'generated_at' => now(),
-                ]
-            );
-        }
-
-        return $finalPatterns;
+        return $result;
     }
 
     private function patternCovers(string $general, string $specific): bool
