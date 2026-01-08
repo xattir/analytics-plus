@@ -2284,20 +2284,20 @@ HTML;
                 continue;
             }
 
-            // Separate homepage paths
-            $homepagePaths = [];
+            // Separate homepage paths (empty segments array means homepage)
+            $hasHomepage = false;
             $nonHomepagePaths = [];
             
             foreach ($pathSegmentsArray as $segments) {
-                if (count($segments) === 0 || (count($segments) === 1 && $segments[0] === '/')) {
-                    $homepagePaths[] = $segments;
+                if (empty($segments)) {
+                    $hasHomepage = true;
                 } else {
                     $nonHomepagePaths[] = $segments;
                 }
             }
 
             // Add homepage pattern if exists
-            if (!empty($homepagePaths)) {
+            if ($hasHomepage) {
                 $patterns[] = [
                     'site_id' => $siteId,
                     'domain' => $domain,
