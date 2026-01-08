@@ -217,8 +217,8 @@ class AnalyticsController extends Controller
             $date = $now->format('Y-m-d');
             
             try {
-                // Update daily path rollup
-                \App\Models\AnalyticsDailyPath::incrementPath($site->id, $date, $path, 1);
+                // Update daily path rollup - use full URL (exitUrl) instead of path only
+                \App\Models\AnalyticsDailyPath::incrementPath($site->id, $date, $exitUrl, 1);
             
                 // Update daily dimension rollups (only for new sessions to avoid double counting)
                 if ($isNewSession && !$isBot) {
@@ -316,11 +316,14 @@ class AnalyticsController extends Controller
                     ->where('site_id', $site->id)
                     ->max('position') ?? 0;
                 
+                // Use full URL for path (same as exit_path) if available, otherwise fallback to path
+                $pathToStore = $exitUrl; // Store full URL (e.g., https://subdomain.example.com/page)
+                
                 // Insert directly using DB::table for better performance
                 DB::table('analytics_session_paths')->insert([
                     'site_id' => $site->id,
                     'session_id' => $sessionId,
-                    'path' => $path,
+                    'path' => $pathToStore, // Store full URL instead of path only
                     'position' => $pathPosition + 1,
                     'scroll_percent' => 0, // Will be updated later if needed
                     'time_spent_ms' => 0, // Will be updated later if needed
