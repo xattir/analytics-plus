@@ -137,6 +137,23 @@ class AnalyticsController extends Controller
             $session->idle_time_ms = ($session->idle_time_ms ?? 0) + $engagement['idle_time_ms'];
             $session->ip = inet_pton($ip);
             
+            // Precompute quality flags at insert/update time for fast aggregations
+            // This eliminates expensive CASE expressions in dashboard queries
+            $isHighQuality = !$isBot 
+                && $session->pages_count > 1 
+                && $session->duration_ms > 30000 
+                && ($session->max_scroll_percent ?? 0) > 50;
+            
+            $isLowQuality = !$isBot 
+                && (
+                    $session->pages_count == 1 
+                    || $session->duration_ms < 5000 
+                    || ($session->max_scroll_percent ?? 0) < 10
+                );
+            
+            $session->is_high_quality = $isHighQuality;
+            $session->is_low_quality = $isLowQuality;
+            
             $session->save();
             
             // Track path

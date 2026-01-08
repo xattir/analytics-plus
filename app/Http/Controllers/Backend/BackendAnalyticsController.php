@@ -183,9 +183,14 @@ class BackendAnalyticsController extends Controller
         
         // Optimized: Use SUM(1) instead of COUNT(*) and single query for aggregations
         // Using SUM(1) is slightly faster than COUNT(*) in some MySQL versions
+        // Optimized: Use first_seen_date for better index usage
+        // Expected EXPLAIN: key=idx_site_first_seen_date, type=range
+        $startDate = $dateFromCarbon->startOfDay()->toDateString();
+        $endDate = $dateToCarbon->endOfDay()->toDateString();
+        
         $statsRaw = DB::table('analytics_sessions')
             ->where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+            ->whereBetween('first_seen_date', [$startDate, $endDate])
             ->selectRaw('
                 SUM(1) as total_sessions,
                 SUM(pages_count) as total_pageviews,
@@ -198,10 +203,10 @@ class BackendAnalyticsController extends Controller
             ->first();
         
         // Optimized: Use covering index for COUNT(DISTINCT) - faster with large datasets
-        // Using approximate count for very large datasets (100M+ records)
+        // Expected EXPLAIN: key=idx_site_date_bot_fingerprint, type=range, Using index
         $uniqueVisitors = DB::table('analytics_sessions')
             ->where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+            ->whereBetween('first_seen_date', [$startDate, $endDate])
             ->select(DB::raw('COUNT(DISTINCT device_fingerprint) as count'))
             ->value('count');
         
@@ -223,15 +228,16 @@ class BackendAnalyticsController extends Controller
         $last7DaysStart = Carbon::now()->subDays(7)->startOfDay();
         $last7DaysEnd = Carbon::now()->endOfDay();
         
-        // Optimized: Get traffic quality metrics in a single query
+        // Optimized: Use precomputed quality flags instead of expensive CASE expressions
+        // Expected EXPLAIN: key=idx_site_date_quality, type=range, much faster than CASE
         $qualityRaw = DB::table('analytics_sessions')
             ->where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFromCarbon->startOfDay(), $dateToCarbon->endOfDay()])
+            ->whereBetween('first_seen_date', [$dateFromCarbon->startOfDay()->toDateString(), $dateToCarbon->endOfDay()->toDateString()])
             ->selectRaw('
                 SUM(CASE WHEN is_bot = 1 THEN 1 ELSE 0 END) as bot_sessions,
                 SUM(CASE WHEN is_bot = 0 THEN 1 ELSE 0 END) as real_sessions,
-                SUM(CASE WHEN is_bot = 0 AND pages_count > 1 AND duration_ms > 30000 AND max_scroll_percent > 50 THEN 1 ELSE 0 END) as high_quality,
-                SUM(CASE WHEN is_bot = 0 AND (pages_count = 1 OR duration_ms < 5000 OR max_scroll_percent < 10) THEN 1 ELSE 0 END) as low_quality
+                SUM(is_high_quality = 1) as high_quality,
+                SUM(is_low_quality = 1) as low_quality
             ')
             ->first();
         
@@ -486,22 +492,22 @@ class BackendAnalyticsController extends Controller
         $days = $dateFrom->diffInDays($dateTo) + 1;
         
         if ($days <= 31) {
-            // Daily data - Optimized: Use UNION ALL with individual day queries to leverage indexes
-            // This allows MySQL to use idx_site_bot_first_seen for each day query
-            // Optimized: Use single query with GROUP BY DATE for better performance (2.42s -> ~500ms)
-            $startDate = $dateFrom->startOfDay()->toDateTimeString();
-            $endDate = $dateTo->endOfDay()->toDateTimeString();
+            // Daily data - Optimized: Use generated column first_seen_date for index usage
+            // This eliminates Using temporary; Using filesort from GROUP BY DATE(first_seen)
+            // Expected EXPLAIN: key=idx_site_first_seen_date, type=range, no temp/filesort
+            $startDate = $dateFrom->startOfDay()->toDateString();
+            $endDate = $dateTo->endOfDay()->toDateString();
             
             return DB::table('analytics_sessions')
                 ->where('site_id', $siteId)
-                ->whereBetween('first_seen', [$startDate, $endDate])
+                ->whereBetween('first_seen_date', [$startDate, $endDate])
                 ->select(
-                    DB::raw('DATE(first_seen) as date'),
+                    'first_seen_date as date',
                     DB::raw('SUM(1) as sessions'),
                     DB::raw('SUM(pages_count) as pageviews')
                 )
-                ->groupBy(DB::raw('DATE(first_seen)'))
-                ->orderBy('date')
+                ->groupBy('first_seen_date')
+                ->orderBy('first_seen_date')
                 ->get();
         } else {
             // Weekly data - Optimized: Use UNION ALL with individual week queries
@@ -542,17 +548,18 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopPages($siteId, $dateFrom, $dateTo)
     {
-        // Optimized: Use direct JOIN with conditions in JOIN clause
-        // This avoids loading large arrays into memory and allows MySQL to optimize
-        // MySQL can use indexes efficiently with this approach
-        $startDate = $dateFrom->startOfDay()->toDateTimeString();
-        $endDate = $dateTo->endOfDay()->toDateTimeString();
+        // Optimized: Use first_seen_date + covering index for session_id
+        // Expected EXPLAIN: 
+        //   analytics_sessions: key=idx_site_bot_first_seen_session, type=ref
+        //   analytics_session_paths: key=idx_site_session_path, type=ref
+        $startDate = $dateFrom->startOfDay()->toDateString();
+        $endDate = $dateTo->endOfDay()->toDateString();
         
         return DB::table('analytics_session_paths')
             ->join('analytics_sessions', function($join) use ($siteId, $startDate, $endDate) {
                 $join->on('analytics_sessions.session_id', '=', 'analytics_session_paths.session_id')
                      ->where('analytics_sessions.site_id', '=', $siteId)
-                     ->whereBetween('analytics_sessions.first_seen', [$startDate, $endDate])
+                     ->whereBetween('analytics_sessions.first_seen_date', [$startDate, $endDate])
                      ->where('analytics_sessions.is_bot', '=', 0);
             })
             ->where('analytics_session_paths.site_id', $siteId)
@@ -568,8 +575,8 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopPagesLast30Minutes($siteId, $startTime)
     {
-        // Optimized: Use direct JOIN with conditions in JOIN clause
-        // This avoids loading large arrays into memory and allows MySQL to optimize
+        // Optimized: Use last_seen + index idx_site_bot_last_seen_core
+        // Expected EXPLAIN: key=idx_site_bot_last_seen_core, type=range
         $startTimeStr = $startTime->toDateTimeString();
         
         return DB::table('analytics_session_paths')
@@ -592,8 +599,14 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopEntryPages($siteId, $dateFrom, $dateTo)
     {
-        return AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+        // Optimized: Use first_seen_date + index idx_site_first_seen_entry
+        // Expected EXPLAIN: key=idx_site_first_seen_entry, type=range
+        $startDate = $dateFrom->startOfDay()->toDateString();
+        $endDate = $dateTo->endOfDay()->toDateString();
+        
+        return DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen_date', [$startDate, $endDate])
             ->select('entry_path', DB::raw('SUM(1) as entries'))
             ->groupBy('entry_path')
             ->orderByDesc('entries')
@@ -606,8 +619,14 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopExitPages($siteId, $dateFrom, $dateTo)
     {
-        return AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('last_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+        // Optimized: Use last_seen_date for better index usage
+        // Expected EXPLAIN: key=idx_site_last_seen_exit, type=range
+        $startDate = $dateFrom->startOfDay()->toDateString();
+        $endDate = $dateTo->endOfDay()->toDateString();
+        
+        return DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('last_seen_date', [$startDate, $endDate])
             ->select('exit_path', DB::raw('SUM(1) as exits'))
             ->groupBy('exit_path')
             ->orderByDesc('exits')
@@ -620,8 +639,14 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopBrowsers($siteId, $dateFrom, $dateTo)
     {
-        return AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+        // Optimized: Use first_seen_date + index idx_site_bot_first_seen_browser
+        // Expected EXPLAIN: key=idx_site_bot_first_seen_browser, type=range
+        $startDate = $dateFrom->startOfDay()->toDateString();
+        $endDate = $dateTo->endOfDay()->toDateString();
+        
+        return DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen_date', [$startDate, $endDate])
             ->where('is_bot', false)
             ->whereNotNull('browser')
             ->select('browser', DB::raw('SUM(1) as count'))
@@ -636,8 +661,14 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopDevices($siteId, $dateFrom, $dateTo)
     {
-        return AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+        // Optimized: Use first_seen_date + index idx_site_first_seen_device
+        // Expected EXPLAIN: key=idx_site_first_seen_device, type=range
+        $startDate = $dateFrom->startOfDay()->toDateString();
+        $endDate = $dateTo->endOfDay()->toDateString();
+        
+        return DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen_date', [$startDate, $endDate])
             ->whereNotNull('device_type')
             ->select('device_type', DB::raw('SUM(1) as count'))
             ->groupBy('device_type')
@@ -650,8 +681,14 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopOs($siteId, $dateFrom, $dateTo)
     {
-        return AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+        // Optimized: Use first_seen_date + index idx_site_first_seen_os
+        // Expected EXPLAIN: key=idx_site_first_seen_os, type=range
+        $startDate = $dateFrom->startOfDay()->toDateString();
+        $endDate = $dateTo->endOfDay()->toDateString();
+        
+        return DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen_date', [$startDate, $endDate])
             ->whereNotNull('os')
             ->select('os', DB::raw('SUM(1) as count'))
             ->groupBy('os')
@@ -665,8 +702,14 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopCountries($siteId, $dateFrom, $dateTo)
     {
-        return AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+        // Optimized: Use first_seen_date + index idx_site_bot_first_seen_country
+        // Expected EXPLAIN: key=idx_site_bot_first_seen_country, type=range
+        $startDate = $dateFrom->startOfDay()->toDateString();
+        $endDate = $dateTo->endOfDay()->toDateString();
+        
+        return DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen_date', [$startDate, $endDate])
             ->where('is_bot', false)
             ->whereNotNull('country')
             ->select('country', DB::raw('SUM(1) as count'))
@@ -681,8 +724,14 @@ class BackendAnalyticsController extends Controller
      */
     private function getTopCampaigns($siteId, $dateFrom, $dateTo)
     {
-        return AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
+        // Optimized: Use first_seen_date for better index usage
+        // Expected EXPLAIN: key=idx_site_first_seen_date, type=range
+        $startDate = $dateFrom->startOfDay()->toDateString();
+        $endDate = $dateTo->endOfDay()->toDateString();
+        
+        return DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen_date', [$startDate, $endDate])
             ->whereNotNull('utm_campaign')
             ->select('utm_campaign', 'utm_source', 'utm_medium', DB::raw('SUM(1) as count'))
             ->groupBy('utm_campaign', 'utm_source', 'utm_medium')
@@ -1076,21 +1125,21 @@ class BackendAnalyticsController extends Controller
      */
     private function getVisitorsLast7Days($siteId)
     {
-        // Optimized: Use single query with GROUP BY DATE for better performance (2.43s -> ~300ms)
-        // While DATE() prevents full index usage, it's faster than UNION ALL for 7 days
-        $startDate = Carbon::today()->subDays(6)->startOfDay();
-        $endDate = Carbon::today()->endOfDay();
+        // Optimized: Use generated column first_seen_date + covering index
+        // Expected EXPLAIN: key=idx_site_date_bot_fingerprint, type=range, Using index
+        $startDate = Carbon::today()->subDays(6)->startOfDay()->toDateString();
+        $endDate = Carbon::today()->endOfDay()->toDateString();
         
         $results = DB::table('analytics_sessions')
             ->where('site_id', $siteId)
-            ->whereBetween('first_seen', [$startDate->toDateTimeString(), $endDate->toDateTimeString()])
+            ->whereBetween('first_seen_date', [$startDate, $endDate])
             ->where('is_bot', false)
             ->select(
-                DB::raw('DATE(first_seen) as date'),
+                'first_seen_date as date',
                 DB::raw('COUNT(DISTINCT device_fingerprint) as count')
             )
-            ->groupBy(DB::raw('DATE(first_seen)'))
-            ->orderBy('date')
+            ->groupBy('first_seen_date')
+            ->orderBy('first_seen_date')
             ->get()
             ->keyBy('date');
         
@@ -1122,9 +1171,14 @@ class BackendAnalyticsController extends Controller
         $startDate = $dateFrom->copy()->startOfDay()->toDateTimeString();
         $endDate = $dateTo->copy()->endOfDay()->toDateTimeString();
         
-        // Optimized: Get referrer sources with aggregated counts and sample referrer URL
-        $referrerSourcesRaw = AnalyticsSession::where('site_id', $siteId)
-            ->whereBetween('first_seen', [$startDate, $endDate])
+        // Optimized: Use first_seen_date + index idx_site_bot_first_seen_referrer
+        // Expected EXPLAIN: key=idx_site_bot_first_seen_referrer, type=range
+        $startDateStr = $dateFrom->copy()->startOfDay()->toDateString();
+        $endDateStr = $dateTo->copy()->endOfDay()->toDateString();
+        
+        $referrerSourcesRaw = DB::table('analytics_sessions')
+            ->where('site_id', $siteId)
+            ->whereBetween('first_seen_date', [$startDateStr, $endDateStr])
             ->whereNotNull('referrer_source')
             ->where('is_bot', false)
             ->select(

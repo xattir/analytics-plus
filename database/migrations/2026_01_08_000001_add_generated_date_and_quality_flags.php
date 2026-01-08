@@ -28,6 +28,15 @@ return new class extends Migration
                     ->comment('Generated column for DATE(first_seen) to enable index usage in GROUP BY');
             }
             
+            // Add last_seen_date for exit_path queries
+            if (!Schema::hasColumn('analytics_sessions', 'last_seen_date')) {
+                $table->date('last_seen_date')
+                    ->nullable()
+                    ->after('last_seen')
+                    ->storedAs('DATE(last_seen)')
+                    ->comment('Generated column for DATE(last_seen) to enable index usage in GROUP BY');
+            }
+            
             // Add quality flags precomputed at insert time
             // This eliminates expensive CASE expressions in aggregate queries
             if (!Schema::hasColumn('analytics_sessions', 'is_high_quality')) {
@@ -137,7 +146,7 @@ return new class extends Migration
         }
         
         Schema::table('analytics_sessions', function (Blueprint $table) {
-            $table->dropColumn(['first_seen_date', 'is_high_quality', 'is_low_quality']);
+            $table->dropColumn(['first_seen_date', 'last_seen_date', 'is_high_quality', 'is_low_quality']);
         });
     }
     

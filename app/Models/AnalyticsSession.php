@@ -49,6 +49,8 @@ class AnalyticsSession extends Model
         'is_returning',
         'is_bounce',
         'is_bot',
+        'is_high_quality',
+        'is_low_quality',
         'ip',
     ];
     
@@ -56,10 +58,14 @@ class AnalyticsSession extends Model
         'is_returning' => 'boolean',
         'is_bounce' => 'boolean',
         'is_bot' => 'boolean',
+        'is_high_quality' => 'boolean',
+        'is_low_quality' => 'boolean',
         'device_pixel_ratio' => 'decimal:2',
         'downlink_mbps' => 'decimal:2',
         'first_seen' => 'datetime',
         'last_seen' => 'datetime',
+        'first_seen_date' => 'date',
+        'last_seen_date' => 'date',
     ];
     
     public function site()
