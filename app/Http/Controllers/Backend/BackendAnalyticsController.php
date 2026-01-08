@@ -2236,120 +2236,154 @@ HTML;
     public function extractUrlPatternsForSite(int $siteId, int $limit = 10000): array
     {
         // Fetch latest N paths for this site
-$paths = AnalyticsSessionPath::where('site_id', $siteId)
-->whereNotNull('path')
-->where('path', '!=', '')
-->orderByDesc('id')
-->limit($limit)
-->get(['path']);
+        $paths = AnalyticsSessionPath::where('site_id', $siteId)
+            ->whereNotNull('path')
+            ->where('path', '!=', '')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get(['path']);
 
-/**
- * Structure:
- * [domain][depth][segment] => count
- */
-$map = [];
+        /**
+         * Group paths by domain with their segments
+         * Structure: [domain] => [ [segments], [segments], ... ]
+         */
+        $domainPaths = [];
 
-/**
- * GLOBAL depth stats per domain
- * [domain][depth][segment] => true
- */
-$globalDepthStats = [];
+        foreach ($paths as $row) {
+            $parts = parse_url($row->path);
+            if (empty($parts['host'])) {
+                continue;
+            }
 
-foreach ($paths as $row) {
-$parts = parse_url($row->path);
-if (empty($parts['host'])) {
-    continue;
-}
+            $domain = $parts['host'];
 
-// Use full domain directly (e.g., subdomain.example.com or example.com)
-$domain = $parts['host'];
+            // Normalize path
+            $path = rtrim($parts['path'] ?? '/', '/');
+            if ($path === '') {
+                $path = '/';
+            }
 
-// ---- normalize path
-$path = rtrim($parts['path'] ?? '/', '/');
-if ($path === '') {
-    $path = '/';
-}
+            $segments = array_values(array_filter(explode('/', $path)));
 
-$segments = array_values(array_filter(explode('/', $path)));
+            if (!isset($domainPaths[$domain])) {
+                $domainPaths[$domain] = [];
+            }
 
-// homepage
-if (empty($segments)) {
-    $map[$domain][0]['/'] =
-        ($map[$domain][0]['/'] ?? 0) + 1;
-
-    $globalDepthStats[$domain][0]['/'] = true;
-    continue;
-}
-
-foreach ($segments as $depth => $segment) {
-    // per domain map
-    $map[$domain][$depth][$segment] =
-        ($map[$domain][$depth][$segment] ?? 0) + 1;
-
-    // global stats (IMPORTANT)
-    $globalDepthStats[$domain][$depth][$segment] = true;
-}
-}
-
-/**
- * Decide wildcard depths globally per domain
- * [domain][depth] => true
- */
-$wildcardDepths = [];
-
-foreach ($globalDepthStats as $domain => $depths) {
-foreach ($depths as $depth => $segments) {
-    if (count($segments) > 5) {
-        $wildcardDepths[$domain][$depth] = true;
-    }
-}
-}
-
-// ---- build patterns
-$patterns = [];
-
-foreach ($map as $domain => $depths) {
-    ksort($depths);
-
-    $patternSegments = [];
-
-    foreach ($depths as $depth => $segments) {
-
-        // GLOBAL wildcard decision
-        if (!empty($wildcardDepths[$domain][$depth])) {
-            $patternSegments[] = '*';
-            continue;
+            // Store segments for this path
+            $domainPaths[$domain][] = $segments;
         }
 
-        // otherwise pick dominant static value
-        arsort($segments);
-        $patternSegments[] = array_key_first($segments);
-    }
+        /**
+         * Build consolidated patterns per domain
+         * We'll group paths by common structure and use wildcards for varying segments
+         */
+        $patterns = [];
 
-    $pattern = '/' . ltrim(implode('/', $patternSegments), '/');
+        foreach ($domainPaths as $domain => $pathSegmentsArray) {
+            if (empty($pathSegmentsArray)) {
+                continue;
+            }
 
-    $patterns[] = [
-        'site_id'     => $siteId,
-        'domain'      => $domain,
-        'pattern'     => $pattern,
-    ];
-}
+            // Group paths by structure (paths with same length)
+            $pathsByLength = [];
+            foreach ($pathSegmentsArray as $segments) {
+                $length = count($segments);
+                if ($length === 0) {
+                    // Homepage
+                    $pathsByLength[0][] = ['/'];
+                } else {
+                    if (!isset($pathsByLength[$length])) {
+                        $pathsByLength[$length] = [];
+                    }
+                    $pathsByLength[$length][] = $segments;
+                }
+            }
 
-// ---- persist
-foreach ($patterns as $row) {
-DB::table('analytics_url_patterns')->updateOrInsert(
-    [
-        'site_id'     => $row['site_id'],
-        'domain'      => $row['domain'],
-        'pattern'     => $row['pattern'],
-    ],
-    [
-        'generated_at' => now(),
-    ]
-);
-}
+            // Process each group of paths with the same length
+            foreach ($pathsByLength as $length => $segmentsArray) {
+                if ($length === 0) {
+                    // Homepage
+                    $patterns[] = [
+                        'site_id' => $siteId,
+                        'domain' => $domain,
+                        'pattern' => '/',
+                    ];
+                    continue;
+                }
 
-return $patterns;
+                if (count($segmentsArray) === 1) {
+                    // Single path with this length - use exact pattern
+                    $pattern = '/' . implode('/', $segmentsArray[0]);
+                    $patterns[] = [
+                        'site_id' => $siteId,
+                        'domain' => $domain,
+                        'pattern' => $pattern,
+                    ];
+                    continue;
+                }
 
+                // Multiple paths with same length - find common structure
+                $patternSegments = [];
+                $segmentVariations = [];
+
+                // Analyze each depth position
+                for ($depth = 0; $depth < $length; $depth++) {
+                    $segmentCounts = [];
+                    
+                    foreach ($segmentsArray as $segments) {
+                        $segment = $segments[$depth];
+                        $segmentCounts[$segment] = ($segmentCounts[$segment] ?? 0) + 1;
+                    }
+
+                    // If more than 1 unique segment at this depth, use wildcard
+                    if (count($segmentCounts) > 1) {
+                        $patternSegments[] = '*';
+                        $segmentVariations[$depth] = true;
+                    } else {
+                        // All paths share the same segment at this depth
+                        $patternSegments[] = array_key_first($segmentCounts);
+                        $segmentVariations[$depth] = false;
+                    }
+                }
+
+                $pattern = '/' . implode('/', $patternSegments);
+
+                // Only add pattern if it's meaningful (not all wildcards)
+                if (in_array(false, $segmentVariations, true)) {
+                    $patterns[] = [
+                        'site_id' => $siteId,
+                        'domain' => $domain,
+                        'pattern' => $pattern,
+                    ];
+                }
+            }
+        }
+
+        // Consolidate duplicate patterns per domain
+        $consolidatedPatterns = [];
+        foreach ($patterns as $pattern) {
+            $key = $pattern['domain'] . '|' . $pattern['pattern'];
+            if (!isset($consolidatedPatterns[$key])) {
+                $consolidatedPatterns[$key] = $pattern;
+            }
+        }
+
+        $patterns = array_values($consolidatedPatterns);
+
+        // Persist to database
+        foreach ($patterns as $row) {
+            DB::table('analytics_url_patterns')->updateOrInsert(
+                [
+                    'site_id' => $row['site_id'],
+                    'domain' => $row['domain'],
+                    'pattern' => $row['pattern'],
+                ],
+                [
+                    'generated_at' => now(),
+                ]
+            );
+        }
+
+        return $patterns;
     }
 }

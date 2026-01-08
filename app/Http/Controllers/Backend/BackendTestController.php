@@ -50,9 +50,9 @@ class BackendTestController extends Controller
         
         // Create controller instance and call method
         $analyticsController = new BackendAnalyticsController();
-        
+                
         try {
-            $patterns = $analyticsController->extractUrlPatternsForSite($siteId, $limit);
+                $patterns = $analyticsController->extractUrlPatternsForSite($siteId, $limit);
             
             return response()->json([
                 'success' => true,
