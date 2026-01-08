@@ -1221,8 +1221,8 @@
                     
                     <div class="site-card-stats">
                         <div class="site-card-stat">
-                            <span class="site-card-stat-label">المستخدمون النشطون</span>
-                            <span class="site-card-stat-value">{{ number_format($activeUsersCount ?? 0) }}</span>
+                            <span class="site-card-stat-label">المستخدمون النشطون <span id="liveIndicator" style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; margin-right: 4px; animation: pulse 2s infinite;"></span></span>
+                            <span class="site-card-stat-value" id="activeUsersCount">{{ number_format($activeUsersCount ?? 0) }}</span>
                         </div>
                         <div class="site-card-stat">
                             <span class="site-card-stat-label">المستخدمون اليوم</span>
@@ -1771,77 +1771,152 @@
 @section('scripts')
 <script src="/js/chartjs.min.js"></script>
 <script>
-// Active Users Chart (Hero - Last 30 minutes) - Bar Chart
+// Active Users Chart (Hero - Last 30 minutes) - Bar Chart with Live Updates
 @if(isset($activeUsersData) && count($activeUsersData) > 0)
 document.addEventListener('DOMContentLoaded', function() {
     const activeUsersCtx = document.getElementById('activeUsersChart');
     if (activeUsersCtx && typeof Chart !== 'undefined') {
         var chartData = @json($activeUsersData);
+        var activeUsersChart = null;
         
-        new Chart(activeUsersCtx, {
-            type: 'bar',
-            data: {
-                labels: chartData.map(function(point) { return point.time; }),
-                datasets: [{
-                    label: 'المستخدمون النشطون',
-                    data: chartData.map(function(point) { return point.count; }),
-                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
-                    borderColor: '#10b981',
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            title: function(context) {
-                                var index = context[0].dataIndex;
-                                return chartData[index] ? chartData[index].time : '';
-                            },
-                            label: function(context) {
-                                return 'المستخدمون: ' + context.parsed.y;
+        function createChart(data) {
+            if (activeUsersChart) {
+                activeUsersChart.destroy();
+            }
+            
+            activeUsersChart = new Chart(activeUsersCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(function(point) { return point.time; }),
+                    datasets: [{
+                        label: 'المستخدمون النشطون',
+                        data: data.map(function(point) { return point.count; }),
+                        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                        borderColor: '#10b981',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                title: function(context) {
+                                    var index = context[0].dataIndex;
+                                    return data[index] ? data[index].time : '';
+                                },
+                                label: function(context) {
+                                    return 'المستخدمون: ' + context.parsed.y;
+                                }
                             }
                         }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            display: false
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                display: false
+                            },
+                            grid: {
+                                display: false
+                            }
                         },
-                        grid: {
-                            display: false
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                display: false
+                            }
                         }
                     },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            display: false
-                        }
+                    animation: {
+                        duration: 300
                     }
-                },
-                animation: {
-                    duration: 750
                 }
-            }
-        });
+            });
+        }
+        
+        // Initialize chart
+        createChart(chartData);
+        
+        // Live data polling - update every 30 seconds
+        var siteId = {{ $site->id }};
+        var updateInterval = 30000; // 30 seconds
+        var isUpdating = false;
+        
+        function updateLiveData() {
+            if (isUpdating) return;
+            isUpdating = true;
+            
+            // Determine the correct route based on current URL
+            var currentPath = window.location.pathname;
+            var isAdminRoute = currentPath.includes('/admin/');
+            var routePrefix = isAdminRoute ? '/admin' : '/dashboard';
+            var apiUrl = routePrefix + '/analytics/' + siteId + '/live-data';
+            
+            fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.activeUsersData && data.activeUsersData.length > 0) {
+                    // Update chart
+                    createChart(data.activeUsersData);
+                    
+                    // Update active users count
+                    var countElement = document.getElementById('activeUsersCount');
+                    if (countElement) {
+                        countElement.textContent = new Intl.NumberFormat('ar-EG').format(data.activeUsersCount || 0);
+                    }
+                }
+                isUpdating = false;
+            })
+            .catch(function(error) {
+                console.error('Error updating live data:', error);
+                isUpdating = false;
+            });
+        }
+        
+        // Start polling
+        setInterval(updateLiveData, updateInterval);
+        
+        // Initial update after 5 seconds
+        setTimeout(updateLiveData, 5000);
     } else if (activeUsersCtx) {
         console.error('Chart.js is not loaded');
     }
 });
 @endif
+
+<style>
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+</style>
 
 // Visitors Last 7 Days Chart (Hero - Line Chart)
 @if(isset($visitorsLast7Days) && count($visitorsLast7Days) > 0)
