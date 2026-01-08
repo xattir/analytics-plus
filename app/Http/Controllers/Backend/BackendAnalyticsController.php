@@ -2244,15 +2244,15 @@ $paths = AnalyticsSessionPath::where('site_id', $siteId)
 ->get(['path']);
 
 /**
-* Structure:
-* [base_domain][subdomain][depth][segment] => count
-*/
+ * Structure:
+ * [domain][depth][segment] => count
+ */
 $map = [];
 
 /**
-* GLOBAL depth stats per base_domain
-* [base_domain][depth][segment] => true
-*/
+ * GLOBAL depth stats per domain
+ * [domain][depth][segment] => true
+ */
 $globalDepthStats = [];
 
 foreach ($paths as $row) {
@@ -2261,18 +2261,8 @@ if (empty($parts['host'])) {
     continue;
 }
 
-// ---- split host into base_domain + subdomain
-$hostParts = explode('.', $parts['host']);
-$subdomain = null;
-
-if (count($hostParts) > 2) {
-    $baseDomain = implode('.', array_slice($hostParts, -2));
-    $subdomain  = implode('.', array_slice($hostParts, 0, -2));
-} else {
-    $baseDomain = $parts['host'];
-}
-
-$subdomainKey = $subdomain ?? '';
+// Use full domain directly (e.g., subdomain.example.com or example.com)
+$domain = $parts['host'];
 
 // ---- normalize path
 $path = rtrim($parts['path'] ?? '/', '/');
@@ -2284,33 +2274,33 @@ $segments = array_values(array_filter(explode('/', $path)));
 
 // homepage
 if (empty($segments)) {
-    $map[$baseDomain][$subdomainKey][0]['/'] =
-        ($map[$baseDomain][$subdomainKey][0]['/'] ?? 0) + 1;
+    $map[$domain][0]['/'] =
+        ($map[$domain][0]['/'] ?? 0) + 1;
 
-    $globalDepthStats[$baseDomain][0]['/'] = true;
+    $globalDepthStats[$domain][0]['/'] = true;
     continue;
 }
 
 foreach ($segments as $depth => $segment) {
-    // per subdomain map
-    $map[$baseDomain][$subdomainKey][$depth][$segment] =
-        ($map[$baseDomain][$subdomainKey][$depth][$segment] ?? 0) + 1;
+    // per domain map
+    $map[$domain][$depth][$segment] =
+        ($map[$domain][$depth][$segment] ?? 0) + 1;
 
     // global stats (IMPORTANT)
-    $globalDepthStats[$baseDomain][$depth][$segment] = true;
+    $globalDepthStats[$domain][$depth][$segment] = true;
 }
 }
 
 /**
-* Decide wildcard depths globally per base_domain
-* [base_domain][depth] => true
-*/
+ * Decide wildcard depths globally per domain
+ * [domain][depth] => true
+ */
 $wildcardDepths = [];
 
-foreach ($globalDepthStats as $baseDomain => $depths) {
+foreach ($globalDepthStats as $domain => $depths) {
 foreach ($depths as $depth => $segments) {
     if (count($segments) > 5) {
-        $wildcardDepths[$baseDomain][$depth] = true;
+        $wildcardDepths[$domain][$depth] = true;
     }
 }
 }
@@ -2318,8 +2308,7 @@ foreach ($depths as $depth => $segments) {
 // ---- build patterns
 $patterns = [];
 
-foreach ($map as $baseDomain => $subs) {
-foreach ($subs as $subdomainKey => $depths) {
+foreach ($map as $domain => $depths) {
     ksort($depths);
 
     $patternSegments = [];
@@ -2327,7 +2316,7 @@ foreach ($subs as $subdomainKey => $depths) {
     foreach ($depths as $depth => $segments) {
 
         // GLOBAL wildcard decision
-        if (!empty($wildcardDepths[$baseDomain][$depth])) {
+        if (!empty($wildcardDepths[$domain][$depth])) {
             $patternSegments[] = '*';
             continue;
         }
@@ -2341,11 +2330,9 @@ foreach ($subs as $subdomainKey => $depths) {
 
     $patterns[] = [
         'site_id'     => $siteId,
-        'base_domain' => $baseDomain,
-        'subdomain'   => $subdomainKey !== '' ? $subdomainKey : null,
+        'domain'      => $domain,
         'pattern'     => $pattern,
     ];
-}
 }
 
 // ---- persist
@@ -2353,8 +2340,7 @@ foreach ($patterns as $row) {
 DB::table('analytics_url_patterns')->updateOrInsert(
     [
         'site_id'     => $row['site_id'],
-        'base_domain' => $row['base_domain'],
-        'subdomain'   => $row['subdomain'],
+        'domain'      => $row['domain'],
         'pattern'     => $row['pattern'],
     ],
     [
