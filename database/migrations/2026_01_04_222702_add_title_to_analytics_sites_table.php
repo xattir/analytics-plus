@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('analytics_sites', function (Blueprint $table) {
-            $table->string('title', 255)->nullable()->after('domain');
-            $table->index('title');
+            //
         });
     }
 
@@ -23,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('analytics_sites', function (Blueprint $table) {
-            $table->dropIndex(['title']);
-            $table->dropColumn('title');
+            //
         });
     }
 };

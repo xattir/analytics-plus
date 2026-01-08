@@ -73,14 +73,9 @@ return new class extends Migration
             $table->binary('ip')->nullable();
             
             $table->timestamp('created_at')->useCurrent();
-            $table->timestamp('updated_at')->nullable();
             
             // constraints
             $table->unique(['site_id', 'session_id'], 'uniq_site_session');
-            
-            // timestamp indexes
-            $table->index('created_at');
-            $table->index('updated_at');
             
             // core query indexes
             $table->index(['site_id', 'first_seen'], 'idx_site_time');

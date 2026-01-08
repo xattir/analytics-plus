@@ -12,11 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('analytics_sessions', function (Blueprint $table) {
-            $table->string('referrer', 2048)->nullable()->after('utm_campaign');
-            $table->string('referrer_source', 128)->nullable()->after('referrer');
-            
-            // Index for referrer source queries
-            $table->index('referrer_source', 'idx_referrer_source');
+            //
         });
     }
 
@@ -26,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('analytics_sessions', function (Blueprint $table) {
-            $table->dropIndex('idx_referrer_source');
-            $table->dropColumn(['referrer', 'referrer_source']);
+            //
         });
     }
 };
