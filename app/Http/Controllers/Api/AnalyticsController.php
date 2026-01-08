@@ -43,24 +43,24 @@ class AnalyticsController extends Controller
             // Get session ID from request or generate new one
             $sessionId = $request->input('session_id') ?? $this->generateSessionId();
             
-            // Get or create session - use firstOrCreate to ensure session exists and is loaded
-            $session = AnalyticsSession::firstOrCreate(
-                [
-                    'site_id' => $site->id,
+            // Check if this is a periodic/interval event (has engagement metrics)
+            // Skip periodic updates - only process initial page view events
+            // IMPORTANT: Check this BEFORE creating session to avoid empty rows
+            $hasEngagementData = $request->has('duration_ms') || $request->has('scroll_percent') || 
+                                 $request->has('active_time_ms') || $request->has('time_spent_ms') ||
+                                 $request->has('idle_time_ms');
+            
+            if ($hasEngagementData) {
+                // Skip: This is a periodic/interval update, don't process
+                return response()->json([
+                    'success' => true,
                     'session_id' => $sessionId,
-                ],
-                [
-                    // Default values for new session
-                    'first_seen' => now(),
-                    'last_seen' => now(),
-                    'pages_count' => 0,
-                    'is_bot' => false,
-                ]
-            );
-
-            $isNewSession = $session->wasRecentlyCreated;
-            $now = now();
-
+                    'skipped' => true,
+                ], 200, [
+                    'Content-Type' => 'application/json',
+                ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            }
+            
             // Get request data
             $path = $request->input('path', '/');
             $url = $request->input('url', ''); // Full URL (e.g., https://subdomain.example.com/page)
@@ -110,25 +110,27 @@ class AnalyticsController extends Controller
             // Get network info
             $networkInfo = $this->getNetworkInfo($request);
             
-            // Get screen/viewport info
+            // Get screen/viewport info (already got above, but ensure we have it)
             $screenInfo = $this->getScreenInfo($request);
             
-            // Check if this is a periodic/interval event (has engagement metrics)
-            // Skip periodic updates - only process initial page view events
-            $hasEngagementData = $request->has('duration_ms') || $request->has('scroll_percent') || 
-                                 $request->has('active_time_ms') || $request->has('time_spent_ms') ||
-                                 $request->has('idle_time_ms');
-            
-            if ($hasEngagementData) {
-                // Skip: This is a periodic/interval update, don't process
-                return response()->json([
-                    'success' => true,
+            // Get or create session - use firstOrCreate to ensure session exists and is loaded
+            // IMPORTANT: Only create session AFTER checking for engagement data to avoid empty rows
+            $session = AnalyticsSession::firstOrCreate(
+                [
+                    'site_id' => $site->id,
                     'session_id' => $sessionId,
-                    'skipped' => true,
-                ], 200, [
-                    'Content-Type' => 'application/json',
-                ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-            }
+                ],
+                [
+                    // Default values for new session
+                    'first_seen' => now(),
+                    'last_seen' => now(),
+                    'pages_count' => 0,
+                    'is_bot' => false,
+                ]
+            );
+
+            $isNewSession = $session->wasRecentlyCreated;
+            $now = now();
             
             // Update or create session (ONLY on initial page view - no engagement metrics)
             {
