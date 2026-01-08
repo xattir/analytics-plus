@@ -2284,35 +2284,46 @@ HTML;
                 continue;
             }
 
-            // Group paths by structure (paths with same length)
-            $pathsByLength = [];
+            // Separate homepage paths
+            $homepagePaths = [];
+            $nonHomepagePaths = [];
+            
             foreach ($pathSegmentsArray as $segments) {
-                $length = count($segments);
-                if ($length === 0) {
-                    // Homepage
-                    $pathsByLength[0][] = ['/'];
+                if (count($segments) === 0 || (count($segments) === 1 && $segments[0] === '/')) {
+                    $homepagePaths[] = $segments;
                 } else {
-                    if (!isset($pathsByLength[$length])) {
-                        $pathsByLength[$length] = [];
-                    }
-                    $pathsByLength[$length][] = $segments;
+                    $nonHomepagePaths[] = $segments;
                 }
             }
 
-            // Process each group of paths with the same length
-            foreach ($pathsByLength as $length => $segmentsArray) {
-                if ($length === 0) {
-                    // Homepage
-                    $patterns[] = [
-                        'site_id' => $siteId,
-                        'domain' => $domain,
-                        'pattern' => '/',
-                    ];
-                    continue;
-                }
+            // Add homepage pattern if exists
+            if (!empty($homepagePaths)) {
+                $patterns[] = [
+                    'site_id' => $siteId,
+                    'domain' => $domain,
+                    'pattern' => '/',
+                ];
+            }
 
+            if (empty($nonHomepagePaths)) {
+                continue;
+            }
+
+            // Group paths by length for initial analysis
+            $pathsByLength = [];
+            foreach ($nonHomepagePaths as $segments) {
+                $length = count($segments);
+                if (!isset($pathsByLength[$length])) {
+                    $pathsByLength[$length] = [];
+                }
+                $pathsByLength[$length][] = $segments;
+            }
+
+            // Process paths of the same length to find common structures
+            foreach ($pathsByLength as $length => $segmentsArray) {
                 if (count($segmentsArray) === 1) {
-                    // Single path with this length - use exact pattern
+                    // Single unique path - check if it's really unique or can be consolidated
+                    // For now, use exact pattern for single paths
                     $pattern = '/' . implode('/', $segmentsArray[0]);
                     $patterns[] = [
                         'site_id' => $siteId,
@@ -2324,7 +2335,7 @@ HTML;
 
                 // Multiple paths with same length - find common structure
                 $patternSegments = [];
-                $segmentVariations = [];
+                $hasStaticSegment = false;
 
                 // Analyze each depth position
                 for ($depth = 0; $depth < $length; $depth++) {
@@ -2338,18 +2349,16 @@ HTML;
                     // If more than 1 unique segment at this depth, use wildcard
                     if (count($segmentCounts) > 1) {
                         $patternSegments[] = '*';
-                        $segmentVariations[$depth] = true;
                     } else {
                         // All paths share the same segment at this depth
                         $patternSegments[] = array_key_first($segmentCounts);
-                        $segmentVariations[$depth] = false;
+                        $hasStaticSegment = true;
                     }
                 }
 
-                $pattern = '/' . implode('/', $patternSegments);
-
-                // Only add pattern if it's meaningful (not all wildcards)
-                if (in_array(false, $segmentVariations, true)) {
+                // Only add pattern if it has at least one static segment (not all wildcards)
+                if ($hasStaticSegment) {
+                    $pattern = '/' . implode('/', $patternSegments);
                     $patterns[] = [
                         'site_id' => $siteId,
                         'domain' => $domain,
