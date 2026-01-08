@@ -580,26 +580,39 @@ class BackendAnalyticsController extends Controller
     
     /**
      * Get top pages - Last 30 minutes (optimized with direct JOIN)
+     * Uses analytics_session_paths JOIN analytics_sessions on last_seen
      */
     private function getTopPagesLast30Minutes($siteId, $startTime)
     {
-        // Optimized: Use last_seen + index idx_site_bot_last_seen_core
-        // Expected EXPLAIN: key=idx_site_bot_last_seen_core, type=range
+        // For last 30 minutes, we need real-time data from analytics_session_paths
+        // Cannot use rollup tables (analytics_daily_paths) as they are daily aggregates
         $startTimeStr = $startTime->toDateTimeString();
+        $endTimeStr = Carbon::now()->toDateTimeString();
         
+        // Use JOIN with proper indexes
+        // Index: idx_site_bot_last_seen_core on analytics_sessions
+        // Index: idx_session_site on analytics_session_paths
+        // Filter by last_seen on sessions (active sessions) and join to paths
         return DB::table('analytics_session_paths')
-            ->join('analytics_sessions', function($join) use ($siteId, $startTimeStr) {
+            ->join('analytics_sessions', function($join) use ($siteId, $startTimeStr, $endTimeStr) {
                 $join->on('analytics_sessions.session_id', '=', 'analytics_session_paths.session_id')
                      ->where('analytics_sessions.site_id', '=', $siteId)
                      ->where('analytics_sessions.last_seen', '>=', $startTimeStr)
+                     ->where('analytics_sessions.last_seen', '<=', $endTimeStr)
                      ->where('analytics_sessions.is_bot', '=', 0);
             })
             ->where('analytics_session_paths.site_id', $siteId)
-            ->select('analytics_session_paths.path', DB::raw('SUM(1) as views'))
+            ->select('analytics_session_paths.path', DB::raw('COUNT(*) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(function($item) {
+                return (object) [
+                    'path' => $item->path,
+                    'views' => (int) $item->views,
+                ];
+            });
     }
 
     /**

@@ -237,19 +237,28 @@ class AnalyticsController extends Controller
                 );
             }
             
-            // Track path
-            $pathPosition = AnalyticsSessionPath::where('session_id', $sessionId)
-                ->where('site_id', $site->id)
-                ->max('position') ?? 0;
-            
-            AnalyticsSessionPath::create([
-                'site_id' => $site->id,
-                'session_id' => $sessionId,
-                'path' => $path,
-                'position' => $pathPosition + 1,
-                'scroll_percent' => $engagement['scroll_percent'],
-                'time_spent_ms' => $engagement['time_spent_ms'],
-            ]);
+            // Track path - MUST be saved after session to ensure session exists
+            try {
+                $pathPosition = AnalyticsSessionPath::where('session_id', $sessionId)
+                    ->where('site_id', $site->id)
+                    ->max('position') ?? 0;
+                
+                AnalyticsSessionPath::create([
+                    'site_id' => $site->id,
+                    'session_id' => $sessionId,
+                    'path' => $path,
+                    'position' => $pathPosition + 1,
+                    'scroll_percent' => $engagement['scroll_percent'],
+                    'time_spent_ms' => $engagement['time_spent_ms'],
+                ]);
+            } catch (\Exception $pathError) {
+                // Log path error but don't fail the request
+                Log::warning('Failed to save analytics session path: ' . $pathError->getMessage(), [
+                    'site_id' => $site->id,
+                    'session_id' => $sessionId,
+                    'path' => $path,
+                ]);
+            }
             
             return response()->json([
                 'success' => true,
@@ -257,7 +266,10 @@ class AnalyticsController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            Log::error('Analytics tracking error: ' . $e->getMessage());
+            Log::error('Analytics tracking error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'site_key' => $request->input('site_key'),
+            ]);
             return response()->json(['error' => 'Tracking failed'], 500);
         }
     }
