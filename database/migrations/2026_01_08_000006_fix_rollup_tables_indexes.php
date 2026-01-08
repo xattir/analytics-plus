@@ -22,46 +22,37 @@ return new class extends Migration
             // due to the prefix index limitation (path(191))
             $this->info('Cleaning up duplicate entries in analytics_daily_paths...');
             
-            // Find and merge duplicates
-            // Group by site_id, date, and path prefix (first 191 chars)
-            // Sum the views and keep one record
+            // Step 1: Create a new table with aggregated data
             DB::statement("
-                CREATE TEMPORARY TABLE temp_daily_paths_cleanup AS
+                CREATE TEMPORARY TABLE temp_daily_paths_aggregated AS
                 SELECT 
                     site_id,
                     date,
                     SUBSTRING(path, 1, 191) as path_prefix,
                     SUM(views) as total_views,
-                    MIN(id) as keep_id,
                     MAX(path) as full_path
                 FROM analytics_daily_paths
-                GROUP BY site_id, date, path_prefix
-                HAVING COUNT(*) > 1
+                GROUP BY site_id, date, SUBSTRING(path, 1, 191)
             ");
             
-            // Delete duplicates (keep the one with minimum id)
+            // Step 2: Truncate original table
+            DB::statement("TRUNCATE TABLE analytics_daily_paths");
+            
+            // Step 3: Insert aggregated data back
             DB::statement("
-                DELETE p1 FROM analytics_daily_paths p1
-                INNER JOIN temp_daily_paths_cleanup t
-                ON p1.site_id = t.site_id
-                AND p1.date = t.date
-                AND SUBSTRING(p1.path, 1, 191) = t.path_prefix
-                AND p1.id != t.keep_id
+                INSERT INTO analytics_daily_paths (site_id, date, path, views)
+                SELECT 
+                    site_id,
+                    date,
+                    full_path as path,
+                    total_views as views
+                FROM temp_daily_paths_aggregated
             ");
             
-            // Update the kept record with aggregated views and full path
-            DB::statement("
-                UPDATE analytics_daily_paths p
-                INNER JOIN temp_daily_paths_cleanup t
-                ON p.id = t.keep_id
-                SET p.views = t.total_views,
-                    p.path = t.full_path
-            ");
+            // Step 4: Drop temp table
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_daily_paths_aggregated");
             
-            // Drop temp table
-            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_daily_paths_cleanup");
-            
-            // Now create the unique index
+            // Step 5: Now create the unique index
             DB::statement("
                 CREATE UNIQUE INDEX idx_site_date_path_unique 
                 ON analytics_daily_paths (site_id, date, path(191))
