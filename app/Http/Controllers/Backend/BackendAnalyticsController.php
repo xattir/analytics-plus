@@ -1302,41 +1302,80 @@ class BackendAnalyticsController extends Controller
         $dateTo = $dateTo instanceof \Carbon\Carbon ? $dateTo : \Carbon\Carbon::parse($dateTo);
         
         // Optimized: Use rollup table analytics_daily_dimensions for counts
-        // Then get sample referrer URL from raw sessions (lightweight query)
+        // Use referrer_domain instead of referrer_source to show actual domains with subdomains
         // Performance: ~1.5s → ~150ms (10x faster)
         $startDateStr = $dateFrom->copy()->startOfDay()->toDateString();
         $endDateStr = $dateTo->copy()->endOfDay()->toDateString();
         
-        // Get top referrer sources from rollup
-        $referrerSourcesRaw = \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'referrer_source', 10);
+        // Get top referrer domains from rollup (actual domains with subdomains)
+        $referrerDomainsRaw = \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'referrer_domain', 10);
         
-        // Get sample referrer URLs for each source (lightweight query with LIMIT)
-        if ($referrerSourcesRaw->isNotEmpty()) {
+        // If no referrer_domain data, fallback to referrer_source (backward compatibility)
+        if ($referrerDomainsRaw->isEmpty()) {
+            $referrerSourcesRaw = \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'referrer_source', 10);
+            
+            // Get sample referrer URLs for each source (lightweight query with LIMIT)
+            if ($referrerSourcesRaw->isNotEmpty()) {
+                $referrerUrls = DB::table('analytics_sessions')
+                    ->where('site_id', $siteId)
+                    ->whereBetween('first_seen_date', [$startDateStr, $endDateStr])
+                    ->whereNotNull('referrer_source')
+                    ->where('is_bot', false)
+                    ->whereIn('referrer_source', $referrerSourcesRaw->pluck('dimension_value'))
+                    ->select('referrer_source', DB::raw('MIN(referrer) as referrer_url'))
+                    ->groupBy('referrer_source')
+                    ->get()
+                    ->keyBy('referrer_source');
+                
+                // Merge counts with URLs
+                $referrerSourcesRaw = $referrerSourcesRaw->map(function($item) use ($referrerUrls) {
+                    $item->referrer_url = $referrerUrls->get($item->dimension_value)->referrer_url ?? null;
+                    return $item;
+                });
+            }
+            
+            // Transform to expected format
+            $referrerSources = $referrerSourcesRaw->map(function($source) {
+                return [
+                    'name' => $source->dimension_value,
+                    'count' => $source->count,
+                    'referrer_url' => $source->referrer_url ?? null,
+                    'type' => $source->dimension_value === 'Direct' ? 'direct' : 'referrer',
+                ];
+            });
+            
+            return $referrerSources->sortByDesc('count')
+                ->take(10)
+                ->values();
+        }
+        
+        // Get sample referrer URLs for each domain (lightweight query with LIMIT)
+        if ($referrerDomainsRaw->isNotEmpty()) {
             $referrerUrls = DB::table('analytics_sessions')
                 ->where('site_id', $siteId)
                 ->whereBetween('first_seen_date', [$startDateStr, $endDateStr])
-                ->whereNotNull('referrer_source')
+                ->whereNotNull('referrer_domain')
                 ->where('is_bot', false)
-                ->whereIn('referrer_source', $referrerSourcesRaw->pluck('dimension_value'))
-                ->select('referrer_source', DB::raw('MIN(referrer) as referrer_url'))
-                ->groupBy('referrer_source')
+                ->whereIn('referrer_domain', $referrerDomainsRaw->pluck('dimension_value'))
+                ->select('referrer_domain', DB::raw('MIN(referrer) as referrer_url'))
+                ->groupBy('referrer_domain')
                 ->get()
-                ->keyBy('referrer_source');
+                ->keyBy('referrer_domain');
             
             // Merge counts with URLs
-            $referrerSourcesRaw = $referrerSourcesRaw->map(function($item) use ($referrerUrls) {
+            $referrerDomainsRaw = $referrerDomainsRaw->map(function($item) use ($referrerUrls) {
                 $item->referrer_url = $referrerUrls->get($item->dimension_value)->referrer_url ?? null;
                 return $item;
             });
         }
         
-        // Transform to expected format
-        $referrerSources = $referrerSourcesRaw->map(function($source) {
+        // Transform to expected format - use actual domain name
+        $referrerSources = $referrerDomainsRaw->map(function($domain) {
             return [
-                'name' => $source->referrer_source,
-                'count' => $source->count,
-                'referrer_url' => $source->referrer_url,
-                'type' => $source->referrer_source === 'Direct' ? 'direct' : 'referrer',
+                'name' => $domain->dimension_value, // Actual domain with subdomain (e.g., subdomain.example.com)
+                'count' => $domain->count,
+                'referrer_url' => $domain->referrer_url ?? null,
+                'type' => 'referrer',
             ];
         });
         

@@ -97,9 +97,10 @@ class AnalyticsController extends Controller
             // Parse UTM parameters
             $utmParams = $this->parseUtmParams($request);
             
-            // Get referrer and extract source
+            // Get referrer and extract source and domain
             $referrer = $request->input('referrer');
             $referrerSource = $this->extractReferrerSource($referrer, $site->domain);
+            $referrerDomain = $this->extractReferrerDomain($referrer, $site->domain);
             
             // Get network info
             $networkInfo = $this->getNetworkInfo($request);
@@ -140,6 +141,7 @@ class AnalyticsController extends Controller
                     // Save referrer only for new sessions (entry point)
                     $session->referrer = $referrer;
                     $session->referrer_source = $referrerSource;
+                    $session->referrer_domain = $referrerDomain;
                     $session->utm_source = $utmParams['utm_source'];
                     $session->utm_medium = $utmParams['utm_medium'];
                     $session->utm_campaign = $utmParams['utm_campaign'];
@@ -263,13 +265,23 @@ class AnalyticsController extends Controller
                         );
                     }
                     
-                    // Referrer source
+                    // Referrer source (keep for backward compatibility)
                     if ($session->referrer_source) {
                         \App\Models\AnalyticsDailyDimension::incrementDimension(
                             $site->id, 
                             $date, 
                             'referrer_source', 
                             $session->referrer_source
+                        );
+                    }
+                    
+                    // Referrer domain (actual domain with subdomain)
+                    if ($session->referrer_domain) {
+                        \App\Models\AnalyticsDailyDimension::incrementDimension(
+                            $site->id, 
+                            $date, 
+                            'referrer_domain', 
+                            $session->referrer_domain
                         );
                     }
                 }
@@ -679,6 +691,49 @@ class AnalyticsController extends Controller
             
         } catch (\Exception $e) {
             return 'Direct';
+        }
+    }
+    
+    /**
+     * Extract actual referrer domain (with subdomain) from referrer URL
+     * Examples:
+     * - https://subdomain.example.com/page -> subdomain.example.com
+     * - https://www.google.com/search -> www.google.com
+     * - https://example.com -> example.com
+     * - (empty) -> null
+     * - Same domain as site -> null (internal)
+     */
+    private function extractReferrerDomain(?string $referrer, ?string $siteDomain = null): ?string
+    {
+        if (empty($referrer)) {
+            return null;
+        }
+        
+        try {
+            $parsedUrl = parse_url($referrer);
+            if (!isset($parsedUrl['host'])) {
+                return null;
+            }
+            
+            $host = strtolower($parsedUrl['host']);
+            
+            // Check if referrer is from the same domain (internal traffic)
+            if ($siteDomain) {
+                $siteHost = strtolower($siteDomain);
+                $siteHost = preg_replace('/^www\./', '', $siteHost);
+                $hostWithoutWww = preg_replace('/^www\./', '', $host);
+                
+                // Compare domains (exact match or subdomain)
+                if ($hostWithoutWww === $siteHost || substr($hostWithoutWww, -strlen('.' . $siteHost)) === '.' . $siteHost) {
+                    return null; // Internal traffic - don't store domain
+                }
+            }
+            
+            // Return the actual host (with subdomain if exists)
+            return $host;
+            
+        } catch (\Exception $e) {
+            return null;
         }
     }
 }
