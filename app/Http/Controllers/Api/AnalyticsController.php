@@ -64,11 +64,11 @@ class AnalyticsController extends Controller
                 }
             }
             
-            // Get geo location
-            $geoInfo = $this->getGeoInfo($ip);
-            
-            // Check if bot
+            // Check if bot FIRST (fast check, no external calls)
             $isBot = $this->isBot($userAgent);
+            
+            // Get geo location (only if not bot, to save time)
+            $geoInfo = $isBot ? ['country_code' => null, 'city' => null, 'isp' => null] : $this->getGeoInfo($ip);
             
             // Get device fingerprint
             $fingerprint = $request->input('fingerprint') ?? $this->generateFingerprint($request);
@@ -238,18 +238,23 @@ class AnalyticsController extends Controller
             }
             
             // Track path - MUST be saved after session to ensure session exists
+            // Use DB::table for better performance and error handling
             try {
-                $pathPosition = AnalyticsSessionPath::where('session_id', $sessionId)
+                // Get max position using raw query for better performance
+                $pathPosition = DB::table('analytics_session_paths')
+                    ->where('session_id', $sessionId)
                     ->where('site_id', $site->id)
                     ->max('position') ?? 0;
                 
-                AnalyticsSessionPath::create([
+                // Insert directly using DB::table for better performance
+                DB::table('analytics_session_paths')->insert([
                     'site_id' => $site->id,
                     'session_id' => $sessionId,
                     'path' => $path,
                     'position' => $pathPosition + 1,
                     'scroll_percent' => $engagement['scroll_percent'],
                     'time_spent_ms' => $engagement['time_spent_ms'],
+                    'created_at' => $now,
                 ]);
             } catch (\Exception $pathError) {
                 // Log path error but don't fail the request
@@ -257,6 +262,7 @@ class AnalyticsController extends Controller
                     'site_id' => $site->id,
                     'session_id' => $sessionId,
                     'path' => $path,
+                    'error' => $pathError->getTraceAsString(),
                 ]);
             }
             

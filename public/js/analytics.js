@@ -216,6 +216,8 @@
             site_key: window.ANALYTICS_SITE_KEY,
             session_id: sessionId,
             path: window.location.pathname + window.location.search,
+            domain: window.location.hostname,
+            url: window.location.href,
             scroll_percent: maxScroll,
             time_spent_ms: Date.now() - pageStartTime,
             active_time_ms: activeTime,
