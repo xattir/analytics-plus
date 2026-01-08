@@ -1014,38 +1014,6 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
-     * Get live data for active users (last 30 minutes)
-     * API endpoint for AJAX polling
-     */
-    public function getLiveData(AnalyticsSite $site)
-    {
-        // Check access
-        $userId = auth()->id();
-        if (!$site->canAccess($userId) && !$this->isSuperAdmin()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        
-        $activeUsersStart = Carbon::now()->subMinutes(30);
-        
-        // Get active users count
-        $activeUsersCount = DB::table('analytics_sessions')
-            ->where('site_id', $site->id)
-            ->where('last_seen', '>=', $activeUsersStart)
-            ->where('is_bot', false)
-            ->select(DB::raw('COUNT(DISTINCT session_id) as count'))
-            ->value('count') ?? 0;
-        
-        // Get chart data
-        $activeUsersData = $this->getActiveUsersChartData($site->id, $activeUsersStart);
-        
-        return response()->json([
-            'activeUsersCount' => $activeUsersCount,
-            'activeUsersData' => $activeUsersData,
-            'timestamp' => Carbon::now()->toIso8601String(),
-        ]);
-    }
-    
-    /**
      * Get last 24 hours chart data (grouped by hour)
      */
     private function getLast24HoursChartData($siteId)
