@@ -553,7 +553,29 @@ class BackendAnalyticsController extends Controller
     {
         // Use rollup table: analytics_daily_paths
         // This eliminates expensive JOIN on analytics_session_paths
-        return \App\Models\AnalyticsDailyPath::getTopPaths($siteId, $dateFrom, $dateTo, 30);
+        $results = \App\Models\AnalyticsDailyPath::getTopPaths($siteId, $dateFrom, $dateTo, 30);
+        
+        // Fallback to raw query if rollup table is empty
+        if ($results->isEmpty()) {
+            $startDate = $dateFrom->startOfDay()->toDateString();
+            $endDate = $dateTo->endOfDay()->toDateString();
+            
+            return DB::table('analytics_session_paths')
+                ->join('analytics_sessions', function($join) use ($siteId, $startDate, $endDate) {
+                    $join->on('analytics_sessions.session_id', '=', 'analytics_session_paths.session_id')
+                         ->where('analytics_sessions.site_id', '=', $siteId)
+                         ->whereBetween('analytics_sessions.first_seen_date', [$startDate, $endDate])
+                         ->where('analytics_sessions.is_bot', '=', 0);
+                })
+                ->where('analytics_session_paths.site_id', $siteId)
+                ->select('analytics_session_paths.path', DB::raw('SUM(1) as views'))
+                ->groupBy('analytics_session_paths.path')
+                ->orderByDesc('views')
+                ->limit(30)
+                ->get();
+        }
+        
+        return $results;
     }
     
     /**
@@ -589,6 +611,24 @@ class BackendAnalyticsController extends Controller
         // Performance: ~3.25s → ~100ms (32x faster)
         $results = \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'entry_path', 10);
         
+        // Fallback to raw query if rollup table is empty
+        if ($results->isEmpty()) {
+            $startDate = $dateFrom->startOfDay()->toDateString();
+            $endDate = $dateTo->endOfDay()->toDateString();
+            
+            $results = DB::table('analytics_sessions')
+                ->where('site_id', $siteId)
+                ->whereBetween('first_seen_date', [$startDate, $endDate])
+                ->whereNotNull('entry_path')
+                ->select('entry_path', DB::raw('SUM(1) as entries'))
+                ->groupBy('entry_path')
+                ->orderByDesc('entries')
+                ->limit(10)
+                ->get();
+            
+            return $results;
+        }
+        
         // Map to expected format (entry_path, entries)
         return $results->map(function($item) {
             return (object) [
@@ -606,6 +646,24 @@ class BackendAnalyticsController extends Controller
         // Optimized: Use rollup table analytics_daily_dimensions
         // Performance: 2.33s → ~100ms (23x faster)
         $results = \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'exit_path', 10);
+        
+        // Fallback to raw query if rollup table is empty
+        if ($results->isEmpty()) {
+            $startDate = $dateFrom->startOfDay()->toDateString();
+            $endDate = $dateTo->endOfDay()->toDateString();
+            
+            $results = DB::table('analytics_sessions')
+                ->where('site_id', $siteId)
+                ->whereBetween('last_seen_date', [$startDate, $endDate])
+                ->whereNotNull('exit_path')
+                ->select('exit_path', DB::raw('SUM(1) as exits'))
+                ->groupBy('exit_path')
+                ->orderByDesc('exits')
+                ->limit(10)
+                ->get();
+            
+            return $results;
+        }
         
         // Map to expected format (exit_path, exits)
         return $results->map(function($item) {
@@ -625,6 +683,30 @@ class BackendAnalyticsController extends Controller
         // Performance: ~1.5s → ~100ms (15x faster)
         $results = \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'browser', 10);
         
+        // Fallback to raw query if rollup table is empty
+        if ($results->isEmpty()) {
+            $startDate = $dateFrom->startOfDay()->toDateString();
+            $endDate = $dateTo->endOfDay()->toDateString();
+            
+            $results = DB::table('analytics_sessions')
+                ->where('site_id', $siteId)
+                ->whereBetween('first_seen_date', [$startDate, $endDate])
+                ->where('is_bot', false)
+                ->whereNotNull('browser')
+                ->select('browser', DB::raw('SUM(1) as count'))
+                ->groupBy('browser')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get();
+            
+            return $results->map(function($item) {
+                return (object) [
+                    'browser' => $item->browser,
+                    'count' => $item->count,
+                ];
+            });
+        }
+        
         // Map to expected format (browser, count)
         return $results->map(function($item) {
             return (object) [
@@ -642,6 +724,28 @@ class BackendAnalyticsController extends Controller
         // Optimized: Use rollup table analytics_daily_dimensions
         // Performance: ~1.5s → ~100ms (15x faster)
         $results = \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'device_type', 20);
+        
+        // Fallback to raw query if rollup table is empty
+        if ($results->isEmpty()) {
+            $startDate = $dateFrom->startOfDay()->toDateString();
+            $endDate = $dateTo->endOfDay()->toDateString();
+            
+            $results = DB::table('analytics_sessions')
+                ->where('site_id', $siteId)
+                ->whereBetween('first_seen_date', [$startDate, $endDate])
+                ->whereNotNull('device_type')
+                ->select('device_type', DB::raw('SUM(1) as count'))
+                ->groupBy('device_type')
+                ->orderByDesc('count')
+                ->get();
+            
+            return $results->map(function($item) {
+                return (object) [
+                    'device_type' => $item->device_type,
+                    'count' => $item->count,
+                ];
+            });
+        }
         
         // Map to expected format (device_type, count)
         return $results->map(function($item) {
@@ -661,6 +765,29 @@ class BackendAnalyticsController extends Controller
         // Performance: ~1.5s → ~100ms (15x faster)
         $results = \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'os', 10);
         
+        // Fallback to raw query if rollup table is empty
+        if ($results->isEmpty()) {
+            $startDate = $dateFrom->startOfDay()->toDateString();
+            $endDate = $dateTo->endOfDay()->toDateString();
+            
+            $results = DB::table('analytics_sessions')
+                ->where('site_id', $siteId)
+                ->whereBetween('first_seen_date', [$startDate, $endDate])
+                ->whereNotNull('os')
+                ->select('os', DB::raw('SUM(1) as count'))
+                ->groupBy('os')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get();
+            
+            return $results->map(function($item) {
+                return (object) [
+                    'os' => $item->os,
+                    'count' => $item->count,
+                ];
+            });
+        }
+        
         // Map to expected format (os, count)
         return $results->map(function($item) {
             return (object) [
@@ -677,7 +804,39 @@ class BackendAnalyticsController extends Controller
     {
         // Optimized: Use rollup table analytics_daily_dimensions
         // Performance: 2.83s → ~100ms (28x faster)
-        return \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'country', 10);
+        $results = \App\Models\AnalyticsDailyDimension::getTopValues($siteId, $dateFrom, $dateTo, 'country', 10);
+        
+        // Fallback to raw query if rollup table is empty
+        if ($results->isEmpty()) {
+            $startDate = $dateFrom->startOfDay()->toDateString();
+            $endDate = $dateTo->endOfDay()->toDateString();
+            
+            $results = DB::table('analytics_sessions')
+                ->where('site_id', $siteId)
+                ->whereBetween('first_seen_date', [$startDate, $endDate])
+                ->where('is_bot', false)
+                ->whereNotNull('country')
+                ->select('country', DB::raw('SUM(1) as count'))
+                ->groupBy('country')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get();
+            
+            return $results->map(function($item) {
+                return (object) [
+                    'country' => $item->country,
+                    'count' => $item->count,
+                ];
+            });
+        }
+        
+        // Map to expected format (country, count)
+        return $results->map(function($item) {
+            return (object) [
+                'country' => $item->dimension_value,
+                'count' => $item->count,
+            ];
+        });
     }
 
     /**
