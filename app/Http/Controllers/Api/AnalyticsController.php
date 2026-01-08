@@ -19,14 +19,8 @@ class AnalyticsController extends Controller
      */
     public function track(Request $request)
     {
-        // Handle CORS preflight request
-        if ($request->isMethod('OPTIONS')) {
-            return response('', 200)
-                ->header('Access-Control-Allow-Origin', '*')
-                ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-                ->header('Access-Control-Max-Age', '86400');
-        }
+        // OPTIONS requests are handled at route level to avoid middleware overhead
+        // No need to check here as route will handle it first
         
         try {
             $siteKey = $request->input('site_key');

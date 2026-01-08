@@ -20,11 +20,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Analytics tracking endpoint (public, no auth required, CORS enabled)
+// Handle OPTIONS separately with minimal middleware to avoid large headers (nginx buffer limit)
 Route::options('/analytics/track', function() {
-    return response('', 200)
+    return response('', 204)
         ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+        ->header('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type')
         ->header('Access-Control-Max-Age', '86400');
-});
+})->withoutMiddleware(['throttle:api', 'cors']);
+
 Route::post('/analytics/track', [AnalyticsController::class, 'track']);
