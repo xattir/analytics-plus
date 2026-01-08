@@ -2270,20 +2270,35 @@ HTML;
 
     /**
      * Extract URL patterns based on website paths
+     * Extracts patterns from both AnalyticsSession.entry_path and AnalyticsSessionPath.path
      * 
      * @param int $siteId
-     * @param int $limit
+     * @param int $limit Limit per source (total limit will be 2x this value)
      * @return array
      */
     public function extractUrlPatternsForSite(int $siteId, int $limit = 10000): array
     {
-        // Fetch latest N paths for this site
-        $paths = AnalyticsSessionPath::where('site_id', $siteId)
+        // Fetch entry_path from AnalyticsSession
+        $entryPaths = AnalyticsSession::where('site_id', $siteId)
+            ->whereNotNull('entry_path')
+            ->where('entry_path', '!=', '')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get()
+            ->map(function ($session) {
+                return (object) ['path' => $session->entry_path];
+            });
+
+        // Fetch path from AnalyticsSessionPath
+        $sessionPaths = AnalyticsSessionPath::where('site_id', $siteId)
             ->whereNotNull('path')
             ->where('path', '!=', '')
             ->orderByDesc('id')
             ->limit($limit)
             ->get(['path']);
+
+        // Combine both sources into a single collection
+        $paths = $entryPaths->concat($sessionPaths);
 
         /**
          * Group paths by domain with their segments
