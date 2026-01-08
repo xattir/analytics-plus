@@ -45,59 +45,65 @@ return new class extends Migration
         // Critical: Index for date range queries with filters
         // This is the PRIMARY index for most dashboard queries
         if (!$this->indexExists('analytics_sessions', 'idx_site_first_seen_date')) {
-            $connection->statement('
+            $connection->statement("
                 CREATE INDEX idx_site_first_seen_date 
                 ON analytics_sessions (site_id, first_seen_date)
-                ALGORITHM=INPLACE, LOCK=NONE
-            ');
+                ALGORITHM=INPLACE
+                LOCK=NONE
+            ");
         }
         
         // Critical: Index for date range queries with is_bot filter (most common)
         if (!$this->indexExists('analytics_sessions', 'idx_site_bot_first_seen_date')) {
-            $connection->statement('
+            $connection->statement("
                 CREATE INDEX idx_site_bot_first_seen_date 
                 ON analytics_sessions (site_id, is_bot, first_seen_date)
-                ALGORITHM=INPLACE, LOCK=NONE
-            ');
+                ALGORITHM=INPLACE
+                LOCK=NONE
+            ");
         }
         
         // Critical: Covering index for COUNT(DISTINCT device_fingerprint) queries
         // This allows index-only scans without touching table data
         if (!$this->indexExists('analytics_sessions', 'idx_site_date_fingerprint_covering')) {
-            $connection->statement('
+            $connection->statement("
                 CREATE INDEX idx_site_date_fingerprint_covering 
                 ON analytics_sessions (site_id, first_seen_date, device_fingerprint)
-                ALGORITHM=INPLACE, LOCK=NONE
-            ');
+                ALGORITHM=INPLACE
+                LOCK=NONE
+            ");
         }
         
         // Critical: Index for quality-based aggregations
         // Supports fast SUM(is_high_quality=1) and SUM(is_low_quality=1) queries
         if (!$this->indexExists('analytics_sessions', 'idx_site_date_quality')) {
-            $connection->statement('
+            $connection->statement("
                 CREATE INDEX idx_site_date_quality 
                 ON analytics_sessions (site_id, first_seen_date, is_bot, is_high_quality, is_low_quality)
-                ALGORITHM=INPLACE, LOCK=NONE
-            ');
+                ALGORITHM=INPLACE
+                LOCK=NONE
+            ");
         }
         
         // Critical: Index for session_id lookups with date range
         // Used in getTopPages and similar queries that need session_ids first
         if (!$this->indexExists('analytics_sessions', 'idx_site_date_session_covering')) {
-            $connection->statement('
+            $connection->statement("
                 CREATE INDEX idx_site_date_session_covering 
                 ON analytics_sessions (site_id, first_seen_date, session_id)
-                ALGORITHM=INPLACE, LOCK=NONE
-            ');
+                ALGORITHM=INPLACE
+                LOCK=NONE
+            ");
         }
         
         // Index for last_seen queries (active users, real-time)
         if (!$this->indexExists('analytics_sessions', 'idx_site_bot_last_seen_date')) {
-            $connection->statement('
+            $connection->statement("
                 CREATE INDEX idx_site_bot_last_seen_date 
                 ON analytics_sessions (site_id, is_bot, last_seen)
-                ALGORITHM=INPLACE, LOCK=NONE
-            ');
+                ALGORITHM=INPLACE
+                LOCK=NONE
+            ");
         }
     }
 
