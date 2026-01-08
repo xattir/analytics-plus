@@ -156,6 +156,87 @@ class AnalyticsController extends Controller
             
             $session->save();
             
+            // Update rollup tables incrementally (fast, atomic upserts)
+            // This eliminates expensive JOIN + GROUP BY queries in dashboard
+            $date = $now->format('Y-m-d');
+            
+            // Update daily path rollup
+            \App\Models\AnalyticsDailyPath::incrementPath($site->id, $date, $path, 1);
+            
+            // Update daily dimension rollups (only for new sessions to avoid double counting)
+            if ($isNewSession && !$isBot) {
+                // Entry path
+                if ($session->entry_path) {
+                    \App\Models\AnalyticsDailyDimension::incrementDimension(
+                        $site->id, 
+                        $date, 
+                        'entry_path', 
+                        $session->entry_path
+                    );
+                }
+                
+                // Country
+                if ($session->country) {
+                    \App\Models\AnalyticsDailyDimension::incrementDimension(
+                        $site->id, 
+                        $date, 
+                        'country', 
+                        $session->country
+                    );
+                }
+                
+                // Browser
+                if ($session->browser) {
+                    \App\Models\AnalyticsDailyDimension::incrementDimension(
+                        $site->id, 
+                        $date, 
+                        'browser', 
+                        $session->browser
+                    );
+                }
+                
+                // OS
+                if ($session->os) {
+                    \App\Models\AnalyticsDailyDimension::incrementDimension(
+                        $site->id, 
+                        $date, 
+                        'os', 
+                        $session->os
+                    );
+                }
+                
+                // Device type
+                if ($session->device_type) {
+                    \App\Models\AnalyticsDailyDimension::incrementDimension(
+                        $site->id, 
+                        $date, 
+                        'device_type', 
+                        $session->device_type
+                    );
+                }
+                
+                // Referrer source
+                if ($session->referrer_source) {
+                    \App\Models\AnalyticsDailyDimension::incrementDimension(
+                        $site->id, 
+                        $date, 
+                        'referrer_source', 
+                        $session->referrer_source
+                    );
+                }
+            }
+            
+            // Update exit path rollup (always, as exit_path changes on each pageview)
+            if (!$isBot && $session->exit_path) {
+                $exitDate = $now->format('Y-m-d');
+                \App\Models\AnalyticsDailyDimension::incrementDimension(
+                    $site->id, 
+                    $exitDate, 
+                    'exit_path', 
+                    $session->exit_path
+                );
+            }
+            
             // Track path
             $pathPosition = AnalyticsSessionPath::where('session_id', $sessionId)
                 ->where('site_id', $site->id)
