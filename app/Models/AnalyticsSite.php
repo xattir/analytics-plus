@@ -62,6 +62,14 @@ class AnalyticsSite extends Model
     }
     
     /**
+     * Get all URL patterns for this site
+     */
+    public function urlPatterns()
+    {
+        return $this->hasMany(AnalyticsUrlPattern::class, 'site_id');
+    }
+    
+    /**
      * Check if a user can access this site
      */
     public function canAccess($userId)
