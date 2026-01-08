@@ -112,6 +112,8 @@
     }
     
     // Send tracking data (always async)
+    // Use FormData to make it a "simple request" and avoid CORS preflight (OPTIONS)
+    // Simple requests (POST with FormData) don't require preflight OPTIONS requests
     function sendTracking(data) {
         if (!window.ANALYTICS_SITE_KEY) {
             console.warn('Analytics: ANALYTICS_SITE_KEY is not set');
@@ -123,15 +125,31 @@
             data.path = window.location.pathname + window.location.search;
         }
         
-        // Always use async fetch with keepalive for non-blocking requests
+        // Use FormData to make it a "simple request" (no preflight OPTIONS needed)
+        // POST with multipart/form-data (FormData) is considered a simple request
+        // This eliminates the need for OPTIONS preflight requests
+        const formData = new FormData();
+        Object.keys(data).forEach(function(key) {
+            const value = data[key];
+            // Convert objects/arrays to JSON strings for FormData
+            if (value !== null && value !== undefined) {
+                if (typeof value === 'object') {
+                    formData.append(key, JSON.stringify(value));
+                } else {
+                    formData.append(key, String(value));
+                }
+            }
+        });
+        
+        // Simple request: POST with FormData (multipart/form-data)
+        // No Content-Type header needed - browser sets it automatically with boundary
+        // This makes it a "simple request" that doesn't require CORS preflight (OPTIONS)
         fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
+            body: formData,
             keepalive: true,
-            // Don't wait for response - fire and forget
+            // Don't set Content-Type header - browser will set it automatically as multipart/form-data
+            // Simple requests don't trigger preflight OPTIONS requests
         }).catch(function(error) {
             // Silently fail - don't block page rendering
             if (window.console && console.error) {

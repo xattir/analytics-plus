@@ -20,17 +20,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Analytics tracking endpoint (public, no auth required, CORS enabled)
-// Handle OPTIONS separately with minimal middleware to avoid large headers (nginx buffer limit)
+// Using FormData (simple request) - no OPTIONS preflight needed
+// OPTIONS route removed because FormData POST requests are "simple requests" that don't trigger preflight
+// If browser still sends OPTIONS (some edge cases), handle it gracefully
 Route::options('/analytics/track', function() {
-    // Explicitly disable Debugbar to prevent large headers
-    if (class_exists(\Barryvdh\Debugbar\Facades\Debugbar::class)) {
-        \Barryvdh\Debugbar\Facades\Debugbar::disable();
-    }
-    
+    // Handle OPTIONS only if browser sends it (unlikely with FormData, but handle gracefully)
     return response('', 204)
         ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'POST,OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type')
+        ->header('Access-Control-Allow-Methods', 'POST')
         ->header('Access-Control-Max-Age', '86400');
 })->withoutMiddleware(['throttle:api', 'cors']);
 
