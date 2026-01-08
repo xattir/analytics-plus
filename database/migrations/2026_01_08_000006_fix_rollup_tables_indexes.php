@@ -22,35 +22,56 @@ return new class extends Migration
             // due to the prefix index limitation (path(191))
             $this->info('Cleaning up duplicate entries in analytics_daily_paths...');
             
-            // Step 1: Create a new table with aggregated data
-            DB::statement("
-                CREATE TEMPORARY TABLE temp_daily_paths_aggregated AS
-                SELECT 
-                    site_id,
-                    date,
-                    SUBSTRING(path, 1, 191) as path_prefix,
-                    SUM(views) as total_views,
-                    MAX(path) as full_path
-                FROM analytics_daily_paths
-                GROUP BY site_id, date, SUBSTRING(path, 1, 191)
-            ");
+            // Step 1: Check if there are any duplicates first
+            $hasDuplicates = DB::selectOne("
+                SELECT COUNT(*) as cnt
+                FROM (
+                    SELECT site_id, date, SUBSTRING(path, 1, 191) as path_prefix
+                    FROM analytics_daily_paths
+                    GROUP BY site_id, date, SUBSTRING(path, 1, 191)
+                    HAVING COUNT(*) > 1
+                ) as dupes
+            ")->cnt > 0;
             
-            // Step 2: Truncate original table
-            DB::statement("TRUNCATE TABLE analytics_daily_paths");
-            
-            // Step 3: Insert aggregated data back
-            DB::statement("
-                INSERT INTO analytics_daily_paths (site_id, date, path, views)
-                SELECT 
-                    site_id,
-                    date,
-                    full_path as path,
-                    total_views as views
-                FROM temp_daily_paths_aggregated
-            ");
-            
-            // Step 4: Drop temp table
-            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_daily_paths_aggregated");
+            if ($hasDuplicates) {
+                $this->info('Found duplicates, aggregating...');
+                
+                // Step 2: Create a new table with aggregated data
+                // Important: We must group by the prefix (first 191 chars) since that's what the index uses
+                DB::statement("
+                    CREATE TEMPORARY TABLE temp_daily_paths_aggregated AS
+                    SELECT 
+                        site_id,
+                        date,
+                        SUBSTRING(path, 1, 191) as path_prefix,
+                        SUM(views) as total_views,
+                        -- Use the longest path (most complete) or first path if same length
+                        SUBSTRING_INDEX(GROUP_CONCAT(path ORDER BY CHAR_LENGTH(path) DESC, path ASC SEPARATOR '|||'), '|||', 1) as full_path
+                    FROM analytics_daily_paths
+                    GROUP BY site_id, date, SUBSTRING(path, 1, 191)
+                ");
+                
+                // Step 3: Truncate original table
+                DB::statement("TRUNCATE TABLE analytics_daily_paths");
+                
+                // Step 4: Insert aggregated data back
+                // Use the path_prefix as the path (since index only uses first 191 chars anyway)
+                DB::statement("
+                    INSERT INTO analytics_daily_paths (site_id, date, path, views)
+                    SELECT 
+                        site_id,
+                        date,
+                        -- Use the full_path if available, otherwise use prefix
+                        COALESCE(NULLIF(full_path, ''), path_prefix) as path,
+                        total_views as views
+                    FROM temp_daily_paths_aggregated
+                ");
+                
+                // Step 5: Drop temp table
+                DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_daily_paths_aggregated");
+            } else {
+                $this->info('No duplicates found, skipping aggregation.');
+            }
             
             // Step 5: Now create the unique index
             DB::statement("
