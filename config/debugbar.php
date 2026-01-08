@@ -14,10 +14,13 @@ return [
      |
      */
 
-    'enabled' => env('DEBUGBAR_ENABLED', env('APP_DEBUG',null)),
+    // Disabled to prevent large response headers that cause "upstream sent too big header" errors
+    'enabled' => false, // Force disable - don't rely on APP_DEBUG
     'except' => [
         'telescope*',
         'horizon*',
+        'api/*', // Exclude all API routes to prevent large headers
+        '*/api/*', // Also exclude any nested API routes
     ],
 
     /*

@@ -22,6 +22,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Analytics tracking endpoint (public, no auth required, CORS enabled)
 // Handle OPTIONS separately with minimal middleware to avoid large headers (nginx buffer limit)
 Route::options('/analytics/track', function() {
+    // Explicitly disable Debugbar to prevent large headers
+    if (class_exists(\Barryvdh\Debugbar\Facades\Debugbar::class)) {
+        \Barryvdh\Debugbar\Facades\Debugbar::disable();
+    }
+    
     return response('', 204)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'POST,OPTIONS')

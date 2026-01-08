@@ -87,8 +87,9 @@ data:
 
       client_body_buffer_size 10K;
       client_max_body_size 20000M;
-      client_header_buffer_size 1k;
-      large_client_header_buffers 4 4k;
+      # Increased client header buffers to handle large request headers
+      client_header_buffer_size 16k;
+      large_client_header_buffers 8 256k;
 
 
       server {  

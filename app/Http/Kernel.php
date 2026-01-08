@@ -44,9 +44,10 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            'throttle:api',
+            // Removed 'throttle:api' for analytics tracking to avoid overhead
+            // Throttling can be handled at nginx level if needed
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            'cors',
+            // Removed 'cors' middleware - handling CORS manually in controller for minimal headers
         ]
     ];
 

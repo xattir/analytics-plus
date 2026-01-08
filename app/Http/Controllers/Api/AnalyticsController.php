@@ -19,14 +19,19 @@ class AnalyticsController extends Controller
      */
     public function track(Request $request)
     {
-        // OPTIONS requests are handled at route level to avoid middleware overhead
-        // No need to check here as route will handle it first
+        // Explicitly disable Debugbar to prevent large response headers
+        // This prevents "upstream sent too big header" errors in nginx
+        if (class_exists(\Barryvdh\Debugbar\Facades\Debugbar::class)) {
+            \Barryvdh\Debugbar\Facades\Debugbar::disable();
+        }
         
         try {
             $siteKey = $request->input('site_key');
             if (!$siteKey) {
-                return response()->json(['error' => 'site_key is required'], 400)
-                    ->header('Access-Control-Allow-Origin', '*');
+                return response()->json(['error' => 'site_key is required'], 400, [
+                    'Access-Control-Allow-Origin' => '*',
+                    'Content-Type' => 'application/json',
+                ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             }
 
             // Get or create site
@@ -38,13 +43,22 @@ class AnalyticsController extends Controller
             // Get session ID from request or generate new one
             $sessionId = $request->input('session_id') ?? $this->generateSessionId();
             
-            // Get or create session
-            $session = AnalyticsSession::firstOrNew([
-                'site_id' => $site->id,
-                'session_id' => $sessionId,
-            ]);
+            // Get or create session - use firstOrCreate to ensure session exists and is loaded
+            $session = AnalyticsSession::firstOrCreate(
+                [
+                    'site_id' => $site->id,
+                    'session_id' => $sessionId,
+                ],
+                [
+                    // Default values for new session
+                    'first_seen' => now(),
+                    'last_seen' => now(),
+                    'pages_count' => 0,
+                    'is_bot' => false,
+                ]
+            );
 
-            $isNewSession = !$session->exists;
+            $isNewSession = !$session->exists || $session->wasRecentlyCreated;
             $now = now();
 
             // Get request data
@@ -112,6 +126,12 @@ class AnalyticsController extends Controller
             
             // Update or create session (ONLY on initial page view - no engagement metrics)
             {
+                // CRITICAL: Always update last_seen FIRST for active users tracking
+                // This ensures "المستخدمون النشطون" query works correctly
+                // last_seen must be updated on EVERY page view to track active users
+                $session->last_seen = $now;
+                $session->exit_path = $path;
+                
                 // Update or create session
                 if ($isNewSession) {
                     $session->first_seen = $now;
@@ -125,11 +145,10 @@ class AnalyticsController extends Controller
                     $session->utm_campaign = $utmParams['utm_campaign'];
                     $session->is_returning = $isReturning;
                 } else {
+                    // Update existing session - increment page count
                     $session->pages_count = ($session->pages_count ?? 0) + 1;
+                    // Don't overwrite entry_path and referrer for existing sessions
                 }
-                
-                $session->last_seen = $now;
-                $session->exit_path = $path;
                 $session->duration_ms = 0; // Will be updated later if needed
                 $session->user_agent = $userAgent;
                 $session->device_fingerprint = $fingerprint;
@@ -165,8 +184,23 @@ class AnalyticsController extends Controller
                 $session->is_high_quality = false;
                 $session->is_low_quality = false;
                 
-                // Save session
-                $session->save();
+                // CRITICAL: Always save session to update last_seen for active users tracking
+                // This ensures "المستخدمون النشطون" shows correct count
+                // Use updateOrInsert as fallback if save fails
+                try {
+                    $session->save();
+                } catch (\Exception $saveError) {
+                    // If save fails, use updateOrInsert as fallback
+                    // This ensures last_seen is always updated
+                    DB::table('analytics_sessions')
+                        ->where('site_id', $site->id)
+                        ->where('session_id', $sessionId)
+                        ->update([
+                            'last_seen' => $now,
+                            'exit_path' => $path,
+                            'pages_count' => $isNewSession ? 1 : DB::raw('pages_count + 1'),
+                        ]);
+                }
             }
             
             // Update rollup tables incrementally (fast, atomic upserts)
@@ -278,20 +312,22 @@ class AnalyticsController extends Controller
                 // Don't log to prevent storage/logs growth
             }
             
+            // Return minimal response with minimal headers to avoid nginx buffer issues
             return response()->json([
                 'success' => true,
                 'session_id' => $sessionId,
-            ])->header('Access-Control-Allow-Origin', '*')
-              ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-              ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+            ], 200, [
+                'Access-Control-Allow-Origin' => '*',
+                'Content-Type' => 'application/json',
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             
         } catch (\Exception $e) {
             // Don't log errors to prevent storage/logs growth
-            // Just return error response
-            return response()->json(['error' => 'Tracking failed'], 500)
-                ->header('Access-Control-Allow-Origin', '*')
-                ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+            // Return minimal error response with minimal headers
+            return response()->json(['error' => 'Tracking failed'], 500, [
+                'Access-Control-Allow-Origin' => '*',
+                'Content-Type' => 'application/json',
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         }
     }
     
