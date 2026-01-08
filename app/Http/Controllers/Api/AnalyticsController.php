@@ -160,7 +160,8 @@ class AnalyticsController extends Controller
             // This eliminates expensive JOIN + GROUP BY queries in dashboard
             $date = $now->format('Y-m-d');
             
-            // Update daily path rollup
+            // Update daily path rollup (for all pageviews, not just new sessions)
+            // The incrementPath method handles truncation and error handling
             \App\Models\AnalyticsDailyPath::incrementPath($site->id, $date, $path, 1);
             
             // Update daily dimension rollups (only for new sessions to avoid double counting)
@@ -228,10 +229,9 @@ class AnalyticsController extends Controller
             
             // Update exit path rollup (always, as exit_path changes on each pageview)
             if (!$isBot && $session->exit_path) {
-                $exitDate = $now->format('Y-m-d');
                 \App\Models\AnalyticsDailyDimension::incrementDimension(
                     $site->id, 
-                    $exitDate, 
+                    $date, 
                     'exit_path', 
                     $session->exit_path
                 );

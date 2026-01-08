@@ -1771,7 +1771,7 @@
 @section('scripts')
 <script src="/js/chartjs.min.js"></script>
 <script>
-// Active Users Chart (Hero - Last 30 minutes) - Line Chart
+// Active Users Chart (Hero - Last 30 minutes) - Bar Chart
 @if(isset($activeUsersData) && count($activeUsersData) > 0)
 document.addEventListener('DOMContentLoaded', function() {
     const activeUsersCtx = document.getElementById('activeUsersChart');
@@ -1779,21 +1779,17 @@ document.addEventListener('DOMContentLoaded', function() {
         var chartData = @json($activeUsersData);
         
         new Chart(activeUsersCtx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: chartData.map(function(point) { return point.time; }),
                 datasets: [{
                     label: 'المستخدمون النشطون',
                     data: chartData.map(function(point) { return point.count; }),
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
                     borderColor: '#10b981',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    pointBackgroundColor: '#10b981',
-                    pointBorderColor: '#10b981'
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
                 }]
             },
             options: {

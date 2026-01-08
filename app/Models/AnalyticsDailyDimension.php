@@ -31,11 +31,25 @@ class AnalyticsDailyDimension extends Model
     {
         $dateStr = is_string($date) ? $date : $date->format('Y-m-d');
         
-        \DB::statement("
-            INSERT INTO analytics_daily_dimensions (site_id, date, dimension_type, dimension_value, count)
-            VALUES (?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE count = count + ?
-        ", [$siteId, $dateStr, $dimensionType, $dimensionValue, $increment, $increment]);
+        // Truncate dimension_value to 255 chars (max length in schema)
+        $dimensionValueForRollup = mb_substr($dimensionValue, 0, 255);
+        
+        try {
+            \DB::statement("
+                INSERT INTO analytics_daily_dimensions (site_id, date, dimension_type, dimension_value, count)
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE count = count + ?
+            ", [$siteId, $dateStr, $dimensionType, $dimensionValueForRollup, $increment, $increment]);
+        } catch (\Exception $e) {
+            // Log error but don't throw - rollup updates are non-critical
+            \Log::warning('Failed to increment dimension in rollup table', [
+                'site_id' => $siteId,
+                'date' => $dateStr,
+                'dimension_type' => $dimensionType,
+                'dimension_value' => $dimensionValueForRollup,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
     
     /**

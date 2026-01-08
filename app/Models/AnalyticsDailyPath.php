@@ -25,16 +25,31 @@ class AnalyticsDailyPath extends Model
     /**
      * Increment views for a path on a specific date
      * Uses INSERT ... ON DUPLICATE KEY UPDATE for atomic upsert
+     * Note: Path is truncated to 191 chars to match unique index prefix
      */
     public static function incrementPath($siteId, $date, $path, $increment = 1)
     {
         $dateStr = is_string($date) ? $date : $date->format('Y-m-d');
         
-        \DB::statement("
-            INSERT INTO analytics_daily_paths (site_id, date, path, views)
-            VALUES (?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE views = views + ?
-        ", [$siteId, $dateStr, $path, $increment, $increment]);
+        // Truncate path to 191 chars to match unique index prefix (path(191))
+        // This ensures the unique constraint works correctly
+        $pathForRollup = mb_substr($path, 0, 191);
+        
+        try {
+            \DB::statement("
+                INSERT INTO analytics_daily_paths (site_id, date, path, views)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE views = views + ?
+            ", [$siteId, $dateStr, $pathForRollup, $increment, $increment]);
+        } catch (\Exception $e) {
+            // Log error but don't throw - rollup updates are non-critical
+            \Log::warning('Failed to increment path in rollup table', [
+                'site_id' => $siteId,
+                'date' => $dateStr,
+                'path' => $pathForRollup,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
     
     /**
