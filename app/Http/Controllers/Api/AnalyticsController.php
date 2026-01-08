@@ -9,7 +9,7 @@ use App\Models\AnalyticsSessionPath;
 use App\Helpers\UserSystemInfoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Stevebauman\Location\Facades\Location;
 
 class AnalyticsController extends Controller
@@ -99,152 +99,165 @@ class AnalyticsController extends Controller
             // Get screen/viewport info
             $screenInfo = $this->getScreenInfo($request);
             
-            // Get engagement metrics
-            $engagement = $this->getEngagementMetrics($request);
+            // Check if this is a periodic/interval event (has engagement metrics)
+            // Skip periodic updates - only process initial page view events
+            $hasEngagementData = $request->has('duration_ms') || $request->has('scroll_percent') || 
+                                 $request->has('active_time_ms') || $request->has('time_spent_ms') ||
+                                 $request->has('idle_time_ms');
             
-            // Update or create session
-            if ($isNewSession) {
-                $session->first_seen = $now;
-                $session->entry_path = $path;
-                $session->pages_count = 1;
-                // Save referrer only for new sessions (entry point)
-                $session->referrer = $referrer;
-                $session->referrer_source = $referrerSource;
-                $session->utm_source = $utmParams['utm_source'];
-                $session->utm_medium = $utmParams['utm_medium'];
-                $session->utm_campaign = $utmParams['utm_campaign'];
-                $session->is_returning = $isReturning;
-            } else {
-                $session->pages_count = ($session->pages_count ?? 0) + 1;
+            if ($hasEngagementData) {
+                // Skip: This is a periodic/interval update, don't process
+                return response()->json([
+                    'success' => true,
+                    'session_id' => $sessionId,
+                    'skipped' => true,
+                ])->header('Access-Control-Allow-Origin', '*')
+                  ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+                  ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
             }
             
-            $session->last_seen = $now;
-            $session->exit_path = $path;
-            $session->duration_ms = $request->input('duration_ms', 0);
-            $session->user_agent = $userAgent;
-            $session->device_fingerprint = $fingerprint;
-            $session->device_type = $deviceInfo['device_type'];
-            $session->os = $deviceInfo['os'];
-            $session->os_version = $deviceInfo['os_version'];
-            $session->browser = $deviceInfo['browser'];
-            $session->browser_version = $deviceInfo['browser_version'];
-            $session->browser_engine = $deviceInfo['browser_engine'];
-            $session->screen_width = $screenInfo['screen_width'];
-            $session->screen_height = $screenInfo['screen_height'];
-            $session->viewport_width = $screenInfo['viewport_width'];
-            $session->viewport_height = $screenInfo['viewport_height'];
-            $session->device_pixel_ratio = $screenInfo['device_pixel_ratio'];
-            $session->network_type = $networkInfo['network_type'];
-            $session->rtt_ms = $networkInfo['rtt_ms'];
-            $session->downlink_mbps = $networkInfo['downlink_mbps'];
-            $session->country = $geoInfo['country_code'];
-            $session->city = $geoInfo['city'];
-            $session->isp = $geoInfo['isp'];
-            $session->is_bounce = $request->input('is_bounce', false);
-            $session->is_bot = $isBot;
-            $session->max_scroll_percent = max($session->max_scroll_percent ?? 0, $engagement['scroll_percent']);
-            $session->active_time_ms = ($session->active_time_ms ?? 0) + $engagement['active_time_ms'];
-            $session->idle_time_ms = ($session->idle_time_ms ?? 0) + $engagement['idle_time_ms'];
-            $session->ip = inet_pton($ip);
-            
-            // Precompute quality flags at insert/update time for fast aggregations
-            // This eliminates expensive CASE expressions in dashboard queries
-            $isHighQuality = !$isBot 
-                && $session->pages_count > 1 
-                && $session->duration_ms > 30000 
-                && ($session->max_scroll_percent ?? 0) > 50;
-            
-            $isLowQuality = !$isBot 
-                && (
-                    $session->pages_count == 1 
-                    || $session->duration_ms < 5000 
-                    || ($session->max_scroll_percent ?? 0) < 10
-                );
-            
-            $session->is_high_quality = $isHighQuality;
-            $session->is_low_quality = $isLowQuality;
-            
-            $session->save();
+            // Update or create session (ONLY on initial page view - no engagement metrics)
+            {
+                // Update or create session
+                if ($isNewSession) {
+                    $session->first_seen = $now;
+                    $session->entry_path = $path;
+                    $session->pages_count = 1;
+                    // Save referrer only for new sessions (entry point)
+                    $session->referrer = $referrer;
+                    $session->referrer_source = $referrerSource;
+                    $session->utm_source = $utmParams['utm_source'];
+                    $session->utm_medium = $utmParams['utm_medium'];
+                    $session->utm_campaign = $utmParams['utm_campaign'];
+                    $session->is_returning = $isReturning;
+                } else {
+                    $session->pages_count = ($session->pages_count ?? 0) + 1;
+                }
+                
+                $session->last_seen = $now;
+                $session->exit_path = $path;
+                $session->duration_ms = 0; // Will be updated later if needed
+                $session->user_agent = $userAgent;
+                $session->device_fingerprint = $fingerprint;
+                $session->device_type = $deviceInfo['device_type'];
+                $session->os = $deviceInfo['os'];
+                $session->os_version = $deviceInfo['os_version'];
+                $session->browser = $deviceInfo['browser'];
+                $session->browser_version = $deviceInfo['browser_version'];
+                $session->browser_engine = $deviceInfo['browser_engine'];
+                $session->screen_width = $screenInfo['screen_width'];
+                $session->screen_height = $screenInfo['screen_height'];
+                $session->viewport_width = $screenInfo['viewport_width'];
+                $session->viewport_height = $screenInfo['viewport_height'];
+                $session->device_pixel_ratio = $screenInfo['device_pixel_ratio'];
+                $session->network_type = $networkInfo['network_type'];
+                $session->rtt_ms = $networkInfo['rtt_ms'];
+                $session->downlink_mbps = $networkInfo['downlink_mbps'];
+                $session->country = $geoInfo['country_code'];
+                $session->city = $geoInfo['city'];
+                $session->isp = $geoInfo['isp'];
+                $session->is_bounce = false; // Default, will be updated later
+                $session->is_bot = $isBot;
+                $session->max_scroll_percent = 0; // Will be updated later if needed
+                $session->active_time_ms = 0; // Will be updated later if needed
+                $session->idle_time_ms = 0; // Will be updated later if needed
+                $session->ip = inet_pton($ip);
+                
+                // Precompute quality flags at insert/update time for fast aggregations
+                // This eliminates expensive CASE expressions in dashboard queries
+                $isHighQuality = false; // Will be computed later
+                $isLowQuality = false; // Will be computed later
+                
+                $session->is_high_quality = false;
+                $session->is_low_quality = false;
+                
+                // Save session
+                $session->save();
+            }
             
             // Update rollup tables incrementally (fast, atomic upserts)
-            // This eliminates expensive JOIN + GROUP BY queries in dashboard
+            // Only update on initial page view
             $date = $now->format('Y-m-d');
             
-            // Update daily path rollup (for all pageviews, not just new sessions)
-            // The incrementPath method handles truncation and error handling
-            \App\Models\AnalyticsDailyPath::incrementPath($site->id, $date, $path, 1);
+            try {
+                // Update daily path rollup
+                \App\Models\AnalyticsDailyPath::incrementPath($site->id, $date, $path, 1);
             
-            // Update daily dimension rollups (only for new sessions to avoid double counting)
-            if ($isNewSession && !$isBot) {
-                // Entry path
-                if ($session->entry_path) {
-                    \App\Models\AnalyticsDailyDimension::incrementDimension(
-                        $site->id, 
-                        $date, 
-                        'entry_path', 
-                        $session->entry_path
-                    );
+                // Update daily dimension rollups (only for new sessions to avoid double counting)
+                if ($isNewSession && !$isBot) {
+                    // Entry path
+                    if ($session->entry_path) {
+                        \App\Models\AnalyticsDailyDimension::incrementDimension(
+                            $site->id, 
+                            $date, 
+                            'entry_path', 
+                            $session->entry_path
+                        );
+                    }
+                    
+                    // Country
+                    if ($session->country) {
+                        \App\Models\AnalyticsDailyDimension::incrementDimension(
+                            $site->id, 
+                            $date, 
+                            'country', 
+                            $session->country
+                        );
+                    }
+                    
+                    // Browser
+                    if ($session->browser) {
+                        \App\Models\AnalyticsDailyDimension::incrementDimension(
+                            $site->id, 
+                            $date, 
+                            'browser', 
+                            $session->browser
+                        );
+                    }
+                    
+                    // OS
+                    if ($session->os) {
+                        \App\Models\AnalyticsDailyDimension::incrementDimension(
+                            $site->id, 
+                            $date, 
+                            'os', 
+                            $session->os
+                        );
+                    }
+                    
+                    // Device type
+                    if ($session->device_type) {
+                        \App\Models\AnalyticsDailyDimension::incrementDimension(
+                            $site->id, 
+                            $date, 
+                            'device_type', 
+                            $session->device_type
+                        );
+                    }
+                    
+                    // Referrer source
+                    if ($session->referrer_source) {
+                        \App\Models\AnalyticsDailyDimension::incrementDimension(
+                            $site->id, 
+                            $date, 
+                            'referrer_source', 
+                            $session->referrer_source
+                        );
+                    }
                 }
                 
-                // Country
-                if ($session->country) {
+                // Update exit path rollup
+                if (!$isBot && $session->exit_path) {
                     \App\Models\AnalyticsDailyDimension::incrementDimension(
                         $site->id, 
                         $date, 
-                        'country', 
-                        $session->country
+                        'exit_path', 
+                        $session->exit_path
                     );
                 }
-                
-                // Browser
-                if ($session->browser) {
-                    \App\Models\AnalyticsDailyDimension::incrementDimension(
-                        $site->id, 
-                        $date, 
-                        'browser', 
-                        $session->browser
-                    );
-                }
-                
-                // OS
-                if ($session->os) {
-                    \App\Models\AnalyticsDailyDimension::incrementDimension(
-                        $site->id, 
-                        $date, 
-                        'os', 
-                        $session->os
-                    );
-                }
-                
-                // Device type
-                if ($session->device_type) {
-                    \App\Models\AnalyticsDailyDimension::incrementDimension(
-                        $site->id, 
-                        $date, 
-                        'device_type', 
-                        $session->device_type
-                    );
-                }
-                
-                // Referrer source
-                if ($session->referrer_source) {
-                    \App\Models\AnalyticsDailyDimension::incrementDimension(
-                        $site->id, 
-                        $date, 
-                        'referrer_source', 
-                        $session->referrer_source
-                    );
-                }
-            }
-            
-            // Update exit path rollup (always, as exit_path changes on each pageview)
-            if (!$isBot && $session->exit_path) {
-                \App\Models\AnalyticsDailyDimension::incrementDimension(
-                    $site->id, 
-                    $date, 
-                    'exit_path', 
-                    $session->exit_path
-                );
+            } catch (\Exception $rollupError) {
+                // Silently fail - rollup updates are non-critical
+                // Don't log to prevent storage/logs growth
             }
             
             // Track path - MUST be saved after session to ensure session exists
@@ -262,18 +275,13 @@ class AnalyticsController extends Controller
                     'session_id' => $sessionId,
                     'path' => $path,
                     'position' => $pathPosition + 1,
-                    'scroll_percent' => $engagement['scroll_percent'],
-                    'time_spent_ms' => $engagement['time_spent_ms'],
+                    'scroll_percent' => 0, // Will be updated later if needed
+                    'time_spent_ms' => 0, // Will be updated later if needed
                     'created_at' => $now,
                 ]);
             } catch (\Exception $pathError) {
-                // Log path error but don't fail the request
-                Log::warning('Failed to save analytics session path: ' . $pathError->getMessage(), [
-                    'site_id' => $site->id,
-                    'session_id' => $sessionId,
-                    'path' => $path,
-                    'error' => $pathError->getTraceAsString(),
-                ]);
+                // Silently fail - path saving is non-critical
+                // Don't log to prevent storage/logs growth
             }
             
             return response()->json([
@@ -284,10 +292,8 @@ class AnalyticsController extends Controller
               ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
             
         } catch (\Exception $e) {
-            Log::error('Analytics tracking error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'site_key' => $request->input('site_key'),
-            ]);
+            // Don't log errors to prevent storage/logs growth
+            // Just return error response
             return response()->json(['error' => 'Tracking failed'], 500)
                 ->header('Access-Control-Allow-Origin', '*')
                 ->header('Access-Control-Allow-Methods', 'POST, OPTIONS')

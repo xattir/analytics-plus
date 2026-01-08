@@ -48,10 +48,9 @@ return [
         ],
 
         'daily' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
-            'days' => 14,
+            'driver' => 'monolog',
+            'handler' => NullHandler::class,
+            'level' => env('LOG_LEVEL', 'error'),
         ],
 
         'slack' => [
