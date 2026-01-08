@@ -1368,19 +1368,32 @@
                                 
                                 $sourceIconUrl = $sourceIconDomain ? 'https://icons.duckduckgo.com/ip3/' . $sourceIconDomain . '.ico' : '';
                                 
-                                // Display name
+                                // Display name - show domain name if available
                                 $sourceDisplayName = '';
                                 if ($source['type'] == 'direct' || $sourceName == 'direct') {
                                     $sourceDisplayName = 'مباشر';
                                 } else {
-                                    $sourceDisplayName = ucfirst($source['name']);
+                                    // Use domain name from referrer URL if available, otherwise use source name
+                                    if (!empty($source['referrer_url'])) {
+                                        $parsed = parse_url($source['referrer_url']);
+                                        if (isset($parsed['host'])) {
+                                            $host = $parsed['host'];
+                                            // Remove www. prefix
+                                            $host = preg_replace('/^www\./', '', $host);
+                                            $sourceDisplayName = $host;
+                                        } else {
+                                            $sourceDisplayName = ucfirst($source['name']);
+                                        }
+                                    } else {
+                                        $sourceDisplayName = ucfirst($source['name']);
+                                    }
                                 }
                             @endphp
                             <div class="source-row" style="--progress-width: {{ $sourcePercent }}%;">
                                 <div class="source-row-content">
                                     <span class="source-icon-name">
                                         @if($sourceIconUrl)
-                                        <img src="{{ $sourceIconUrl }}" alt="" style="width: 16px; height: 16px; flex-shrink: 0;" onerror="this.style.display='none'">
+                                        <img src="{{ $sourceIconUrl }}" alt="" style="width: 16px; height: 16px; flex-shrink: 0; margin-left: 8px;" onerror="this.style.display='none'">
                                         @endif
                                         <span>{{ $sourceDisplayName }}</span>
                                     </span>
@@ -1758,76 +1771,80 @@
 @section('scripts')
 <script src="/js/chartjs.min.js"></script>
 <script>
-// Active Users Chart (Hero - Last 30 minutes) - Bar Chart matching index page
+// Active Users Chart (Hero - Last 30 minutes) - Line Chart
 @if(isset($activeUsersData) && count($activeUsersData) > 0)
-const activeUsersCtx = document.getElementById('activeUsersChart');
-if (activeUsersCtx) {
-    new Chart(activeUsersCtx, {
-        type: 'bar',
-        data: {
-            labels: [
-                @foreach($activeUsersData as $point)
-                "{{ $point['time'] }}",
-                @endforeach
-            ],
-            datasets: [{
-                label: 'المستخدمون النشطون',
-                data: [
-                    @foreach($activeUsersData as $point)
-                    {{ $point['count'] }},
-                    @endforeach
-                ],
-                backgroundColor: 'rgba(16, 185, 129, 0.6)',
-                borderColor: '#10b981',
-                borderWidth: 1,
-                borderRadius: 4,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        title: function(context) {
-                            var index = context[0].dataIndex;
-                            var chartData = @json($activeUsersData);
-                            return chartData[index] ? chartData[index].time : '';
-                        },
-                        label: function(context) {
-                            return 'المستخدمون: ' + context.parsed.y;
+document.addEventListener('DOMContentLoaded', function() {
+    const activeUsersCtx = document.getElementById('activeUsersChart');
+    if (activeUsersCtx && typeof Chart !== 'undefined') {
+        var chartData = @json($activeUsersData);
+        
+        new Chart(activeUsersCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.map(function(point) { return point.time; }),
+                datasets: [{
+                    label: 'المستخدمون النشطون',
+                    data: chartData.map(function(point) { return point.count; }),
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#10b981'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            title: function(context) {
+                                var index = context[0].dataIndex;
+                                return chartData[index] ? chartData[index].time : '';
+                            },
+                            label: function(context) {
+                                return 'المستخدمون: ' + context.parsed.y;
+                            }
                         }
                     }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        display: false
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            display: false
+                        },
+                        grid: {
+                            display: false
+                        }
                     },
-                    grid: {
-                        display: false
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            display: false
+                        }
                     }
                 },
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        display: false
-                    }
+                animation: {
+                    duration: 750
                 }
             }
-        }
-    });
-}
+        });
+    } else if (activeUsersCtx) {
+        console.error('Chart.js is not loaded');
+    }
+});
 @endif
 
 // Visitors Last 7 Days Chart (Hero - Line Chart)
