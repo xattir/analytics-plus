@@ -57,6 +57,7 @@ class AnalyticsController extends Controller
                     'is_bot' => false,
                 ]
             );
+            dd($session);
 
             $isNewSession = !$session->exists || $session->wasRecentlyCreated;
             $now = now();
