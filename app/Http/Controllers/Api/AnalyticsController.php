@@ -63,8 +63,13 @@ class AnalyticsController extends Controller
 
             // Get request data
             $path = $request->input('path', '/');
+            $url = $request->input('url', ''); // Full URL (e.g., https://subdomain.example.com/page)
             $userAgent = $request->input('user_agent') ?? $request->header('User-Agent', '');
             $ip = $this->getIpAddress($request);
+            
+            // Use full URL for entry_path and exit_path if available, otherwise fallback to path
+            $entryUrl = !empty($url) ? $url : $path;
+            $exitUrl = !empty($url) ? $url : $path;
             
             // Parse user agent
             $deviceInfo = $this->parseDeviceInfo($userAgent, $request);
@@ -131,12 +136,12 @@ class AnalyticsController extends Controller
                 // This ensures "المستخدمون النشطون" query works correctly
                 // last_seen must be updated on EVERY page view to track active users
                 $session->last_seen = $now;
-                $session->exit_path = $path;
+                $session->exit_path = $exitUrl; // Store full URL (e.g., https://subdomain.example.com/page)
                 
                 // Update or create session
                 if ($isNewSession) {
                     $session->first_seen = $now;
-                    $session->entry_path = $path;
+                    $session->entry_path = $entryUrl; // Store full URL (e.g., https://subdomain.example.com/page)
                     $session->pages_count = 1;
                     // Save referrer only for new sessions (entry point)
                     $session->referrer = $referrer;
@@ -199,7 +204,7 @@ class AnalyticsController extends Controller
                         ->where('session_id', $sessionId)
                         ->update([
                             'last_seen' => $now,
-                            'exit_path' => $path,
+                            'exit_path' => $exitUrl,
                             'pages_count' => $isNewSession ? 1 : DB::raw('pages_count + 1'),
                         ]);
                 }
