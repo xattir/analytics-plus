@@ -2225,4 +2225,116 @@ HTML;
             // Silently fail - don't block page load
         }
     }
+    
+    /**
+     * Extract URL patterns based on website paths
+     * 
+     * @param int $siteId
+     * @param int $limit
+     * @return array
+     */
+    public function extractUrlPatternsForSite(int $siteId, int $limit = 10000): array
+    {
+        // Fetch latest N paths for this site
+        $paths = AnalyticsSessionPath::where('site_id', $siteId)
+            ->whereNotNull('path')
+            ->where('path', '!=', '')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get(['path']);
+
+        /**
+         * Structure:
+         * [base_domain][subdomain][depth][segment] => count
+         */
+        $map = [];
+
+        foreach ($paths as $row) {
+            $parts = parse_url($row->path);
+            if (empty($parts['host'])) {
+                continue;
+            }
+
+            // ---- split host into base_domain + subdomain
+            $hostParts = explode('.', $parts['host']);
+            $subdomain = null;
+            if (count($hostParts) > 2) {
+                $baseDomain = implode('.', array_slice($hostParts, -2));
+                $subdomain  = implode('.', array_slice($hostParts, 0, -2));
+            } else {
+                $baseDomain = $parts['host'];
+            }
+            
+            // Use empty string as array key for null subdomain (for consistency)
+            $subdomainKey = $subdomain ?? '';
+
+            // ---- normalize path
+            $path = rtrim($parts['path'] ?? '/', '/');
+            if ($path === '') {
+                $path = '/';
+            }
+
+            $segments = array_values(array_filter(explode('/', $path)));
+
+            // homepage "/"
+            if (empty($segments)) {
+                $map[$baseDomain][$subdomainKey][0]['/'] =
+                    ($map[$baseDomain][$subdomainKey][0]['/'] ?? 0) + 1;
+                continue;
+            }
+
+            foreach ($segments as $depth => $segment) {
+                $map[$baseDomain][$subdomainKey][$depth][$segment] =
+                    ($map[$baseDomain][$subdomainKey][$depth][$segment] ?? 0) + 1;
+            }
+        }
+
+        // ---- build patterns
+        $patterns = [];
+
+        foreach ($map as $baseDomain => $subs) {
+            foreach ($subs as $subdomain => $depths) {
+                ksort($depths);
+
+                $patternSegments = [];
+
+                foreach ($depths as $depth => $segments) {
+                    // more than 5 variants → wildcard
+                    if (count($segments) > 5) {
+                        $patternSegments[] = '*';
+                    } else {
+                        // take most frequent static segment
+                        arsort($segments);
+                        $patternSegments[] = array_key_first($segments);
+                    }
+                }
+
+                $pattern = '/' . ltrim(implode('/', $patternSegments), '/');
+
+                $patterns[] = [
+                    'site_id'     => $siteId,
+                    'base_domain' => $baseDomain,
+                    'subdomain'   => $subdomain ?: null, // Store null instead of empty string in database
+                    'pattern'     => $pattern,
+                ];
+            }
+        }
+
+        // ---- persist (optional – remove if you just want return)
+        foreach ($patterns as $row) {
+            DB::table('analytics_url_patterns')->updateOrInsert(
+                [
+                    'site_id'     => $row['site_id'],
+                    'base_domain' => $row['base_domain'],
+                    'subdomain'   => $row['subdomain'],
+                    'pattern'     => $row['pattern'],
+                ],
+                [
+                    'generated_at' => now(),
+                ]
+            );
+        }
+
+        return $patterns;
+    }
 }

@@ -207,3 +207,4 @@ Route::get('sitemaps/{name}/{page}/sitemap.xml',[BackendSiteMapController::class
 
 ############## For Testing Routes ##############
 Route::get('/test',[BackendTestController::class,'test'])->name('test');
+Route::get('/test/url-patterns',[BackendTestController::class,'index'])->name('test.url-patterns')->middleware('auth');
