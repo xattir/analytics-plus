@@ -28,11 +28,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('site_id');
             $table->date('date');
-            $table->string('path', 2048)->index(); // Full path for exact matching
+            $table->string('path', 2048); // Full path for exact matching
             $table->unsignedBigInteger('views')->default(0);
-            
-            // Composite unique index for efficient upserts
-            $table->unique(['site_id', 'date', 'path'], 'idx_site_date_path_unique');
             
             // Index for dashboard queries (site + date range)
             $table->index(['site_id', 'date'], 'idx_site_date');
@@ -45,6 +42,13 @@ return new class extends Migration
             
             $table->comment('Pre-aggregated daily path views. Updated incrementally at ingestion time.');
         });
+        
+        // Add unique index with prefix on path (path is too long for full index)
+        // Using prefix of 191 characters (safe for most paths, allows unique constraint)
+        DB::statement("
+            CREATE UNIQUE INDEX idx_site_date_path_unique 
+            ON analytics_daily_paths (site_id, date, path(191))
+        ");
         
         // ============================================
         // ANALYTICS_DAILY_DIMENSIONS
