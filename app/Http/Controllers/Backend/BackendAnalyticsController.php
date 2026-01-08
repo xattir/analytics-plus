@@ -2227,6 +2227,48 @@ HTML;
     }
     
     /**
+     * Check if a specific path matches a wildcard pattern
+     * 
+     * @param string $path Specific path (e.g., "/article/slug/download/file")
+     * @param string $pattern Wildcard pattern (e.g., "/article/{star}/download/{star}" where {star} is wildcard)
+     * @return bool
+     */
+    private function pathMatchesPattern(string $path, string $pattern): bool
+    {
+        // Normalize paths
+        $path = rtrim($path, '/');
+        $pattern = rtrim($pattern, '/');
+        
+        if ($path === '' || $path === '/') {
+            return $pattern === '/' || $pattern === '';
+        }
+        
+        // Convert pattern to regex
+        $patternParts = explode('/', ltrim($pattern, '/'));
+        $pathParts = explode('/', ltrim($path, '/'));
+        
+        // Pattern and path must have same number of segments
+        if (count($patternParts) !== count($pathParts)) {
+            return false;
+        }
+        
+        // Check each segment
+        for ($i = 0; $i < count($patternParts); $i++) {
+            // Wildcard matches anything
+            if ($patternParts[$i] === '*') {
+                continue;
+            }
+            
+            // Exact match required for non-wildcard segments
+            if ($patternParts[$i] !== $pathParts[$i]) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    /**
      * Extract URL patterns based on website paths
      * 
      * @param int $siteId
@@ -2379,8 +2421,58 @@ HTML;
 
         $patterns = array_values($consolidatedPatterns);
 
+        // Separate wildcard patterns from specific patterns per domain
+        $wildcardPatternsByDomain = [];
+        $specificPatternsByDomain = [];
+        
+        foreach ($patterns as $pattern) {
+            $domain = $pattern['domain'];
+            $patternStr = $pattern['pattern'];
+            
+            if (!isset($wildcardPatternsByDomain[$domain])) {
+                $wildcardPatternsByDomain[$domain] = [];
+                $specificPatternsByDomain[$domain] = [];
+            }
+            
+            if (strpos($patternStr, '*') !== false) {
+                $wildcardPatternsByDomain[$domain][] = $patternStr;
+            } else {
+                $specificPatternsByDomain[$domain][] = $pattern;
+            }
+        }
+
+        // Filter out specific patterns that match wildcard patterns
+        $finalPatterns = [];
+        
+        foreach ($patterns as $pattern) {
+            $domain = $pattern['domain'];
+            $patternStr = $pattern['pattern'];
+            
+            // Always keep wildcard patterns and homepage
+            if (strpos($patternStr, '*') !== false || $patternStr === '/') {
+                $finalPatterns[] = $pattern;
+                continue;
+            }
+            
+            // Check if this specific pattern matches any wildcard pattern for this domain
+            $matchesWildcard = false;
+            if (isset($wildcardPatternsByDomain[$domain])) {
+                foreach ($wildcardPatternsByDomain[$domain] as $wildcardPattern) {
+                    if ($this->pathMatchesPattern($patternStr, $wildcardPattern)) {
+                        $matchesWildcard = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Only keep specific patterns that don't match any wildcard pattern
+            if (!$matchesWildcard) {
+                $finalPatterns[] = $pattern;
+            }
+        }
+
         // Persist to database
-        foreach ($patterns as $row) {
+        foreach ($finalPatterns as $row) {
             DB::table('analytics_url_patterns')->updateOrInsert(
                 [
                     'site_id' => $row['site_id'],
@@ -2393,6 +2485,6 @@ HTML;
             );
         }
 
-        return $patterns;
+        return $finalPatterns;
     }
 }
