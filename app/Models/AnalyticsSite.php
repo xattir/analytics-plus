@@ -54,6 +54,14 @@ class AnalyticsSite extends Model
     }
     
     /**
+     * Get all invitations for this site
+     */
+    public function invitations()
+    {
+        return $this->hasMany(AnalyticsSiteInvitation::class, 'site_id');
+    }
+    
+    /**
      * Check if a user can access this site
      */
     public function canAccess($userId)
