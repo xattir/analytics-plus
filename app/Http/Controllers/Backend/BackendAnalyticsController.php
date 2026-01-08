@@ -538,31 +538,24 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * Get top pages (optimized with subquery first to get matching session_ids)
+     * Get top pages (optimized with direct JOIN - no large array)
      */
     private function getTopPages($siteId, $dateFrom, $dateTo)
     {
-        // Optimized: First get matching session_ids using covering index idx_site_bot_first_seen
-        // Then join only with those sessions to dramatically reduce the dataset
+        // Optimized: Use direct JOIN with conditions in JOIN clause
+        // This avoids loading large arrays into memory and allows MySQL to optimize
+        // MySQL can use indexes efficiently with this approach
         $startDate = $dateFrom->startOfDay()->toDateTimeString();
         $endDate = $dateTo->endOfDay()->toDateTimeString();
         
-        // Step 1: Get matching session_ids first (very fast with index)
-        $matchingSessionIds = DB::table('analytics_sessions')
-            ->where('site_id', $siteId)
-            ->whereBetween('first_seen', [$startDate, $endDate])
-            ->where('is_bot', 0)
-            ->pluck('session_id')
-            ->toArray();
-        
-        if (empty($matchingSessionIds)) {
-            return collect([]);
-        }
-        
-        // Step 2: Join only with matching sessions (much faster)
         return DB::table('analytics_session_paths')
+            ->join('analytics_sessions', function($join) use ($siteId, $startDate, $endDate) {
+                $join->on('analytics_sessions.session_id', '=', 'analytics_session_paths.session_id')
+                     ->where('analytics_sessions.site_id', '=', $siteId)
+                     ->whereBetween('analytics_sessions.first_seen', [$startDate, $endDate])
+                     ->where('analytics_sessions.is_bot', '=', 0);
+            })
             ->where('analytics_session_paths.site_id', $siteId)
-            ->whereIn('analytics_session_paths.session_id', $matchingSessionIds)
             ->select('analytics_session_paths.path', DB::raw('SUM(1) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
@@ -571,30 +564,22 @@ class BackendAnalyticsController extends Controller
     }
     
     /**
-     * Get top pages - Last 30 minutes (optimized with subquery first)
+     * Get top pages - Last 30 minutes (optimized with direct JOIN)
      */
     private function getTopPagesLast30Minutes($siteId, $startTime)
     {
-        // Optimized: First get matching session_ids using index idx_site_bot_last_seen
-        // Then join only with those sessions
+        // Optimized: Use direct JOIN with conditions in JOIN clause
+        // This avoids loading large arrays into memory and allows MySQL to optimize
         $startTimeStr = $startTime->toDateTimeString();
         
-        // Step 1: Get matching session_ids first (very fast with index)
-        $matchingSessionIds = DB::table('analytics_sessions')
-            ->where('site_id', $siteId)
-            ->where('last_seen', '>=', $startTimeStr)
-            ->where('is_bot', 0)
-            ->pluck('session_id')
-            ->toArray();
-        
-        if (empty($matchingSessionIds)) {
-            return collect([]);
-        }
-        
-        // Step 2: Join only with matching sessions (much faster)
         return DB::table('analytics_session_paths')
+            ->join('analytics_sessions', function($join) use ($siteId, $startTimeStr) {
+                $join->on('analytics_sessions.session_id', '=', 'analytics_session_paths.session_id')
+                     ->where('analytics_sessions.site_id', '=', $siteId)
+                     ->where('analytics_sessions.last_seen', '>=', $startTimeStr)
+                     ->where('analytics_sessions.is_bot', '=', 0);
+            })
             ->where('analytics_session_paths.site_id', $siteId)
-            ->whereIn('analytics_session_paths.session_id', $matchingSessionIds)
             ->select('analytics_session_paths.path', DB::raw('SUM(1) as views'))
             ->groupBy('analytics_session_paths.path')
             ->orderByDesc('views')
