@@ -332,7 +332,7 @@
         return null;
     }
 
-    // Toggle ad collapse/expand function (for pop_from_bottom, pop_from_top, and Interstitial)
+    // Toggle ad collapse/expand function - simple and clean
     function toggleAdCollapse(btn) {
         const adContainer = btn.closest('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-interstitial');
         if (!adContainer) return;
@@ -340,39 +340,48 @@
         const adId = adContainer.getAttribute('data-ad-id');
         const isCollapsed = adContainer.classList.contains('analytics-ad-collapsed');
         const isBottom = adContainer.classList.contains('analytics-ad-pop-from-bottom');
+        const isTop = adContainer.classList.contains('analytics-ad-pop-from-top');
         const isInterstitial = adContainer.classList.contains('analytics-ad-interstitial');
         
         if (isCollapsed) {
-            // Expand
+            // Expand - show full ad
             adContainer.classList.remove('analytics-ad-collapsed');
             if (isInterstitial) {
                 adContainer.style.opacity = '1';
                 adContainer.style.pointerEvents = 'auto';
-            } else {
-                adContainer.style.transform = 'translateY(0)';
-            }
-            sessionStorage.removeItem('analytics_ad_collapsed_' + adId);
-            if (isInterstitial) {
+                const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
+                if (wrapper) {
+                    wrapper.style.opacity = '1';
+                    wrapper.style.transform = 'scale(1)';
+                    wrapper.style.pointerEvents = 'auto';
+                }
                 btn.innerHTML = '✕';
             } else {
+                // Smooth slide animation
+                adContainer.style.transform = 'translateY(0)';
                 btn.innerHTML = isBottom ? '▼' : '▲';
             }
+            sessionStorage.removeItem('analytics_ad_collapsed_' + adId);
         } else {
-            // Collapse
+            // Collapse - show only toggle button
             adContainer.classList.add('analytics-ad-collapsed');
             if (isInterstitial) {
-                adContainer.style.opacity = '0';
-                adContainer.style.pointerEvents = 'none';
-            } else {
-                const offset = 50;
-                adContainer.style.transform = isBottom ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
-            }
-            sessionStorage.setItem('analytics_ad_collapsed_' + adId, 'true');
-            if (isInterstitial) {
+                adContainer.style.opacity = '1'; // Keep backdrop visible
+                adContainer.style.pointerEvents = 'auto';
+                const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
+                if (wrapper) {
+                    wrapper.style.opacity = '0';
+                    wrapper.style.transform = 'scale(0.95)';
+                    wrapper.style.pointerEvents = 'none';
+                }
                 btn.innerHTML = '☰';
             } else {
+                // Collapse to show only toggle button area (28px height)
+                const offset = 28; // Height of toggle button
+                adContainer.style.transform = isBottom ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
                 btn.innerHTML = isBottom ? '▲' : '▼';
             }
+            sessionStorage.setItem('analytics_ad_collapsed_' + adId, 'true');
         }
     }
 
@@ -449,27 +458,21 @@
                     margin: 0 !important;
                     padding: 0 !important;
                     overflow: visible !important;
+                    position: relative !important;
                 }
-                .analytics-ad-content-wrapper,
                 .analytics-ad-content-wrapper * {
-                    color: inherit !important;
                     box-sizing: border-box !important;
                 }
                 .analytics-ad-content-wrapper img {
                     max-width: 100% !important;
                     height: auto !important;
                     display: block !important;
+                    margin: 0 auto !important;
                 }
                 .analytics-ad-content-wrapper a {
                     text-decoration: none !important;
                     color: inherit !important;
                     cursor: pointer !important;
-                }
-                /* Ensure content wrapper has proper height */
-                .analytics-ad-content-wrapper:after {
-                    content: "";
-                    display: table;
-                    clear: both;
                 }
             `;
             document.head.appendChild(style);
@@ -569,9 +572,9 @@
                 padding: '0',
                 maxWidth: '100%',
                 width: '100%',
-                boxShadow: '0 -2px 10px rgba(0,0,0,0.3)',
+                boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
                 transform: transformValue,
-                transition: 'transform 0.3s ease-in-out'
+                transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
             };
         } else if (ad.type === 'pop_from_top') {
             containerClass = 'analytics-ad-pop-from-top';
@@ -586,9 +589,9 @@
                 padding: '0',
                 maxWidth: '100%',
                 width: '100%',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                 transform: transformValue,
-                transition: 'transform 0.3s ease-in-out'
+                transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
             };
         } else if (ad.type === 'Interstitial') {
             containerClass = 'analytics-ad-interstitial';
@@ -639,16 +642,9 @@
             wrapper.className = 'analytics-ad-interstitial-wrapper';
             wrapper.style.cssText = 'position: relative; width: 550px; max-width: 90%; max-height: 90%; overflow: auto; background: #fff; border-radius: 8px; padding: ' + paddingY + 'px ' + paddingX + 'px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: scale(0.9); opacity: 0; transition: transform 0.3s ease-out, opacity 0.3s ease-out;';
         } else {
-            // For pop_from_bottom and pop_from_top: full width outer wrapper with centered inner container
+            // For pop_from_bottom and pop_from_top: simple centered container
             wrapper.className = 'analytics-ad-wrapper';
-            wrapper.style.cssText = 'width: 100% !important; padding: ' + paddingY + 'px ' + paddingX + 'px; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s ease-in-out;';
-        }
-        
-        // Create centered container for pop_from_bottom and pop_from_top
-        let innerContainer = null;
-        if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
-            innerContainer = document.createElement('div');
-            innerContainer.style.cssText = 'width: 100% !important; max-width: 1000px; margin: 0 auto; position: relative; display: flex; align-items: center; justify-content: center;';
+            wrapper.style.cssText = 'width: 100% !important; max-width: 1000px; margin: 0 auto; padding: ' + paddingY + 'px ' + paddingX + 'px; position: relative; min-height: auto;';
         }
         
         // Create content div with isolated content (no iframe)
@@ -656,38 +652,45 @@
         const isolatedContent = createIsolatedAdContent(adContent, ad.id, ad.type);
         
         if (ad.type === 'Interstitial') {
-            contentDiv.style.cssText = 'width: 100%; height: 100%; position: relative; overflow: auto;';
+            contentDiv.style.cssText = 'width: 100%; min-height: 100px; position: relative; overflow: visible;';
             contentDiv.appendChild(isolatedContent);
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
-            contentDiv.style.cssText = 'width: 100%; display: block; text-align: center;';
-            isolatedContent.style.maxWidth = '1000px';
+            // Simple centered content layout - clean and minimal
+            contentDiv.style.cssText = 'width: 100%; display: block; min-height: auto;';
+            isolatedContent.style.display = 'block !important';
+            isolatedContent.style.width = '100%';
             isolatedContent.style.margin = '0 auto';
-            isolatedContent.style.display = 'block';
             contentDiv.appendChild(isolatedContent);
+            wrapper.appendChild(contentDiv);
         } else {
             contentDiv.style.cssText = 'width: 100%; display: block;';
             contentDiv.appendChild(isolatedContent);
         }
         
-        // Create toggle button for all ad types - no close button
+        // Create toggle button (simple and clean design)
         let toggleBtn = null;
         if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top' || ad.type === 'Interstitial') {
             toggleBtn = document.createElement('button');
             toggleBtn.className = 'analytics-ad-toggle';
             toggleBtn.setAttribute('onclick', 'toggleAdCollapse(this)');
             toggleBtn.setAttribute('type', 'button');
+            toggleBtn.setAttribute('aria-label', 'Toggle ad');
             
             if (ad.type === 'Interstitial') {
                 toggleBtn.innerHTML = '✕';
-                toggleBtn.style.cssText = 'position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.75); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: #fff; font-size: 24px; font-weight: bold; z-index: 100000; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease-in-out; font-family: arial !important; line-height: 1; padding: 0;';
+                toggleBtn.style.cssText = 'position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; color: #fff; font-size: 20px; font-weight: normal; z-index: 100001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.2);';
+                toggleBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; };
+                toggleBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; };
             } else {
+                // For pop_from_bottom and pop_from_top: simple toggle button at the edge
                 toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▼' : '▲';
-                // Position toggle button on the edge of the container with consistent styling
                 toggleBtn.style.cssText = 'position: absolute; ' + 
-                    (ad.type === 'pop_from_bottom' ? 'top: -35px;' : 'bottom: -35px;') + 
-                    'left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); border: none; ' +
-                    (ad.type === 'pop_from_bottom' ? 'border-radius: 4px 4px 0 0;' : 'border-radius: 0 0 4px 4px;') +
-                    'width: 60px; height: 30px; cursor: pointer; color: #fff; font-size: 18px; font-weight: bold; z-index: 10000; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease-in-out; font-family: arial !important;';
+                    (ad.type === 'pop_from_bottom' ? 'top: -32px;' : 'bottom: -32px;') + 
+                    'left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border: none; ' +
+                    (ad.type === 'pop_from_bottom' ? 'border-radius: 6px 6px 0 0;' : 'border-radius: 0 0 6px 6px;') +
+                    'width: 50px; height: 28px; cursor: pointer; color: #fff; font-size: 16px; font-weight: normal; z-index: 10000; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; box-shadow: 0 2px 8px rgba(0,0,0,0.2);';
+                toggleBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; };
+                toggleBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; };
             }
             
             // Add styles for collapsed state
@@ -695,56 +698,65 @@
                 const style = document.createElement('style');
                 style.id = 'analytics-ad-toggle-styles';
                 style.textContent = `
-                    .analytics-ad-pop-from-bottom .analytics-ad-toggle,
-                    .analytics-ad-pop-from-top .analytics-ad-toggle,
-                    .analytics-ad-interstitial .analytics-ad-toggle {
+                    .analytics-ad-toggle {
                         font-family: arial !important;
+                        outline: none !important;
+                        user-select: none !important;
+                        -webkit-user-select: none !important;
+                    }
+                    .analytics-ad-toggle:hover {
+                        background: rgba(0,0,0,0.9) !important;
+                    }
+                    .analytics-ad-toggle:active {
+                        transform: translateX(-50%) scale(0.95) !important;
                     }
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-toggle {
                         top: auto !important;
-                        bottom: 10px !important;
+                        bottom: 0 !important;
                         left: 50% !important;
                         transform: translateX(-50%) !important;
-                        border-radius: 4px 4px 0 0 !important;
-                        background: rgba(0,0,0,0.75) !important;
+                        border-radius: 6px 6px 0 0 !important;
+                        background: rgba(0,0,0,0.8) !important;
                     }
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-toggle {
                         bottom: auto !important;
-                        top: 10px !important;
+                        top: 0 !important;
                         left: 50% !important;
                         transform: translateX(-50%) !important;
-                        border-radius: 0 0 4px 4px !important;
-                        background: rgba(0,0,0,0.75) !important;
+                        border-radius: 0 0 6px 6px !important;
+                        background: rgba(0,0,0,0.8) !important;
                     }
                     .analytics-ad-interstitial.analytics-ad-collapsed .analytics-ad-toggle {
-                        background: rgba(0,0,0,0.75) !important;
+                        background: rgba(0,0,0,0.8) !important;
                         opacity: 1 !important;
                         pointer-events: auto !important;
                     }
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-wrapper,
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-wrapper {
-                        opacity: 0;
-                        pointer-events: none;
+                        opacity: 0 !important;
+                        pointer-events: none !important;
+                        height: 0 !important;
+                        overflow: hidden !important;
                     }
-                    .analytics-ad-interstitial.analytics-ad-collapsed .analytics-ad-wrapper {
-                        opacity: 0;
-                        pointer-events: none;
+                    .analytics-ad-interstitial.analytics-ad-collapsed .analytics-ad-interstitial-wrapper {
+                        opacity: 0 !important;
+                        pointer-events: none !important;
+                        transform: scale(0.95) !important;
                     }
                 `;
                 document.head.appendChild(style);
             }
         }
         
-        // Assemble structure - toggle button for all special ad types
+        // Assemble structure - simple and clean
         if (ad.type === 'Interstitial') {
             wrapper.appendChild(contentDiv);
             container.appendChild(wrapper);
             if (toggleBtn) {
-                container.appendChild(toggleBtn);
+                wrapper.appendChild(toggleBtn);
             }
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
-            innerContainer.appendChild(contentDiv);
-            wrapper.appendChild(innerContainer);
+            // Simple structure: container -> wrapper -> contentDiv
             container.appendChild(wrapper);
             if (toggleBtn) {
                 container.appendChild(toggleBtn);
@@ -796,18 +808,32 @@
                     return;
                 }
 
-                // Check sessionStorage for collapsed state (pop_from_bottom and pop_from_top only)
-                const wasCollapsed = (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') && 
-                                     sessionStorage.getItem('analytics_ad_collapsed_' + ad.id) === 'true';
+                // Check sessionStorage for collapsed state (all ad types)
+                const wasCollapsed = sessionStorage.getItem('analytics_ad_collapsed_' + ad.id) === 'true';
                 
                 if (wasCollapsed) {
-                    // Start in collapsed state - show only 50px (toggle button area)
+                    // Start in collapsed state
                     adContainer.classList.add('analytics-ad-collapsed');
-                    const offset = 50;
-                    adContainer.style.transform = ad.type === 'pop_from_bottom' ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
                     const toggleBtn = adContainer.querySelector('.analytics-ad-toggle');
-                    if (toggleBtn) {
-                        toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▲' : '▼';
+                    
+                    if (ad.type === 'Interstitial') {
+                        adContainer.style.opacity = '1';
+                        const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
+                        if (wrapper) {
+                            wrapper.style.opacity = '0';
+                            wrapper.style.transform = 'scale(0.95)';
+                            wrapper.style.pointerEvents = 'none';
+                        }
+                        if (toggleBtn) {
+                            toggleBtn.innerHTML = '☰';
+                        }
+                    } else {
+                        // pop_from_bottom or pop_from_top
+                        const offset = 28; // Height of toggle button
+                        adContainer.style.transform = ad.type === 'pop_from_bottom' ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
+                        if (toggleBtn) {
+                            toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▲' : '▼';
+                        }
                     }
                 }
 
@@ -829,9 +855,10 @@
                                 });
                             }
                         } else {
+                            // Smooth slide up/down animation
                             adContainer.style.transform = 'translateY(0)';
                         }
-                    }, 10);
+                    }, 50);
                 }
 
                 // Store url_pattern_id in container for click tracking
