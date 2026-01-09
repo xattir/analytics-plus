@@ -607,7 +607,7 @@
                 justifyContent: 'center',
                 padding: '0',
                 opacity: '1',
-                transition: 'opacity 0.3s ease-in-out'
+                transition: 'none'
             };
         } else {
             return null;
@@ -630,6 +630,7 @@
         if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             container.style.setProperty('background', '#ffffff', 'important');
         } else if (ad.type === 'Interstitial') {
+            // Force white background and visibility immediately - prevent any external CSS override
             container.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
             container.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
             container.style.setProperty('-webkit-backdrop-filter', 'blur(10px)', 'important');
@@ -637,6 +638,10 @@
             container.style.setProperty('display', 'flex', 'important');
             container.style.setProperty('visibility', 'visible', 'important');
             container.style.setProperty('pointer-events', 'auto', 'important');
+            // Remove any inline styles that might override
+            container.style.removeProperty('color');
+            // Force all styles to override external CSS
+            container.setAttribute('style', container.getAttribute('style') + '; background: rgba(255,255,255,0.95) !important; opacity: 1 !important; display: flex !important;');
         }
         
         // Create inner wrapper - clean and modern padding
@@ -698,7 +703,7 @@
             closeBtn.setAttribute('aria-label', 'Close ad');
             closeBtn.innerHTML = '✕';
             // Position close button in the corner of the wrapper (content frame) - white background with border
-            closeBtn.style.cssText = 'position: absolute; top: ' + (paddingY > 10 ? paddingY / 2 : 10) + 'px; right: ' + (paddingX > 10 ? paddingX / 2 : 10) + 'px; background: #fff; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #333; font-size: 18px; font-weight: normal; z-index: 1001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+            closeBtn.style.cssText = 'position: absolute; top: ' + (paddingY > 10 ? paddingY / 2 : 10) + 'px; right: ' + (paddingX > 10 ? paddingX / 2 : 10) + 'px; background: #fff; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #333; font-size: 18px; font-weight: normal; z-index: 1000000; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
             closeBtn.onmouseover = function() { this.style.setProperty('background', '#f5f5f5', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.2)', 'important'); this.style.setProperty('transform', 'scale(1.1)', 'important'); };
             closeBtn.onmouseout = function() { this.style.setProperty('background', '#fff', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.1)', 'important'); this.style.setProperty('transform', 'scale(1)', 'important'); };
         }
@@ -812,6 +817,10 @@
                         outline: none !important;
                         user-select: none !important;
                         -webkit-user-select: none !important;
+                        z-index: 1000000 !important;
+                        background: #fff !important;
+                        border: 2px solid rgba(0,0,0,0.1) !important;
+                        color: #333 !important;
                     }
                     .analytics-ad-close-interstitial:hover {
                         background: #f5f5f5 !important;
@@ -908,18 +917,61 @@
                 // Inject into body
                 document.body.appendChild(adContainer);
 
+                // Force Interstitial visibility immediately (before animation)
+                if (ad.type === 'Interstitial') {
+                    // Force container visibility immediately - no delay, multiple methods
+                    adContainer.style.setProperty('opacity', '1', 'important');
+                    adContainer.style.setProperty('display', 'flex', 'important');
+                    adContainer.style.setProperty('visibility', 'visible', 'important');
+                    adContainer.style.setProperty('pointer-events', 'auto', 'important');
+                    adContainer.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
+                    adContainer.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
+                    adContainer.style.setProperty('-webkit-backdrop-filter', 'blur(10px)', 'important');
+                    
+                    // Direct assignment as backup
+                    adContainer.style.opacity = '1';
+                    adContainer.style.display = 'flex';
+                    adContainer.style.visibility = 'visible';
+                    adContainer.style.background = 'rgba(255,255,255,0.95)';
+                    
+                    // Also set wrapper visibility immediately
+                    const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
+                    if (wrapper) {
+                        wrapper.style.setProperty('opacity', '1', 'important');
+                        wrapper.style.setProperty('transform', 'scale(1)', 'important');
+                        wrapper.style.setProperty('display', 'block', 'important');
+                        wrapper.style.setProperty('visibility', 'visible', 'important');
+                        wrapper.style.setProperty('pointer-events', 'auto', 'important');
+                        // Direct assignment as backup
+                        wrapper.style.opacity = '1';
+                        wrapper.style.transform = 'scale(1)';
+                        wrapper.style.display = 'block';
+                    }
+                    
+                    // Remove any close buttons from Interstitial content (they're not needed)
+                    const closeButtons = adContainer.querySelectorAll('.analytics-ad-close');
+                    closeButtons.forEach(function(btn) {
+                        btn.remove();
+                    });
+                    
+                    // Force styles again after a tiny delay to override any external CSS
+                    setTimeout(function() {
+                        adContainer.style.setProperty('opacity', '1', 'important');
+                        adContainer.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
+                        adContainer.style.opacity = '1';
+                        adContainer.style.background = 'rgba(255,255,255,0.95)';
+                        if (wrapper) {
+                            wrapper.style.setProperty('opacity', '1', 'important');
+                            wrapper.style.opacity = '1';
+                        }
+                    }, 50);
+                }
+                
                 // Animate in (only if not collapsed)
                 if (!wasCollapsed) {
                     setTimeout(function() {
                         if (ad.type === 'Interstitial') {
-                            // Force container visibility with all necessary properties
-                            adContainer.style.setProperty('opacity', '1', 'important');
-                            adContainer.style.setProperty('display', 'flex', 'important');
-                            adContainer.style.setProperty('visibility', 'visible', 'important');
-                            adContainer.style.setProperty('pointer-events', 'auto', 'important');
-                            adContainer.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
-                            
-                            // Animate wrapper with scale and fade - smooth animation
+                            // Container already visible, just ensure wrapper is fully visible
                             const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
                             if (wrapper) {
                                 // Use requestAnimationFrame for smooth animation
@@ -928,31 +980,11 @@
                                     wrapper.style.setProperty('opacity', '1', 'important');
                                 });
                             }
-                            
-                            // Remove any close buttons from Interstitial content (they're not needed)
-                            const closeButtons = adContainer.querySelectorAll('.analytics-ad-close');
-                            closeButtons.forEach(function(btn) {
-                                btn.remove();
-                            });
                         } else {
                             // Smooth slide up/down animation
                             adContainer.style.transform = 'translateY(0)';
                         }
-                    }, 50);
-                } else {
-                    // Even if collapsed initially, ensure Interstitial container is visible
-                    if (ad.type === 'Interstitial') {
-                        adContainer.style.setProperty('opacity', '1', 'important');
-                        adContainer.style.setProperty('display', 'flex', 'important');
-                        adContainer.style.setProperty('visibility', 'visible', 'important');
-                        adContainer.style.setProperty('pointer-events', 'auto', 'important');
-                        
-                        // Remove close buttons
-                        const closeButtons = adContainer.querySelectorAll('.analytics-ad-close');
-                        closeButtons.forEach(function(btn) {
-                            btn.remove();
-                        });
-                    }
+                    }, 10);
                 }
 
                 // Store url_pattern_id in container for click tracking
