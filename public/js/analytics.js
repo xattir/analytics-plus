@@ -161,8 +161,12 @@
             // Handle ads from response
             if (result.success && result.ads && result.ads.length > 0) {
                 result.ads.forEach(function(ad) {
-                    // Check if selector exists in page before injecting
-                    if (ad.selector && document.querySelector(ad.selector)) {
+                    // Special ad types don't need selectors
+                    const specialTypes = ['pop_from_bottom', 'pop_from_top', 'Interstitial'];
+                    if (specialTypes.includes(ad.type)) {
+                        injectAd(ad);
+                    } else if (ad.selector && document.querySelector(ad.selector)) {
+                        // Regular ads need selectors
                         injectAd(ad);
                     }
                 });
@@ -348,6 +352,126 @@
         }
     }
 
+    // Create pop-up ad structure (standalone - works without server HTML)
+    function createPopupAdStructure(ad) {
+        const paddingX = ad.padding_x || 20;
+        const paddingY = ad.padding_y || 20;
+        const intervalPeriod = ad.interval_period || null;
+        const adContent = ad.content || '';
+        
+        let containerClass = '';
+        let transformValue = '';
+        let positionStyles = {};
+        
+        if (ad.type === 'pop_from_bottom') {
+            containerClass = 'analytics-ad-pop-from-bottom';
+            transformValue = 'translateY(100%)';
+            positionStyles = {
+                position: 'fixed',
+                bottom: '0',
+                left: '0',
+                right: '0',
+                zIndex: '9999',
+                background: 'rgba(0,0,0,0.95)',
+                padding: paddingY + 'px ' + paddingX + 'px',
+                maxWidth: '100%',
+                boxShadow: '0 -2px 10px rgba(0,0,0,0.3)',
+                transform: transformValue,
+                transition: 'transform 0.3s ease-in-out'
+            };
+        } else if (ad.type === 'pop_from_top') {
+            containerClass = 'analytics-ad-pop-from-top';
+            transformValue = 'translateY(-100%)';
+            positionStyles = {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                right: '0',
+                zIndex: '9999',
+                background: 'rgba(0,0,0,0.95)',
+                padding: paddingY + 'px ' + paddingX + 'px',
+                maxWidth: '100%',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                transform: transformValue,
+                transition: 'transform 0.3s ease-in-out'
+            };
+        } else if (ad.type === 'Interstitial') {
+            containerClass = 'analytics-ad-interstitial';
+            positionStyles = {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                right: '0',
+                bottom: '0',
+                zIndex: '99999',
+                background: 'rgba(0,0,0,0.95)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: paddingY + 'px ' + paddingX + 'px',
+                opacity: '0',
+                transition: 'opacity 0.3s ease-in-out'
+            };
+        } else {
+            return null;
+        }
+        
+        // Create container
+        const container = document.createElement('div');
+        container.className = containerClass;
+        container.setAttribute('data-ad-id', ad.id);
+        if (intervalPeriod) {
+            container.setAttribute('data-interval', intervalPeriod);
+        }
+        
+        // Apply styles
+        Object.keys(positionStyles).forEach(function(key) {
+            container.style[key] = positionStyles[key];
+        });
+        
+        // Create inner wrapper
+        const wrapper = document.createElement('div');
+        if (ad.type === 'Interstitial') {
+            wrapper.style.cssText = 'position: relative; max-width: 90%; max-height: 90%; overflow: auto; background: #fff; border-radius: 8px; padding: 20px;';
+        } else {
+            wrapper.style.cssText = 'position: relative; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;';
+        }
+        
+        // Create content div
+        const contentDiv = document.createElement('div');
+        if (ad.type === 'Interstitial') {
+            contentDiv.innerHTML = adContent;
+        } else {
+            contentDiv.style.cssText = 'flex: 1;';
+            contentDiv.innerHTML = adContent;
+        }
+        
+        // Create close button
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'analytics-ad-close';
+        closeBtn.innerHTML = '×';
+        closeBtn.setAttribute('onclick', 'closeAdPopup(this)');
+        
+        if (ad.type === 'Interstitial') {
+            closeBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: #fff; font-size: 24px; line-height: 1; z-index: 100000;';
+        } else {
+            closeBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 20px; line-height: 1; margin-left: 15px; flex-shrink: 0;';
+        }
+        
+        // Assemble structure
+        if (ad.type === 'Interstitial') {
+            wrapper.appendChild(closeBtn);
+            wrapper.appendChild(contentDiv);
+            container.appendChild(wrapper);
+        } else {
+            wrapper.appendChild(contentDiv);
+            wrapper.appendChild(closeBtn);
+            container.appendChild(wrapper);
+        }
+        
+        return container;
+    }
+
     // Inject ad into page
     function injectAd(ad) {
         if (!ad.content) {
@@ -371,20 +495,37 @@
                     localStorage.setItem('analytics_ad_interstitial_' + ad.id, Date.now().toString());
                 }
 
-                // Inject special ad types directly into body
-                const adElement = document.createElement('div');
-                adElement.innerHTML = ad.content;
-                document.body.appendChild(adElement);
+                // Check if content already has the proper structure
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = ad.content;
+                const existingContainer = tempDiv.querySelector('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-interstitial');
+                
+                let adContainer;
+                if (existingContainer) {
+                    // Server provided the structure, use it
+                    adContainer = existingContainer;
+                    // Ensure it's not already in the DOM
+                    if (adContainer.parentNode) {
+                        adContainer = adContainer.cloneNode(true);
+                    }
+                } else {
+                    // Create structure standalone in JavaScript
+                    adContainer = createPopupAdStructure(ad);
+                }
+                
+                if (!adContainer) {
+                    return;
+                }
+
+                // Inject into body
+                document.body.appendChild(adContainer);
 
                 // Animate in
                 setTimeout(function() {
-                    const adContainer = adElement.querySelector('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-interstitial');
-                    if (adContainer) {
-                        if (ad.type === 'Interstitial') {
-                            adContainer.style.opacity = '1';
-                        } else {
-                            adContainer.style.transform = 'translateY(0)';
-                        }
+                    if (ad.type === 'Interstitial') {
+                        adContainer.style.opacity = '1';
+                    } else {
+                        adContainer.style.transform = 'translateY(0)';
                     }
                 }, 10);
 
@@ -393,7 +534,7 @@
 
                 // Track click if ad has URL
                 if (ad.url) {
-                    const adLinks = adElement.querySelectorAll('a.ad-link, a[href]');
+                    const adLinks = adContainer.querySelectorAll('a.ad-link, a[href]');
                     adLinks.forEach(function(link) {
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
@@ -404,7 +545,7 @@
                 }
 
                 // Add click tracking to close buttons
-                const closeButtons = adElement.querySelectorAll('.analytics-ad-close');
+                const closeButtons = adContainer.querySelectorAll('.analytics-ad-close');
                 closeButtons.forEach(function(btn) {
                     btn.addEventListener('click', function() {
                         closeAdPopup(btn);
@@ -414,7 +555,7 @@
                 // Auto-close Interstitial after 10 seconds if no interval
                 if (ad.type === 'Interstitial' && !ad.interval_period) {
                     setTimeout(function() {
-                        const closeBtn = adElement.querySelector('.analytics-ad-close');
+                        const closeBtn = adContainer.querySelector('.analytics-ad-close');
                         if (closeBtn) {
                             closeAdPopup(closeBtn);
                         }
@@ -546,4 +687,7 @@
         getSessionId: function() { return sessionId; },
         loadAds: loadAds,
     };
+    
+    // Expose closeAdPopup globally for onclick handlers
+    window.closeAdPopup = closeAdPopup;
 })();
