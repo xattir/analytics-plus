@@ -557,18 +557,20 @@
         
         contentWrapper.innerHTML = cleanAdHtml || '';
         
-        // Force all links to open in new tab immediately after content is inserted
+        // Remove target attributes and prepare links for JavaScript handling
         setTimeout(function() {
             const allLinksInContent = contentWrapper.querySelectorAll('a[href]');
             allLinksInContent.forEach(function(link) {
-                // Force all links to open in new tab
-                link.setAttribute('target', '_blank');
-                link.setAttribute('rel', 'noopener noreferrer');
-                // Remove any conflicting target attributes
-                if (link.getAttribute('target') !== '_blank') {
-                    link.removeAttribute('target');
-                    link.setAttribute('target', '_blank');
+                // Store original href if exists
+                const originalHref = link.getAttribute('href');
+                if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
+                    link.setAttribute('data-original-href', originalHref);
+                    // Set href to # to prevent default navigation - will be handled by event listeners
+                    link.setAttribute('href', '#');
                 }
+                // Remove target attribute - we'll handle navigation via JavaScript
+                link.removeAttribute('target');
+                link.setAttribute('rel', 'noopener noreferrer');
             });
         }, 0);
         
@@ -616,10 +618,19 @@
                 }
             });
             
-            // Re-force all links to open in new tab after DOM manipulation
+            // Re-prepare all links after DOM manipulation
             const allLinksAfter = contentWrapper.querySelectorAll('a[href]');
             allLinksAfter.forEach(function(link) {
-                link.setAttribute('target', '_blank');
+                // Store original href if exists and not already stored
+                if (!link.hasAttribute('data-original-href')) {
+                    const originalHref = link.getAttribute('href');
+                    if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
+                        link.setAttribute('data-original-href', originalHref);
+                        link.setAttribute('href', '#');
+                    }
+                }
+                // Remove target attribute - we'll handle navigation via JavaScript
+                link.removeAttribute('target');
                 link.setAttribute('rel', 'noopener noreferrer');
             });
         }, 100);
