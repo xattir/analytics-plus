@@ -241,24 +241,78 @@
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/clike/clike.js"></script>
 
 <style>
+.CodeMirror,
+.CodeMirror *,
+#content-editor-container,
+#content-editor-container *,
+#patterns-editor-container,
+#patterns-editor-container *,
+#selectors-editor-container,
+#selectors-editor-container *,
+#subdomains-editor-container,
+#subdomains-editor-container * {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
 .CodeMirror {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
-    direction: ltr;
-    text-align: left;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
 }
+
 .CodeMirror-focused {
     border-color: #80bdff;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
+
+.CodeMirror-scroll {
+    direction: ltr !important;
+}
+
+.CodeMirror-lines {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+.CodeMirror-line {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+.CodeMirror-linenumber {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+.CodeMirror-gutters {
+    direction: ltr !important;
+    left: 0 !important;
+    right: auto !important;
+}
+
+.CodeMirror-gutter {
+    direction: ltr !important;
+}
+
+.CodeMirror-cursor {
+    direction: ltr !important;
+}
+
+.CodeMirror-code {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
 #content-editor-container .CodeMirror,
 #patterns-editor-container .CodeMirror,
 #selectors-editor-container .CodeMirror,
 #subdomains-editor-container .CodeMirror {
     border: none;
     height: auto;
+    direction: ltr !important;
+    text-align: left !important;
 }
 </style>
 
@@ -277,6 +331,10 @@ function initCodeEditors() {
     const contentTextarea = document.getElementById('content-editor');
     const contentContainer = document.getElementById('content-editor-container');
     if (contentTextarea && contentContainer) {
+        // Force LTR on container
+        contentContainer.style.direction = 'ltr';
+        contentContainer.style.textAlign = 'left';
+        
         contentEditor = CodeMirror(contentContainer, {
             value: contentTextarea.value || '',
             mode: 'htmlmixed',
@@ -287,17 +345,55 @@ function initCodeEditors() {
             indentUnit: 2,
             autoCloseTags: true,
             matchBrackets: true,
+            rtlMoveVisually: false,
         });
         contentEditor.setSize('100%', '200px');
+        
+        // Force LTR on all CodeMirror elements
+        const cmWrapper = contentEditor.getWrapperElement();
+        cmWrapper.style.direction = 'ltr';
+        cmWrapper.style.textAlign = 'left';
+        cmWrapper.setAttribute('dir', 'ltr');
+        
+        // Force LTR on scroll element
+        const cmScroll = cmWrapper.querySelector('.CodeMirror-scroll');
+        if (cmScroll) {
+            cmScroll.style.direction = 'ltr';
+            cmScroll.style.textAlign = 'left';
+        }
+        
+        // Force LTR on lines
+        const cmLines = cmWrapper.querySelector('.CodeMirror-lines');
+        if (cmLines) {
+            cmLines.style.direction = 'ltr';
+            cmLines.style.textAlign = 'left';
+        }
+        
+        // Force LTR on gutters
+        const cmGutters = cmWrapper.querySelector('.CodeMirror-gutters');
+        if (cmGutters) {
+            cmGutters.style.direction = 'ltr';
+            cmGutters.style.left = '0';
+            cmGutters.style.right = 'auto';
+        }
+        
         contentEditor.on('change', function(cm) {
             contentTextarea.value = cm.getValue();
         });
+        
+        // Force refresh to apply changes
+        setTimeout(function() {
+            contentEditor.refresh();
+        }, 100);
     }
 
     // Patterns Editor
     const patternsTextarea = document.getElementById('patterns-editor');
     const patternsContainer = document.getElementById('patterns-editor-container');
     if (patternsTextarea && patternsContainer) {
+        patternsContainer.style.direction = 'ltr';
+        patternsContainer.style.textAlign = 'left';
+        
         patternsEditor = CodeMirror(patternsContainer, {
             value: patternsTextarea.value || '',
             mode: 'text/plain',
@@ -306,17 +402,31 @@ function initCodeEditors() {
             lineWrapping: true,
             direction: 'ltr',
             indentUnit: 2,
+            rtlMoveVisually: false,
         });
         patternsEditor.setSize('100%', '100px');
+        
+        const cmWrapper = patternsEditor.getWrapperElement();
+        cmWrapper.style.direction = 'ltr';
+        cmWrapper.style.textAlign = 'left';
+        cmWrapper.setAttribute('dir', 'ltr');
+        
         patternsEditor.on('change', function(cm) {
             patternsTextarea.value = cm.getValue();
         });
+        
+        setTimeout(function() {
+            patternsEditor.refresh();
+        }, 100);
     }
 
     // Selectors Editor
     const selectorsTextarea = document.getElementById('selectors-editor');
     const selectorsContainer = document.getElementById('selectors-editor-container');
     if (selectorsTextarea && selectorsContainer) {
+        selectorsContainer.style.direction = 'ltr';
+        selectorsContainer.style.textAlign = 'left';
+        
         selectorsEditor = CodeMirror(selectorsContainer, {
             value: selectorsTextarea.value || '',
             mode: 'css',
@@ -325,17 +435,31 @@ function initCodeEditors() {
             lineWrapping: true,
             direction: 'ltr',
             indentUnit: 2,
+            rtlMoveVisually: false,
         });
         selectorsEditor.setSize('100%', '100px');
+        
+        const cmWrapper = selectorsEditor.getWrapperElement();
+        cmWrapper.style.direction = 'ltr';
+        cmWrapper.style.textAlign = 'left';
+        cmWrapper.setAttribute('dir', 'ltr');
+        
         selectorsEditor.on('change', function(cm) {
             selectorsTextarea.value = cm.getValue();
         });
+        
+        setTimeout(function() {
+            selectorsEditor.refresh();
+        }, 100);
     }
 
     // Subdomains Editor
     const subdomainsTextarea = document.getElementById('subdomains-editor');
     const subdomainsContainer = document.getElementById('subdomains-editor-container');
     if (subdomainsTextarea && subdomainsContainer) {
+        subdomainsContainer.style.direction = 'ltr';
+        subdomainsContainer.style.textAlign = 'left';
+        
         // Convert comma-separated to line-separated for better editor display
         const subdomainsValue = (subdomainsTextarea.value || '').split(',').map(s => s.trim()).filter(s => s).join('\n');
         subdomainsEditor = CodeMirror(subdomainsContainer, {
@@ -346,8 +470,15 @@ function initCodeEditors() {
             lineWrapping: true,
             direction: 'ltr',
             indentUnit: 2,
+            rtlMoveVisually: false,
         });
         subdomainsEditor.setSize('100%', '80px');
+        
+        const cmWrapper = subdomainsEditor.getWrapperElement();
+        cmWrapper.style.direction = 'ltr';
+        cmWrapper.style.textAlign = 'left';
+        cmWrapper.setAttribute('dir', 'ltr');
+        
         subdomainsEditor.on('change', function(cm) {
             // Convert newlines back to comma-separated for form submission
             const value = cm.getValue().split('\n').map(s => s.trim()).filter(s => s).join(',');
@@ -355,6 +486,10 @@ function initCodeEditors() {
         });
         // Set initial value
         subdomainsTextarea.value = subdomainsValue.split('\n').map(s => s.trim()).filter(s => s).join(',');
+        
+        setTimeout(function() {
+            subdomainsEditor.refresh();
+        }, 100);
     }
 }
 
