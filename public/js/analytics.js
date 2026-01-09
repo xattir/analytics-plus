@@ -19,6 +19,9 @@
         
         // Track page view (ONLY main event - no periodic updates)
         trackPageView();
+        
+        // Load advertisements after page view tracking
+        loadAds();
     }
     
     // Get or create session ID
@@ -206,9 +209,213 @@
     // Start initialization
     initializeAnalytics();
     
+    // Load advertisements
+    function loadAds() {
+        if (!window.ANALYTICS_SITE_KEY) {
+            return;
+        }
+
+        const selectors = findSelectorsInPage();
+        if (selectors.length === 0) {
+            return;
+        }
+
+        const data = {
+            site_key: window.ANALYTICS_SITE_KEY,
+            device_type: detectDeviceType(),
+            country_code: getCountryCode(),
+            url: window.location.href,
+            selectors: selectors
+        };
+
+        const adsApiUrl = (window.ANALYTICS_API_URL || '/api/analytics/track').replace('/track', '/ads/get');
+
+        fetch(adsApiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(result) {
+            if (result.ads && result.ads.length > 0) {
+                result.ads.forEach(function(ad) {
+                    injectAd(ad);
+                });
+            }
+        })
+        .catch(function(error) {
+            // Silently fail - don't block page rendering
+            if (window.console && console.error) {
+                console.error('Analytics ads error:', error);
+            }
+        });
+    }
+
+    // Find selectors in page
+    function findSelectorsInPage() {
+        const selectors = [];
+        
+        // Search for predefined selector tags (data attributes)
+        document.querySelectorAll('[data-ad-selector]').forEach(function(el) {
+            const selector = el.getAttribute('data-ad-selector');
+            if (selector && selectors.indexOf(selector) === -1) {
+                selectors.push(selector);
+            }
+        });
+
+        // Also search for common selectors that might be in the page
+        // This allows sites to use standard selectors without data attributes
+        const commonSelectors = ['header', 'footer', '.sidebar', 'aside', '[data-sidebar]', 'main', '.content'];
+        commonSelectors.forEach(function(selector) {
+            if (document.querySelector(selector) && selectors.indexOf(selector) === -1) {
+                selectors.push(selector);
+            }
+        });
+
+        return selectors;
+    }
+
+    // Detect device type
+    function detectDeviceType() {
+        const width = window.innerWidth || screen.width;
+        if (width < 768) {
+            return 'mobile';
+        } else if (width < 1024) {
+            return 'tablet';
+        }
+        return 'desktop';
+    }
+
+    // Get country code (from cookie or session)
+    function getCountryCode() {
+        // Try to get from cookie
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.indexOf('country_code=') === 0) {
+                return cookie.substring('country_code='.length);
+            }
+        }
+        return null;
+    }
+
+    // Inject ad into page
+    function injectAd(ad) {
+        if (!ad.selector || !ad.content) {
+            return;
+        }
+
+        try {
+            const elements = document.querySelectorAll(ad.selector);
+            if (elements.length === 0) {
+                return;
+            }
+
+            elements.forEach(function(el) {
+                // Create ad container
+                const adElement = document.createElement('div');
+                adElement.className = 'analytics-ad';
+                adElement.setAttribute('data-ad-id', ad.id);
+                adElement.innerHTML = ad.content;
+
+                // Insert ad
+                el.appendChild(adElement);
+
+                // Track impression
+                trackAdImpression(ad.id, ad.selector, ad.url_pattern_id);
+
+                // Track click if ad has URL
+                if (ad.url) {
+                    const adLinks = adElement.querySelectorAll('a.ad-link, a[href]');
+                    adLinks.forEach(function(link) {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            trackAdClick(ad.id, ad.url, ad.selector, ad.url_pattern_id);
+                        });
+                    });
+                }
+            });
+        } catch (error) {
+            if (window.console && console.error) {
+                console.error('Error injecting ad:', error);
+            }
+        }
+    }
+
+    // Track ad impression
+    function trackAdImpression(adId, selector, urlPatternId) {
+        if (!window.ANALYTICS_SITE_KEY) {
+            return;
+        }
+
+        const data = {
+            site_key: window.ANALYTICS_SITE_KEY,
+            ad_id: adId,
+            session_id: sessionId,
+            url: window.location.href,
+            selector: selector,
+            url_pattern_id: urlPatternId || null
+        };
+
+        const impressionUrl = (window.ANALYTICS_API_URL || '/api/analytics/track').replace('/track', '/ads/impression');
+
+        fetch(impressionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            keepalive: true
+        }).catch(function(error) {
+            // Silently fail
+        });
+    }
+
+    // Track ad click
+    function trackAdClick(adId, targetUrl, selector, urlPatternId) {
+        if (!window.ANALYTICS_SITE_KEY) {
+            return;
+        }
+
+        const data = {
+            site_key: window.ANALYTICS_SITE_KEY,
+            ad_id: adId,
+            session_id: sessionId,
+            url: window.location.href,
+            selector: selector,
+            url_pattern_id: urlPatternId || null
+        };
+
+        const clickUrl = (window.ANALYTICS_API_URL || '/api/analytics/track').replace('/track', '/ads/click');
+
+        fetch(clickUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            keepalive: true
+        }).then(function() {
+            // After tracking click, navigate to target URL
+            if (targetUrl) {
+                window.location.href = targetUrl;
+            }
+        }).catch(function(error) {
+            // Even if tracking fails, navigate to target URL
+            if (targetUrl) {
+                window.location.href = targetUrl;
+            }
+        });
+    }
+
     // Expose API
     window.Analytics = {
         track: trackPageView,
         getSessionId: function() { return sessionId; },
+        loadAds: loadAds,
     };
 })();

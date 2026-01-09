@@ -20,6 +20,7 @@ use App\Http\Controllers\Backend\BackendMenuController;
 use App\Http\Controllers\Backend\BackendMenuLinkController;
 use App\Http\Controllers\Backend\BackendFileController;
 use App\Http\Controllers\Backend\BackendFaqController;
+use App\Http\Controllers\Backend\BackendAdvertisementController;
 use App\Http\Controllers\Backend\BackendContactReplyController;
 use App\Http\Controllers\Backend\BackendAnnouncementController;
 use App\Http\Controllers\Backend\BackendPermissionController;
@@ -123,6 +124,8 @@ Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->gr
         Route::resource('builders',BackendBuilderController::class);
         Route::resource('tags',BackendTagController::class);
         Route::resource('contact-replies',BackendContactReplyController::class);
+        Route::get('advertisements/{advertisement}/stats',[BackendAdvertisementController::class,'stats'])->name('advertisements.stats');
+        Route::resource('advertisements',BackendAdvertisementController::class);
         Route::post('faqs/order',[BackendFaqController::class,'order'])->name('faqs.order');
         Route::resource('faqs',BackendFaqController::class);
         Route::post('menu-links/get-type',[BackendMenuLinkController::class,'getType'])->name('menu-links.get-type');

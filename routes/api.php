@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\AdvertisementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,3 +31,10 @@ Route::options('/analytics/track', function() {
 })->withoutMiddleware(['throttle:api', 'cors']);
 
 Route::post('/analytics/track', [AnalyticsController::class, 'track']);
+
+// Advertisement endpoints (public, no auth required, CORS enabled)
+Route::prefix('ads')->group(function () {
+    Route::post('get', [AdvertisementController::class, 'getAds']);
+    Route::post('impression', [AdvertisementController::class, 'trackImpression']);
+    Route::post('click', [AdvertisementController::class, 'trackClick']);
+});
