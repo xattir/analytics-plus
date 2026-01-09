@@ -386,20 +386,20 @@
             const iconDirection = adType === 'pop_from_bottom' ? 'down' : 'up';
             btn.innerHTML = createToggleIcon(iconDirection);
         } else {
-            // إغلاق الإعلان - ينزل/يطلع مع الـ toggle (يظهر toggle button فقط)
+            // إغلاق الإعلان - container يختفي تمامًا، toggle button فقط يظهر
             adContainer.classList.add('analytics-ad-collapsed');
             
-            // حساب الإزاحة الصحيحة:
-            // toggle button في top: -21px من container، وارتفاعه 22px
+            // حساب الإزاحة: toggle button في top: -21px من container
             // للإغلاق: container يجب أن ينزل بحيث toggle button فقط يظهر على الحافة
-            // للـ pop_from_bottom: toggle button في top: -21px، فإذا أردنا toggle button على الحافة (bottom: 0)
-            // container يجب أن ينزل: 100% - 21px (ليكون toggle button على الحافة)
-            // لكن هذا يجعل 21px من container تظهر - لذا نحتاج إخفاء wrapper
-            // الحل: ننزل container بالكامل تقريبًا لكن نخفي wrapper
-            const toggleOffset = 21; // المسافة من أعلى container لـ toggle button (top: -21px)
+            // toggle button في top: -21px، فإذا container ينزل 21px إضافية بعد 100%، toggle button سيكون على الحافة
+            // لكن toggle button داخل container، لذا container يجب أن ينزل 100% + 21px لإخفائه بالكامل
+            // الحل: container ينزل 100% (يختفي)، toggle button يبقى ظاهرًا لأنه خارج container بصريًا
+            // لكن toggle button داخل container في DOM، لذا نحتاج overflow: hidden على container
+            // وننزل container بحيث toggle button يكون على الحافة
+            const toggleButtonOffset = 21; // toggle button في top: -21px
             const translateValue = adType === 'pop_from_bottom' 
-                ? 'translateY(calc(100% - ' + toggleOffset + 'px))' 
-                : 'translateY(calc(-100% + ' + toggleOffset + 'px))';
+                ? 'translateY(calc(100% + ' + toggleButtonOffset + 'px))' 
+                : 'translateY(calc(-100% - ' + toggleButtonOffset + 'px))';
             adContainer.style.transform = translateValue;
             
             // تغيير الأيقونة لاتجاه الفتح (عكس الاتجاه)
@@ -1029,6 +1029,28 @@
                     .analytics-ad-pop-from-top.analytics-ad-collapsed {
                         background: transparent !important;
                         box-shadow: none !important;
+                        overflow: visible !important;
+                    }
+                    
+                    /* toggle button يجب أن يظهر حتى عندما container مخفي */
+                    /* toggle button في top: -21px (خارج container)، لذا يبقى ظاهرًا */
+                    .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-toggle,
+                    .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-toggle {
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                        pointer-events: auto !important;
+                        z-index: 99999999999 !important;
+                        position: fixed !important;
+                    }
+                    
+                    /* تحديد موضع toggle button عند الإغلاق */
+                    .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-toggle {
+                        bottom: 0px !important;
+                        top: auto !important;
+                    }
+                    .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-toggle {
+                        top: 0px !important;
+                        bottom: auto !important;
                     }
                     
                     /* أنيميشن سلس للتحويل - container كامل (wrapper + toggle) يتحرك معًا */
