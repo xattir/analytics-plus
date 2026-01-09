@@ -2515,6 +2515,141 @@ HTML;
     }
 
     /**
+     * Show the form for creating a new pattern
+     * 
+     * @param Request $request
+     * @param AnalyticsSite $site
+     * @return \Illuminate\View\View
+     */
+    public function createPattern(Request $request, AnalyticsSite $site)
+    {
+        // Check if user can access this site
+        if (!$site->canAccess(auth()->id()) && !$this->isSuperAdmin()) {
+            abort(403, 'You do not have access to this site.');
+        }
+
+        // Get unique domains from existing patterns for suggestions
+        $domains = \App\Models\AnalyticsUrlPattern::where('site_id', $site->id)
+            ->distinct()
+            ->pluck('domain')
+            ->sort()
+            ->values();
+
+        return view('admin.analytics.patterns.create', compact('site', 'domains'));
+    }
+
+    /**
+     * Store a newly created pattern
+     * 
+     * @param Request $request
+     * @param AnalyticsSite $site
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function storePattern(Request $request, AnalyticsSite $site)
+    {
+        // Check if user can access this site
+        if (!$site->canAccess(auth()->id()) && !$this->isSuperAdmin()) {
+            abort(403, 'You do not have access to this site.');
+        }
+
+        $request->validate([
+            'domain' => 'required|string|max:255',
+            'pattern' => 'required|string|max:2048',
+        ]);
+
+        try {
+            \App\Models\AnalyticsUrlPattern::create([
+                'site_id' => $site->id,
+                'domain' => $request->domain,
+                'pattern' => $request->pattern,
+                'generated_at' => now(),
+            ]);
+
+            $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
+            return redirect()
+                ->route($routeName, $site)
+                ->with('success', 'Pattern created successfully.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to create pattern: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show the form for editing a pattern
+     * 
+     * @param Request $request
+     * @param AnalyticsSite $site
+     * @param int $pattern Pattern ID
+     * @return \Illuminate\View\View
+     */
+    public function editPattern(Request $request, AnalyticsSite $site, $pattern)
+    {
+        // Check if user can access this site
+        if (!$site->canAccess(auth()->id()) && !$this->isSuperAdmin()) {
+            abort(403, 'You do not have access to this site.');
+        }
+
+        $patternModel = \App\Models\AnalyticsUrlPattern::where('id', $pattern)
+            ->where('site_id', $site->id)
+            ->firstOrFail();
+
+        // Get unique domains from existing patterns for suggestions
+        $domains = \App\Models\AnalyticsUrlPattern::where('site_id', $site->id)
+            ->distinct()
+            ->pluck('domain')
+            ->sort()
+            ->values();
+
+        return view('admin.analytics.patterns.edit', compact('site', 'patternModel', 'domains'));
+    }
+
+    /**
+     * Update a pattern
+     * 
+     * @param Request $request
+     * @param AnalyticsSite $site
+     * @param int $pattern Pattern ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updatePattern(Request $request, AnalyticsSite $site, $pattern)
+    {
+        // Check if user can access this site
+        if (!$site->canAccess(auth()->id()) && !$this->isSuperAdmin()) {
+            abort(403, 'You do not have access to this site.');
+        }
+
+        $request->validate([
+            'domain' => 'required|string|max:255',
+            'pattern' => 'required|string|max:2048',
+        ]);
+
+        try {
+            $patternModel = \App\Models\AnalyticsUrlPattern::where('id', $pattern)
+                ->where('site_id', $site->id)
+                ->firstOrFail();
+
+            $patternModel->update([
+                'domain' => $request->domain,
+                'pattern' => $request->pattern,
+                'generated_at' => now(), // Update generated_at when manually edited
+            ]);
+
+            $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
+            return redirect()
+                ->route($routeName, $site)
+                ->with('success', 'Pattern updated successfully.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to update pattern: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Regenerate URL patterns for a site
      * 
      * @param Request $request

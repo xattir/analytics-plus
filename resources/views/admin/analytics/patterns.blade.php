@@ -123,7 +123,10 @@
                     {{ $site->title }} ({{ $site->domain }})
                 </p>
             </div>
-            <div>
+            <div style="display: flex; gap: 12px;">
+                <a href="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.patterns.create' : 'user.analytics.patterns.create', $site) }}" class="btn btn-success" style="padding: 10px 20px; border-radius: 8px; font-weight: 600;">
+                    <i class="fas fa-plus"></i> إضافة نمط
+                </a>
                 <form method="POST" action="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.patterns.regenerate' : 'user.analytics.patterns.regenerate', $site) }}" style="display: inline;">
                     @csrf
                     <button type="submit" class="btn-regenerate">
@@ -184,7 +187,10 @@
                             </div>
                         </div>
                         <div class="pattern-actions">
-                            <form method="POST" action="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.patterns.delete' : 'user.analytics.patterns.delete', [$site, $pattern]) }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا النمط؟');">
+                            <a href="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.patterns.edit' : 'user.analytics.patterns.edit', [$site, $pattern]) }}" class="btn btn-primary btn-delete" style="padding: 6px 12px; font-size: 12px;">
+                                <i class="fas fa-edit"></i> تعديل
+                            </a>
+                            <form method="POST" action="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.patterns.delete' : 'user.analytics.patterns.delete', [$site, $pattern]) }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا النمط؟');" style="display: inline;">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-delete">
@@ -205,13 +211,18 @@
                     <i class="fas fa-search"></i>
                 </div>
                 <h3>لا توجد أنماط</h3>
-                <p>لا توجد أنماط URL لهذا الموقع. اضغط على "إعادة توليد الأنماط" لاستخراج الأنماط من بيانات الجلسات.</p>
-                <form method="POST" action="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.patterns.regenerate' : 'user.analytics.patterns.regenerate', $site) }}" style="margin-top: 24px;">
-                    @csrf
-                    <button type="submit" class="btn-regenerate">
-                        <i class="fas fa-sync-alt"></i> إعادة توليد الأنماط
-                    </button>
-                </form>
+                <p>لا توجد أنماط URL لهذا الموقع. يمكنك إضافة نمط يدويًا أو إعادة توليد الأنماط من بيانات الجلسات.</p>
+                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap;">
+                    <a href="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.patterns.create' : 'user.analytics.patterns.create', $site) }}" class="btn btn-success" style="padding: 10px 20px; border-radius: 8px; font-weight: 600;">
+                        <i class="fas fa-plus"></i> إضافة نمط يدويًا
+                    </a>
+                    <form method="POST" action="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.patterns.regenerate' : 'user.analytics.patterns.regenerate', $site) }}" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="btn-regenerate">
+                            <i class="fas fa-sync-alt"></i> إعادة توليد الأنماط
+                        </button>
+                    </form>
+                </div>
             </div>
         @endif
     </div>
