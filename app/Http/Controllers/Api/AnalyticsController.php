@@ -359,7 +359,7 @@ class AnalyticsController extends Controller
                 $groupedAds = [];
                 
                 // Special ad types that don't need selectors
-                $specialTypes = ['pop-bottom', 'pop-top', 'interstitial'];
+                $specialTypes = ['pop_from_bottom', 'pop_from_top', 'Interstitial'];
                 
                 foreach ($matchingAds as $ad) {
                     // Handle special ad types (pop-bottom, pop-top, interstitial)
@@ -385,6 +385,7 @@ class AnalyticsController extends Controller
                                 'selector' => null,
                                 'content' => $ad->renderContent(),
                                 'url' => $ad->url,
+                                'interval_period' => $ad->interval_period ?? null,
                                 'url_pattern_id' => $urlPatternId,
                             ];
                         }
@@ -418,6 +419,7 @@ class AnalyticsController extends Controller
                             'selector' => $selectorKey,
                             'content' => $ad->renderContent(),
                             'url' => $ad->url,
+                            'interval_period' => $ad->interval_period,
                             'url_pattern_id' => $urlPatternId,
                         ];
                     }

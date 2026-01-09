@@ -50,9 +50,12 @@ class BackendAdvertisementController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:html,image,video,text,script,pop-bottom,pop-top,interstitial',
+            'type' => 'required|in:in_content,pop_from_bottom,pop_from_top,Interstitial',
             'content' => 'required|string',
             'url' => 'nullable|url|max:2048',
+            'padding_x' => 'nullable|integer|min:0|max:100',
+            'padding_y' => 'nullable|integer|min:0|max:100',
+            'interval_period' => 'nullable|integer|min:0',
             'priority' => 'nullable|integer|min:0',
             'is_active' => 'nullable|boolean',
             'site_ids' => 'nullable|array',
@@ -67,16 +70,28 @@ class BackendAdvertisementController extends Controller
             'excluded_pattern_ids.*' => 'exists:analytics_url_patterns,id',
             'predefined_selectors' => 'nullable|array',
             'custom_selectors' => 'nullable|string',
+            'custom_patterns' => 'nullable|string',
             'subdomains' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
         try {
+            // Prepare custom_patterns text
+            $customPatternsText = null;
+            if ($request->custom_patterns) {
+                $customPatterns = array_filter(array_map('trim', explode("\n", $request->custom_patterns)));
+                $customPatternsText = implode("\n", $customPatterns);
+            }
+            
             $advertisement = Advertisement::create([
                 'name' => $request->name,
                 'type' => $request->type,
                 'content' => $request->content,
                 'url' => $request->url,
+                'padding_x' => $request->padding_x ?? 20,
+                'padding_y' => $request->padding_y ?? 20,
+                'interval_period' => $request->interval_period,
+                'custom_patterns' => $customPatternsText,
                 'priority' => $request->priority ?? 0,
                 'is_active' => $request->is_active ?? true,
             ]);
@@ -101,8 +116,33 @@ class BackendAdvertisementController extends Controller
             }
 
             // Attach URL patterns
-            if ($request->url_pattern_ids) {
-                $advertisement->urlPatterns()->sync($request->url_pattern_ids);
+            $urlPatternIds = $request->url_pattern_ids ?? [];
+            
+            // Handle custom patterns - create URL patterns for matching
+            if ($request->custom_patterns) {
+                $customPatterns = array_filter(array_map('trim', explode("\n", $request->custom_patterns)));
+                
+                // Create or get URL pattern for each site for matching
+                foreach ($customPatterns as $pattern) {
+                    if (!empty($pattern)) {
+                        foreach ($advertisement->sites as $site) {
+                            $urlPattern = \App\Models\AnalyticsUrlPattern::firstOrCreate([
+                                'site_id' => $site->id,
+                                'domain' => parse_url($site->domain, PHP_URL_HOST) ?: $site->domain,
+                                'pattern' => $pattern,
+                            ], [
+                                'generated_at' => now(),
+                            ]);
+                            if (!in_array($urlPattern->id, $urlPatternIds)) {
+                                $urlPatternIds[] = $urlPattern->id;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (!empty($urlPatternIds)) {
+                $advertisement->urlPatterns()->sync($urlPatternIds);
             }
 
             // Attach excluded patterns
@@ -113,8 +153,8 @@ class BackendAdvertisementController extends Controller
             // Clear cache after syncing relationships
             $advertisement->clearAdsCache();
 
-            // Attach selectors (only for non-special ad types)
-            $specialTypes = ['pop-bottom', 'pop-top', 'interstitial'];
+            // Attach selectors (only for in_content type)
+            $specialTypes = ['pop_from_bottom', 'pop_from_top', 'Interstitial'];
             if (!in_array($advertisement->type, $specialTypes)) {
                 $selectors = [];
                 if ($request->predefined_selectors) {
@@ -188,6 +228,9 @@ class BackendAdvertisementController extends Controller
             }
         }
 
+        // Get current custom patterns from custom_patterns table
+        $currentCustomPatterns = $advertisement->customPatterns->pluck('pattern')->toArray();
+
         return view('admin.advertisements.edit', compact(
             'advertisement',
             'sites',
@@ -195,7 +238,8 @@ class BackendAdvertisementController extends Controller
             'countries',
             'predefinedSelectors',
             'currentPredefinedTags',
-            'currentCustomSelectors'
+            'currentCustomSelectors',
+            'currentCustomPatterns'
         ));
     }
 
@@ -203,9 +247,12 @@ class BackendAdvertisementController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:html,image,video,text,script,pop-bottom,pop-top,interstitial',
+            'type' => 'required|in:in_content,pop_from_bottom,pop_from_top,Interstitial',
             'content' => 'required|string',
             'url' => 'nullable|url|max:2048',
+            'padding_x' => 'nullable|integer|min:0|max:100',
+            'padding_y' => 'nullable|integer|min:0|max:100',
+            'interval_period' => 'nullable|integer|min:0',
             'priority' => 'nullable|integer|min:0',
             'is_active' => 'nullable|boolean',
             'site_ids' => 'nullable|array',
@@ -220,16 +267,28 @@ class BackendAdvertisementController extends Controller
             'excluded_pattern_ids.*' => 'exists:analytics_url_patterns,id',
             'predefined_selectors' => 'nullable|array',
             'custom_selectors' => 'nullable|string',
+            'custom_patterns' => 'nullable|string',
             'subdomains' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
         try {
+            // Prepare custom_patterns text
+            $customPatternsText = null;
+            if ($request->custom_patterns) {
+                $customPatterns = array_filter(array_map('trim', explode("\n", $request->custom_patterns)));
+                $customPatternsText = implode("\n", $customPatterns);
+            }
+            
             $advertisement->update([
                 'name' => $request->name,
                 'type' => $request->type,
                 'content' => $request->content,
                 'url' => $request->url,
+                'padding_x' => $request->padding_x ?? 20,
+                'padding_y' => $request->padding_y ?? 20,
+                'interval_period' => $request->interval_period,
+                'custom_patterns' => $customPatternsText,
                 'priority' => $request->priority ?? 0,
                 'is_active' => $request->is_active ?? true,
             ]);
@@ -256,8 +315,33 @@ class BackendAdvertisementController extends Controller
             }
 
             // Sync URL patterns
-            if ($request->has('url_pattern_ids')) {
-                $advertisement->urlPatterns()->sync($request->url_pattern_ids ?? []);
+            $urlPatternIds = $request->url_pattern_ids ?? [];
+            
+            // Handle custom patterns - create URL patterns for matching
+            if ($request->custom_patterns) {
+                $customPatterns = array_filter(array_map('trim', explode("\n", $request->custom_patterns)));
+                
+                // Create or get URL pattern for each site for matching
+                foreach ($customPatterns as $pattern) {
+                    if (!empty($pattern)) {
+                        foreach ($advertisement->sites as $site) {
+                            $urlPattern = \App\Models\AnalyticsUrlPattern::firstOrCreate([
+                                'site_id' => $site->id,
+                                'domain' => parse_url($site->domain, PHP_URL_HOST) ?: $site->domain,
+                                'pattern' => $pattern,
+                            ], [
+                                'generated_at' => now(),
+                            ]);
+                            if (!in_array($urlPattern->id, $urlPatternIds)) {
+                                $urlPatternIds[] = $urlPattern->id;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if ($request->has('url_pattern_ids') || $request->custom_patterns) {
+                $advertisement->urlPatterns()->sync($urlPatternIds);
             }
 
             // Sync excluded patterns
@@ -268,8 +352,8 @@ class BackendAdvertisementController extends Controller
             // Clear cache after syncing relationships
             $advertisement->clearAdsCache();
 
-            // Sync selectors (only for non-special ad types)
-            $specialTypes = ['pop-bottom', 'pop-top', 'interstitial'];
+            // Sync selectors (only for in_content type)
+            $specialTypes = ['pop_from_bottom', 'pop_from_top', 'Interstitial'];
             if (!in_array($advertisement->type, $specialTypes)) {
                 $advertisement->selectors()->delete();
                 $selectors = [];

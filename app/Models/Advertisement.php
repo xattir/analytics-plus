@@ -12,6 +12,10 @@ class Advertisement extends Model
         'type',
         'content',
         'url',
+        'padding_x',
+        'padding_y',
+        'interval_period',
+        'custom_patterns',
         'priority',
         'is_active',
         'impressions_count',
@@ -21,6 +25,9 @@ class Advertisement extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'priority' => 'integer',
+        'padding_x' => 'integer',
+        'padding_y' => 'integer',
+        'interval_period' => 'integer',
         'impressions_count' => 'integer',
         'clicks_count' => 'integer',
     ];
@@ -114,66 +121,49 @@ class Advertisement extends Model
     {
         $content = $this->content;
         $rendered = '';
+        $paddingX = $this->padding_x ?? 20;
+        $paddingY = $this->padding_y ?? 20;
+        $intervalPeriod = $this->interval_period ?? null;
 
         switch ($this->type) {
-            case 'image':
-                $rendered = '<img src="' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '" alt="Advertisement" style="max-width: 100%; height: auto;" />';
-                break;
-            case 'video':
-                if (filter_var($content, FILTER_VALIDATE_URL)) {
-                    // Check if it's YouTube/Vimeo URL
-                    if (preg_match('/youtube\.com|youtu\.be/', $content)) {
-                        $videoId = $this->extractYouTubeId($content);
-                        $rendered = '<iframe width="560" height="315" src="https://www.youtube.com/embed/' . htmlspecialchars($videoId, ENT_QUOTES, 'UTF-8') . '" frameborder="0" allowfullscreen></iframe>';
-                    } elseif (preg_match('/vimeo\.com/', $content)) {
-                        $videoId = $this->extractVimeoId($content);
-                        $rendered = '<iframe src="https://player.vimeo.com/video/' . htmlspecialchars($videoId, ENT_QUOTES, 'UTF-8') . '" width="560" height="315" frameborder="0" allowfullscreen></iframe>';
-                    } else {
-                        $rendered = '<video controls style="max-width: 100%;"><source src="' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '"></video>';
-                    }
-                } else {
-                    $rendered = '<video controls style="max-width: 100%;"><source src="' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '"></video>';
-                }
-                break;
-            case 'html':
+            case 'in_content':
+                // Regular in-content ad - just return the content as-is
                 $rendered = $content;
                 break;
-            case 'text':
-                $rendered = '<p>' . nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8')) . '</p>';
+                
+            case 'pop_from_bottom':
+                // Pop from bottom - Google AdSense style
+                $rendered = '<div class="analytics-ad-pop-from-bottom" data-ad-id="' . $this->id . '" data-interval="' . ($intervalPeriod ?? '') . '" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.95); padding: ' . $paddingY . 'px ' . $paddingX . 'px; max-width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.3); transform: translateY(100%); transition: transform 0.3s ease-in-out;">';
+                $rendered .= '<div style="position: relative; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">';
+                $rendered .= '<div style="flex: 1;">' . $content . '</div>';
+                $rendered .= '<button class="analytics-ad-close" onclick="closeAdPopup(this)" style="background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 20px; line-height: 1; margin-left: 15px; flex-shrink: 0;">×</button>';
+                $rendered .= '</div></div>';
                 break;
-            case 'script':
-                $rendered = '<script>' . $content . '</script>';
+                
+            case 'pop_from_top':
+                // Pop from top - Google AdSense style
+                $rendered = '<div class="analytics-ad-pop-from-top" data-ad-id="' . $this->id . '" data-interval="' . ($intervalPeriod ?? '') . '" style="position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.95); padding: ' . $paddingY . 'px ' . $paddingX . 'px; max-width: 100%; box-shadow: 0 2px 10px rgba(0,0,0,0.3); transform: translateY(-100%); transition: transform 0.3s ease-in-out;">';
+                $rendered .= '<div style="position: relative; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">';
+                $rendered .= '<div style="flex: 1;">' . $content . '</div>';
+                $rendered .= '<button class="analytics-ad-close" onclick="closeAdPopup(this)" style="background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 20px; line-height: 1; margin-left: 15px; flex-shrink: 0;">×</button>';
+                $rendered .= '</div></div>';
                 break;
-            case 'pop-bottom':
-                // Pop from bottom - fixed position at bottom
-                $rendered = '<div class="analytics-ad-pop-bottom" data-ad-id="' . $this->id . '" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.8); padding: 20px; max-width: 100%;">';
-                $rendered .= '<div style="position: relative; max-width: 1200px; margin: 0 auto;">';
-                $rendered .= '<button class="analytics-ad-close" onclick="this.closest(\'.analytics-ad-pop-bottom\').remove()" style="position: absolute; top: -10px; right: -10px; background: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px; line-height: 1;">×</button>';
+                
+            case 'Interstitial':
+                // Interstitial - full screen overlay with interval support
+                $rendered = '<div class="analytics-ad-interstitial" data-ad-id="' . $this->id . '" data-interval="' . ($intervalPeriod ?? '') . '" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; padding: ' . $paddingY . 'px ' . $paddingX . 'px; opacity: 0; transition: opacity 0.3s ease-in-out;">';
+                $rendered .= '<div style="position: relative; max-width: 90%; max-height: 90%; overflow: auto; background: #fff; border-radius: 8px; padding: 20px;">';
+                $rendered .= '<button class="analytics-ad-close" onclick="closeAdPopup(this)" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: #fff; font-size: 24px; line-height: 1; z-index: 100000;">×</button>';
                 $rendered .= $content;
                 $rendered .= '</div></div>';
                 break;
-            case 'pop-top':
-                // Pop from top - fixed position at top
-                $rendered = '<div class="analytics-ad-pop-top" data-ad-id="' . $this->id . '" style="position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.8); padding: 20px; max-width: 100%;">';
-                $rendered .= '<div style="position: relative; max-width: 1200px; margin: 0 auto;">';
-                $rendered .= '<button class="analytics-ad-close" onclick="this.closest(\'.analytics-ad-pop-top\').remove()" style="position: absolute; top: -10px; right: -10px; background: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px; line-height: 1;">×</button>';
-                $rendered .= $content;
-                $rendered .= '</div></div>';
-                break;
-            case 'interstitial':
-                // Interstitial - full screen overlay
-                $rendered = '<div class="analytics-ad-interstitial" data-ad-id="' . $this->id . '" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; padding: 20px;">';
-                $rendered .= '<div style="position: relative; max-width: 90%; max-height: 90%; overflow: auto;">';
-                $rendered .= '<button class="analytics-ad-close" onclick="this.closest(\'.analytics-ad-interstitial\').remove()" style="position: absolute; top: -10px; right: -10px; background: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 24px; line-height: 1; z-index: 100000;">×</button>';
-                $rendered .= $content;
-                $rendered .= '</div></div>';
-                break;
+                
             default:
                 $rendered = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
         }
 
-        // Wrap in link if URL is provided
-        if ($this->url && $this->type !== 'script') {
+        // Wrap in link if URL is provided (except for special types)
+        if ($this->url && !in_array($this->type, ['pop_from_bottom', 'pop_from_top', 'Interstitial'])) {
             $rendered = '<a href="' . htmlspecialchars($this->url, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" class="ad-link" data-ad-id="' . $this->id . '">' . $rendered . '</a>';
         }
 

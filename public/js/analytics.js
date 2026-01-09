@@ -326,6 +326,28 @@
         return null;
     }
 
+    // Close ad popup function
+    function closeAdPopup(btn) {
+        const adContainer = btn.closest('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-interstitial');
+        if (adContainer) {
+            const adType = adContainer.classList.contains('analytics-ad-interstitial') ? 'Interstitial' : 
+                          adContainer.classList.contains('analytics-ad-pop-from-bottom') ? 'pop_from_bottom' : 'pop_from_top';
+            
+            // Animate out
+            if (adType === 'Interstitial') {
+                adContainer.style.opacity = '0';
+                setTimeout(function() {
+                    adContainer.remove();
+                }, 300);
+            } else {
+                adContainer.style.transform = adType === 'pop_from_bottom' ? 'translateY(100%)' : 'translateY(-100%)';
+                setTimeout(function() {
+                    adContainer.remove();
+                }, 300);
+            }
+        }
+    }
+
     // Inject ad into page
     function injectAd(ad) {
         if (!ad.content) {
@@ -333,13 +355,38 @@
         }
 
         try {
-            // Special ad types (pop-bottom, pop-top, interstitial) don't need selectors
-            const specialTypes = ['pop-bottom', 'pop-top', 'interstitial'];
+            // Special ad types (pop_from_bottom, pop_from_top, Interstitial) don't need selectors
+            const specialTypes = ['pop_from_bottom', 'pop_from_top', 'Interstitial'];
             if (specialTypes.includes(ad.type)) {
+                // Check interval period for Interstitial ads
+                if (ad.type === 'Interstitial' && ad.interval_period) {
+                    const lastShown = localStorage.getItem('analytics_ad_interstitial_' + ad.id);
+                    if (lastShown) {
+                        const timeSinceLastShown = (Date.now() - parseInt(lastShown)) / 1000;
+                        if (timeSinceLastShown < parseInt(ad.interval_period)) {
+                            return; // Don't show yet
+                        }
+                    }
+                    // Store current time
+                    localStorage.setItem('analytics_ad_interstitial_' + ad.id, Date.now().toString());
+                }
+
                 // Inject special ad types directly into body
                 const adElement = document.createElement('div');
                 adElement.innerHTML = ad.content;
                 document.body.appendChild(adElement);
+
+                // Animate in
+                setTimeout(function() {
+                    const adContainer = adElement.querySelector('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-interstitial');
+                    if (adContainer) {
+                        if (ad.type === 'Interstitial') {
+                            adContainer.style.opacity = '1';
+                        } else {
+                            adContainer.style.transform = 'translateY(0)';
+                        }
+                    }
+                }, 10);
 
                 // Track impression
                 trackAdImpression(ad.id, ad.type, ad.url_pattern_id);
@@ -351,6 +398,7 @@
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
                             trackAdClick(ad.id, ad.url, ad.type, ad.url_pattern_id);
+                            window.open(ad.url, '_blank');
                         });
                     });
                 }
@@ -359,15 +407,25 @@
                 const closeButtons = adElement.querySelectorAll('.analytics-ad-close');
                 closeButtons.forEach(function(btn) {
                     btn.addEventListener('click', function() {
-                        // Track close as impression (optional)
+                        closeAdPopup(btn);
                     });
                 });
+
+                // Auto-close Interstitial after 10 seconds if no interval
+                if (ad.type === 'Interstitial' && !ad.interval_period) {
+                    setTimeout(function() {
+                        const closeBtn = adElement.querySelector('.analytics-ad-close');
+                        if (closeBtn) {
+                            closeAdPopup(closeBtn);
+                        }
+                    }, 10000);
+                }
 
                 return;
             }
 
-            // Regular ad types need selector
-            if (!ad.selector) {
+            // Regular in_content type needs selector
+            if (ad.type !== 'in_content' || !ad.selector) {
                 return;
             }
 
@@ -396,6 +454,7 @@
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
                             trackAdClick(ad.id, ad.url, ad.selector, ad.url_pattern_id);
+                            window.open(ad.url, '_blank');
                         });
                     });
                 }

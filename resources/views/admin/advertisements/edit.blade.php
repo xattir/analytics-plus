@@ -27,14 +27,10 @@
                         </div>
                         <div class="col-12 pt-3">
                             <select class="form-control" name="type" id="ad_type" required onchange="toggleSelectorFields()">
-                                <option value="html" @if(old('type', $advertisement->type) == 'html') selected @endif>HTML</option>
-                                <option value="image" @if(old('type', $advertisement->type) == 'image') selected @endif>صورة</option>
-                                <option value="video" @if(old('type', $advertisement->type) == 'video') selected @endif>فيديو</option>
-                                <option value="text" @if(old('type', $advertisement->type) == 'text') selected @endif>نص</option>
-                                <option value="script" @if(old('type', $advertisement->type) == 'script') selected @endif>Script</option>
-                                <option value="pop-bottom" @if(old('type', $advertisement->type) == 'pop-bottom') selected @endif>Pop from Bottom</option>
-                                <option value="pop-top" @if(old('type', $advertisement->type) == 'pop-top') selected @endif>Pop from Top</option>
-                                <option value="interstitial" @if(old('type', $advertisement->type) == 'interstitial') selected @endif>Interstitial</option>
+                                <option value="in_content" @if(old('type', $advertisement->type) == 'in_content') selected @endif>In Content</option>
+                                <option value="pop_from_bottom" @if(old('type', $advertisement->type) == 'pop_from_bottom') selected @endif>Pop from Bottom</option>
+                                <option value="pop_from_top" @if(old('type', $advertisement->type) == 'pop_from_top') selected @endif>Pop from Top</option>
+                                <option value="Interstitial" @if(old('type', $advertisement->type) == 'Interstitial') selected @endif>Interstitial</option>
                             </select>
                         </div>
                     </div>
@@ -133,6 +129,15 @@
                     </div>
                     <div class="col-12 p-2">
                         <div class="col-12">
+                            Custom URL Patterns (سطر واحد لكل pattern)
+                        </div>
+                        <div class="col-12 pt-3">
+                            <textarea name="custom_patterns" class="form-control" style="min-height:100px" placeholder="/products/*&#10;/blog/*&#10;/category/*">{{old('custom_patterns', $advertisement->custom_patterns ?? '')}}</textarea>
+                            <small class="text-muted">أدخل patterns مخصصة (مثل /products/* أو /blog/*). يمكنك استخدام * كـ wildcard.</small>
+                        </div>
+                    </div>
+                    <div class="col-12 p-2">
+                        <div class="col-12">
                             استثناء أنماط URL
                         </div>
                         <div class="col-12 pt-3">
@@ -203,12 +208,24 @@ function toggleSelectorFields() {
     const customSelectorField = document.getElementById('custom_selector_field');
     
     // Special ad types don't need CSS selectors
-    if (adType === 'pop-bottom' || adType === 'pop-top' || adType === 'interstitial') {
-        selectorFields.style.display = 'none';
-        customSelectorField.style.display = 'none';
+    if (adType === 'pop_from_bottom' || adType === 'pop_from_top' || adType === 'Interstitial') {
+        if (selectorFields) selectorFields.style.display = 'none';
+        if (customSelectorField) customSelectorField.style.display = 'none';
+        const paddingFields = document.getElementById('padding_fields');
+        const paddingYField = document.getElementById('padding_y_field');
+        const intervalField = document.getElementById('interval_field');
+        if (paddingFields) paddingFields.style.display = 'block';
+        if (paddingYField) paddingYField.style.display = 'block';
+        if (intervalField) intervalField.style.display = adType === 'Interstitial' ? 'block' : 'none';
     } else {
-        selectorFields.style.display = 'block';
-        customSelectorField.style.display = 'block';
+        if (selectorFields) selectorFields.style.display = 'block';
+        if (customSelectorField) customSelectorField.style.display = 'block';
+        const paddingFields = document.getElementById('padding_fields');
+        const paddingYField = document.getElementById('padding_y_field');
+        const intervalField = document.getElementById('interval_field');
+        if (paddingFields) paddingFields.style.display = 'none';
+        if (paddingYField) paddingYField.style.display = 'none';
+        if (intervalField) intervalField.style.display = 'none';
     }
 }
 
