@@ -386,13 +386,20 @@
             const iconDirection = adType === 'pop_from_bottom' ? 'down' : 'up';
             btn.innerHTML = createToggleIcon(iconDirection);
         } else {
-            // إغلاق الإعلان - ينزل/يطلع مع الـ toggle (يظهر جزء صغير فقط)
+            // إغلاق الإعلان - ينزل/يطلع مع الـ toggle (يظهر toggle button فقط)
             adContainer.classList.add('analytics-ad-collapsed');
             
-            // الإعلان ينزل/يطلع جزئيًا - يظهر فقط toggle button
+            // حساب الإزاحة الصحيحة:
+            // toggle button في top: -21px من container، وارتفاعه 22px
+            // للإغلاق: container يجب أن ينزل بحيث toggle button فقط يظهر على الحافة
+            // للـ pop_from_bottom: toggle button في top: -21px، فإذا أردنا toggle button على الحافة (bottom: 0)
+            // container يجب أن ينزل: 100% - 21px (ليكون toggle button على الحافة)
+            // لكن هذا يجعل 21px من container تظهر - لذا نحتاج إخفاء wrapper
+            // الحل: ننزل container بالكامل تقريبًا لكن نخفي wrapper
+            const toggleOffset = 21; // المسافة من أعلى container لـ toggle button (top: -21px)
             const translateValue = adType === 'pop_from_bottom' 
-                ? 'translateY(calc(100% - ' + toggleButtonHeight + 'px))' 
-                : 'translateY(calc(-100% + ' + toggleButtonHeight + 'px))';
+                ? 'translateY(calc(100% - ' + toggleOffset + 'px))' 
+                : 'translateY(calc(-100% + ' + toggleOffset + 'px))';
             adContainer.style.transform = translateValue;
             
             // تغيير الأيقونة لاتجاه الفتح (عكس الاتجاه)
@@ -1005,10 +1012,23 @@
                         box-shadow: rgba(0, 0, 0, 0.25) 0px 7px 8px !important;
                     }
                     
-                    /* المحتوى يبقى ظاهرًا عند الإغلاق - الإعلان ينزل/يطلع مع الـ toggle */
+                    /* إخفاء المحتوى عند الإغلاق - يظهر toggle button فقط */
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-wrapper,
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-wrapper {
-                        /* المحتوى يبقى ظاهرًا - فقط الإعلان ينزل/يطلع */
+                        opacity: 0 !important;
+                        visibility: hidden !important;
+                        pointer-events: none !important;
+                        height: 0 !important;
+                        overflow: hidden !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    
+                    /* إخفاء container background وbox-shadow عند الإغلاق */
+                    .analytics-ad-pop-from-bottom.analytics-ad-collapsed,
+                    .analytics-ad-pop-from-top.analytics-ad-collapsed {
+                        background: transparent !important;
+                        box-shadow: none !important;
                     }
                     
                     /* أنيميشن سلس للتحويل - container كامل (wrapper + toggle) يتحرك معًا */
