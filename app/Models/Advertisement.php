@@ -54,7 +54,7 @@ class Advertisement extends Model
      */
     public function urlPatterns()
     {
-        return $this->belongsToMany(AnalyticsUrlPattern::class, 'advertisement_url_patterns');
+        return $this->belongsToMany(AnalyticsUrlPattern::class, 'advertisement_url_patterns', 'advertisement_id', 'url_pattern_id');
     }
 
     /**
@@ -62,7 +62,7 @@ class Advertisement extends Model
      */
     public function excludedPatterns()
     {
-        return $this->belongsToMany(AnalyticsUrlPattern::class, 'advertisement_excluded_patterns');
+        return $this->belongsToMany(AnalyticsUrlPattern::class, 'advertisement_excluded_patterns', 'advertisement_id', 'url_pattern_id');
     }
 
     /**
