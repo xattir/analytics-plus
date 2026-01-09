@@ -182,7 +182,7 @@
                 </p>
             </div>
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <a href="{{ route('admin.analytics.advertisements', $site) }}" class="btn-modern btn-modern-secondary">
+                <a href="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.advertisements' : 'user.analytics.advertisements', $site) }}" class="btn-modern btn-modern-secondary">
                     <i class="fal fa-ad"></i> الإعلانات
                 </a>
                 <a href="{{ route(request()->routeIs('admin.*') ? 'admin.analytics.patterns.create' : 'user.analytics.patterns.create', $site) }}" class="btn-modern btn-modern-success">
