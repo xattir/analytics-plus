@@ -122,7 +122,8 @@
                             أنماط URL (اترك فارغاً للكل)
                         </div>
                         <div class="col-12 pt-3">
-                            <select class="form-control select2-select" name="url_pattern_ids[]" multiple size="1" style="height:30px;opacity: 0;">
+                            <select class="form-control select2-select url-patterns-select" name="url_pattern_ids[]" multiple size="1" style="height:30px;opacity: 0;" data-placeholder="اترك فارغاً للكل">
+                                <option></option>
                                 @foreach($urlPatterns as $pattern)
                                 <option value="{{$pattern->id}}" @if(old('url_pattern_ids') && in_array($pattern->id, old('url_pattern_ids'))) selected @endif>{{$pattern->site->title}}: {{$pattern->pattern}}</option>
                                 @endforeach
@@ -497,10 +498,39 @@ function initCodeEditors() {
 // Wait for jQuery and select2 to be available
 function initSelect2() {
     if (typeof window.$ !== 'undefined' && typeof window.$.fn.select2 !== 'undefined') {
-        $('.select2-select').select2({
-            dir: 'rtl',
-            language: 'ar',
-            width: '100%'
+        $('.select2-select').each(function() {
+            const $select = $(this);
+            const placeholder = $select.data('placeholder') || $select.attr('data-placeholder') || 'اختر...';
+            const isMultiple = $select.prop('multiple');
+            
+            const select2Options = {
+                dir: 'rtl',
+                language: {
+                    inputTooShort: function() { return ''; },
+                    noResults: function() { return 'لا توجد نتائج'; },
+                    searching: function() { return 'جاري البحث...'; }
+                },
+                width: '100%',
+                allowClear: true
+            };
+            
+            // إضافة placeholder للحقول المتعددة (multiple)
+            if (isMultiple && placeholder) {
+                select2Options.placeholder = placeholder;
+                // التأكد من وجود option فارغة للـ placeholder
+                if ($select.find('option[value=""]').length === 0) {
+                    $select.prepend('<option value=""></option>');
+                }
+            } else if (!isMultiple && placeholder) {
+                select2Options.placeholder = placeholder;
+            }
+            
+            $select.select2(select2Options);
+            
+            // إزالة الخيار الفارغ بعد التهيئة للحقول المتعددة (إذا لم يكن هناك خيارات محددة)
+            if (isMultiple && $select.find('option:selected').length === 0) {
+                // الحقل فارغ - placeholder سيظهر
+            }
         });
     } else {
         setTimeout(initSelect2, 100);
