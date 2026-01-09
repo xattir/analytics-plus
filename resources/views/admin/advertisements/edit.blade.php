@@ -176,6 +176,46 @@
                             <input type="text" name="subdomains" class="form-control" value="{{$advertisement->subdomains->whereNotNull('subdomain')->pluck('subdomain')->implode(',')}}">
                         </div>
                     </div>
+                    <div class="col-12 p-2" id="padding_fields" style="display: none;">
+                        <div class="col-12">
+                            Padding (بالـ px) - للـ Pop from Bottom/Top
+                        </div>
+                        <div class="col-12 pt-3 row">
+                            <div class="col-6">
+                                <label>Padding X</label>
+                                <input type="number" name="padding_x" min="0" max="100" class="form-control" value="{{old('padding_x', $advertisement->padding_x ?? 20)}}" placeholder="20">
+                            </div>
+                            <div class="col-6">
+                                <label>Padding Y</label>
+                                <input type="number" name="padding_y" min="0" max="100" class="form-control" value="{{old('padding_y', $advertisement->padding_y ?? 20)}}" placeholder="20">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 p-2" id="interstitial_padding_field" style="display: none;">
+                        <div class="col-12">
+                            Padding (بالـ px) - للـ Interstitial
+                        </div>
+                        <div class="col-12 pt-3 row">
+                            <div class="col-6">
+                                <label>Padding X</label>
+                                <input type="number" name="padding_x" id="interstitial_padding_x" min="0" max="100" class="form-control" value="{{old('padding_x', $advertisement->padding_x ?? 20)}}" placeholder="20">
+                            </div>
+                            <div class="col-6">
+                                <label>Padding Y</label>
+                                <input type="number" name="padding_y" id="interstitial_padding_y" min="0" max="100" class="form-control" value="{{old('padding_y', $advertisement->padding_y ?? 20)}}" placeholder="20">
+                            </div>
+                        </div>
+                        <small class="text-muted">Padding للمحتوى داخل الصندوق</small>
+                    </div>
+                    <div class="col-12 p-2" id="interval_field" style="display: none;">
+                        <div class="col-12">
+                            Interval Period (بالثواني) - للـ Interstitial
+                        </div>
+                        <div class="col-12 pt-3">
+                            <input type="number" name="interval_period" min="0" class="form-control" value="{{old('interval_period', $advertisement->interval_period ?? '')}}" placeholder="3600">
+                            <small class="text-muted">المدة بالثواني قبل إظهار الإعلان مرة أخرى (0 = إظهار دائماً، اترك فارغاً = إخفاء تلقائي بعد 10 ثوانٍ)</small>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-12 p-3">
@@ -206,25 +246,28 @@ function toggleSelectorFields() {
     const adType = document.getElementById('ad_type').value;
     const selectorFields = document.getElementById('selector_fields');
     const customSelectorField = document.getElementById('custom_selector_field');
+    const paddingFields = document.getElementById('padding_fields');
+    const interstitialPaddingField = document.getElementById('interstitial_padding_field');
+    const intervalField = document.getElementById('interval_field');
     
     // Special ad types don't need CSS selectors
-    if (adType === 'pop_from_bottom' || adType === 'pop_from_top' || adType === 'Interstitial') {
+    if (adType === 'pop_from_bottom' || adType === 'pop_from_top') {
         if (selectorFields) selectorFields.style.display = 'none';
         if (customSelectorField) customSelectorField.style.display = 'none';
-        const paddingFields = document.getElementById('padding_fields');
-        const paddingYField = document.getElementById('padding_y_field');
-        const intervalField = document.getElementById('interval_field');
         if (paddingFields) paddingFields.style.display = 'block';
-        if (paddingYField) paddingYField.style.display = 'block';
-        if (intervalField) intervalField.style.display = adType === 'Interstitial' ? 'block' : 'none';
+        if (interstitialPaddingField) interstitialPaddingField.style.display = 'none';
+        if (intervalField) intervalField.style.display = 'none';
+    } else if (adType === 'Interstitial') {
+        if (selectorFields) selectorFields.style.display = 'none';
+        if (customSelectorField) customSelectorField.style.display = 'none';
+        if (paddingFields) paddingFields.style.display = 'none';
+        if (interstitialPaddingField) interstitialPaddingField.style.display = 'block';
+        if (intervalField) intervalField.style.display = 'block';
     } else {
         if (selectorFields) selectorFields.style.display = 'block';
         if (customSelectorField) customSelectorField.style.display = 'block';
-        const paddingFields = document.getElementById('padding_fields');
-        const paddingYField = document.getElementById('padding_y_field');
-        const intervalField = document.getElementById('interval_field');
         if (paddingFields) paddingFields.style.display = 'none';
-        if (paddingYField) paddingYField.style.display = 'none';
+        if (interstitialPaddingField) interstitialPaddingField.style.display = 'none';
         if (intervalField) intervalField.style.display = 'none';
     }
 }

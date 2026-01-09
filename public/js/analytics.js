@@ -431,11 +431,13 @@
                 right: '0',
                 bottom: '0',
                 zIndex: '99999',
-                background: 'rgba(0,0,0,0.95)',
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: paddingY + 'px ' + paddingX + 'px',
+                padding: '20px',
                 opacity: '0',
                 transition: 'opacity 0.3s ease-in-out'
             };
@@ -459,7 +461,7 @@
         // Create inner wrapper
         const wrapper = document.createElement('div');
         if (ad.type === 'Interstitial') {
-            wrapper.style.cssText = 'position: relative; max-width: 90%; max-height: 90%; overflow: auto; background: #fff; border-radius: 8px; padding: 20px;';
+            wrapper.style.cssText = 'position: relative; width: 350px; max-width: 90%; max-height: 90%; overflow: auto; background: #fff; border-radius: 8px; padding: ' + paddingY + 'px ' + paddingX + 'px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
         } else {
             // For pop_from_bottom and pop_from_top: full width outer wrapper with centered inner container
             wrapper.className = 'analytics-ad-wrapper';
@@ -535,7 +537,7 @@
         closeBtn.setAttribute('onclick', 'closeAdPopup(this)');
         
         if (ad.type === 'Interstitial') {
-            closeBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: #fff; font-size: 24px; line-height: 1; z-index: 100000;';
+            closeBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: #fff; font-size: 28px; font-weight: bold; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 0; margin: 0; line-height: 1;';
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             closeBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 20px; line-height: 1; z-index: 10001;';
         } else {
