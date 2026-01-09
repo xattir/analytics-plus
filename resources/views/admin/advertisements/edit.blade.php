@@ -212,7 +212,7 @@
                             Interval Period (بالثواني) - للـ Interstitial
                         </div>
                         <div class="col-12 pt-3">
-                            <input type="number" name="interval_period" min="0" class="form-control" value="{{old('interval_period', $advertisement->interval_period ?? '')}}" placeholder="3600">
+                            <input type="number" name="interval_period" id="interval_period_input" min="0" class="form-control" value="{{old('interval_period', $advertisement->interval_period ?? '')}}" placeholder="3600">
                             <small class="text-muted">المدة بالثواني قبل إظهار الإعلان مرة أخرى (0 = إظهار دائماً، اترك فارغاً = إخفاء تلقائي بعد 10 ثوانٍ)</small>
                         </div>
                     </div>
