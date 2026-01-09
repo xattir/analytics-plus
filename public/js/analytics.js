@@ -362,7 +362,8 @@
         const storageKey = 'analytics_ad_collapsed_' + adId + '_' + adType;
         
         // ارتفاع الـ toggle handle (يجب أن يظهر دائمًا حتى بعد الإغلاق)
-        const toggleHandleHeight = 48; // 32px button + 16px margin
+        // الزر: 40px + margin: 8px (top/bottom) = 48px
+        const toggleHandleHeight = 48;
         
         if (isCollapsed) {
             // فتح الإعلان - إرجاعه للظهور بالكامل
