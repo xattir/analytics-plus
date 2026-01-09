@@ -830,6 +830,7 @@ class AnalyticsController extends Controller
      */
     private function matchesUrlPattern($urlPath, $pattern)
     {
+        dd(\App\Models\Advertisement::matchesUrlPatternStatic($urlPath, $pattern));
         //dump($urlPath, $pattern);
         return \App\Models\Advertisement::matchesUrlPatternStatic($urlPath, $pattern);
     }
