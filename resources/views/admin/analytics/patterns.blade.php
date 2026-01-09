@@ -85,10 +85,11 @@
         font-family: 'Courier New', monospace;
         color: var(--color-2, #575f66);
         word-break: break-all;
-        direction: ltr;
+        direction: ltr!important;
         text-align: left;
         display: inline-block;
         unicode-bidi: embed;
+        
     }
     
     .pattern-path .wildcard {
