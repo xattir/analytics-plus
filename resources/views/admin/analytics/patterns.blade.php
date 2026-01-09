@@ -51,7 +51,7 @@
     
     .patterns-table thead th {
         padding: 16px;
-        text-align: right;
+        text-align: left;
         font-weight: 600;
         font-size: 14px;
     }
@@ -69,6 +69,7 @@
         padding: 16px;
         font-size: 14px;
         color: var(--color-2, #575f66);
+        text-align: left;
     }
     
     .pattern-domain {
@@ -235,14 +236,14 @@
                 عرض {{ $patterns->firstItem() }} - {{ $patterns->lastItem() }} من أصل {{ $patterns->total() }} نمط
             </div>
             
-            <div style="overflow-x: auto;">
-                <table class="patterns-table">
+            <div style="overflow-x: auto; direction: ltr;">
+                <table class="patterns-table" style="direction: ltr;">
                     <thead>
                         <tr>
-                            <th style="width: 25%;">النطاق</th>
-                            <th style="width: 40%;">النمط</th>
-                            <th style="width: 20%;">تاريخ الإنشاء</th>
-                            <th style="width: 15%;">الإجراءات</th>
+                            <th style="width: 25%; text-align: left;">النطاق</th>
+                            <th style="width: 40%; text-align: left;">النمط</th>
+                            <th style="width: 20%; text-align: left;">تاريخ الإنشاء</th>
+                            <th style="width: 15%; text-align: left;">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody>

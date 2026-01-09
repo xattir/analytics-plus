@@ -830,9 +830,6 @@ class AnalyticsController extends Controller
      */
     private function matchesUrlPattern($urlPath, $pattern)
     {
-        // Convert pattern wildcard (*) to regex
-        $regex = str_replace(['*', '/'], ['.*', '\/'], $pattern);
-        $regex = '/^' . $regex . '$/';
-        return preg_match($regex, $urlPath);
+        return \App\Models\Advertisement::matchesUrlPatternStatic($urlPath, $pattern);
     }
 }

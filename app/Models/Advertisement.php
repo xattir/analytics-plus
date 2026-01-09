@@ -404,10 +404,29 @@ class Advertisement extends Model
      */
     private static function matchesUrlPatternStatic($urlPath, $pattern)
     {
-        // Convert pattern wildcard (*) to regex
-        $regex = str_replace(['*', '/'], ['.*', '\/'], preg_quote($pattern, '/'));
+        // Normalize paths - remove leading/trailing slashes for comparison
+        $urlPath = trim($urlPath, '/');
+        $pattern = trim($pattern, '/');
+        
+        // If pattern is empty or just '*', match everything
+        if (empty($pattern) || $pattern === '*') {
+            return true;
+        }
+        
+        // Convert pattern to regex by replacing * with .*
+        // First, escape all special regex characters
+        $escaped = preg_quote($pattern, '/');
+        
+        // Replace escaped \* back to * (preg_quote escapes * as \*)
+        $escaped = str_replace('\\*', '___WILDCARD___', $escaped);
+        
+        // Now replace our placeholder with regex wildcard .*
+        $regex = str_replace('___WILDCARD___', '.*', $escaped);
+        
+        // Match from start to end
         $regex = '/^' . $regex . '$/';
-        return preg_match($regex, $urlPath);
+        
+        return preg_match($regex, $urlPath) === 1;
     }
 }
 
