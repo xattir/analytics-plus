@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AnalyticsSite;
 use App\Models\AnalyticsSession;
 use App\Models\AnalyticsSessionPath;
+use App\Models\Advertisement;
+use App\Models\AnalyticsUrlPattern;
 use App\Helpers\UserSystemInfoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -334,10 +336,70 @@ class AnalyticsController extends Controller
                 // Don't log to prevent storage/logs growth
             }
             
-            // Return minimal response - nginx will add CORS headers
+            // Get advertisements for this site
+            $ads = [];
+            try {
+                $deviceType = $request->input('device_type') ?? $session->device_type ?? 'desktop';
+                $countryCode = $request->input('country_code') ?? $session->country ?? null;
+                $url = $request->input('url') ?? $exitUrl;
+                $subdomain = $this->extractSubdomain($url ? parse_url($url, PHP_URL_HOST) : '');
+                
+                // Get all matching ads (without selector filter)
+                $matchingAds = Advertisement::getMatchingAdsForSite(
+                    $site->id,
+                    $deviceType,
+                    $countryCode,
+                    $url,
+                    $subdomain
+                );
+                
+                // Prepare response with all ads and their selectors
+                // Group by selector and return highest priority ad for each selector
+                $predefinedSelectors = config('advertisements.predefined_selectors', []);
+                $groupedAds = [];
+                
+                foreach ($matchingAds as $ad) {
+                    foreach ($ad->selectors as $adSelector) {
+                        $selectorKey = $adSelector->selector;
+                        
+                        // Skip if we already have a higher priority ad for this selector
+                        if (isset($groupedAds[$selectorKey])) {
+                            continue;
+                        }
+                        
+                        // Find matching URL pattern
+                        $urlPatternId = null;
+                        if ($url) {
+                            $urlPath = parse_url($url, PHP_URL_PATH);
+                            $pattern = $ad->urlPatterns->first(function ($pattern) use ($urlPath) {
+                                return $this->matchesUrlPattern($urlPath, $pattern->pattern);
+                            });
+                            if ($pattern) {
+                                $urlPatternId = $pattern->id;
+                            }
+                        }
+                        
+                        $groupedAds[$selectorKey] = [
+                            'id' => $ad->id,
+                            'selector' => $selectorKey,
+                            'content' => $ad->renderContent(),
+                            'url' => $ad->url,
+                            'url_pattern_id' => $urlPatternId,
+                        ];
+                    }
+                }
+                
+                $ads = array_values($groupedAds);
+            } catch (\Exception $adsError) {
+                // Silently fail - ads are non-critical
+                // Don't log to prevent storage/logs growth
+            }
+            
+            // Return response with ads - nginx will add CORS headers
             return response()->json([
                 'success' => true,
                 'session_id' => $sessionId,
+                'ads' => $ads,
             ], 200, [
                 'Content-Type' => 'application/json',
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -745,5 +807,32 @@ class AnalyticsController extends Controller
         } catch (\Exception $e) {
             return null;
         }
+    }
+    
+    /**
+     * Extract subdomain from hostname
+     */
+    private function extractSubdomain($hostname)
+    {
+        if (!$hostname) {
+            return null;
+        }
+
+        $parts = explode('.', $hostname);
+        if (count($parts) > 2) {
+            return $parts[0];
+        }
+        return null;
+    }
+
+    /**
+     * Match URL pattern with wildcards
+     */
+    private function matchesUrlPattern($urlPath, $pattern)
+    {
+        // Convert pattern wildcard (*) to regex
+        $regex = str_replace(['*', '/'], ['.*', '\/'], $pattern);
+        $regex = '/^' . $regex . '$/';
+        return preg_match($regex, $urlPath);
     }
 }

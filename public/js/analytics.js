@@ -18,10 +18,8 @@
         deviceFingerprint = generateFingerprint();
         
         // Track page view (ONLY main event - no periodic updates)
+        // Ads will be loaded from the response
         trackPageView();
-        
-        // Load advertisements after page view tracking
-        loadAds();
     }
     
     // Get or create session ID
@@ -108,6 +106,8 @@
             utm_source: getUrlParameter('utm_source'),
             utm_medium: getUrlParameter('utm_medium'),
             utm_campaign: getUrlParameter('utm_campaign'),
+            device_type: detectDeviceType(),
+            country_code: getCountryCode(),
             // NO engagement metrics - only track initial page view
         };
         
@@ -153,7 +153,22 @@
             keepalive: true,
             // Don't set Content-Type header - browser will set it automatically as multipart/form-data
             // Simple requests don't trigger preflight OPTIONS requests
-        }).catch(function(error) {
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(result) {
+            // Handle ads from response
+            if (result.success && result.ads && result.ads.length > 0) {
+                result.ads.forEach(function(ad) {
+                    // Check if selector exists in page before injecting
+                    if (ad.selector && document.querySelector(ad.selector)) {
+                        injectAd(ad);
+                    }
+                });
+            }
+        })
+        .catch(function(error) {
             // Silently fail - don't block page rendering
             if (window.console && console.error) {
                 console.error('Analytics tracking error:', error);

@@ -165,6 +165,87 @@ class Advertisement extends Model
     }
 
     /**
+     * Get matching advertisements based on criteria (without selector filter)
+     */
+    public static function getMatchingAdsForSite($siteId, $deviceType, $countryCode, $url, $subdomain)
+    {
+        $cacheKey = "ads_matching_{$siteId}_{$deviceType}_{$countryCode}_" . md5($url . $subdomain);
+        
+        return Cache::remember($cacheKey, 300, function () use ($siteId, $deviceType, $countryCode, $url, $subdomain) {
+            $query = self::where('is_active', true)
+                ->whereHas('sites', function ($q) use ($siteId) {
+                    $q->where('analytics_sites.id', $siteId);
+                });
+
+            // Filter by device type
+            $query->where(function ($q) use ($deviceType) {
+                $q->whereDoesntHave('devices')
+                  ->orWhereHas('devices', function ($q) use ($deviceType) {
+                      $q->where('device_type', $deviceType);
+                  });
+            });
+
+            // Filter by country
+            $query->where(function ($q) use ($countryCode) {
+                $q->whereDoesntHave('countries')
+                  ->orWhereHas('countries', function ($q) use ($countryCode) {
+                      $q->where('country_code', $countryCode);
+                  });
+            });
+
+            // Filter by subdomain
+            if ($subdomain) {
+                $query->where(function ($q) use ($subdomain) {
+                    $q->whereHas('subdomains', function ($q) use ($subdomain) {
+                        $q->whereNull('subdomain')->orWhere('subdomain', $subdomain);
+                    });
+                });
+            } else {
+                $query->whereHas('subdomains', function ($q) {
+                    $q->whereNull('subdomain');
+                });
+            }
+
+            // Order by priority and created_at
+            $ads = $query->orderBy('priority', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->with(['selectors', 'urlPatterns', 'excludedPatterns'])
+                ->get();
+
+            // Filter by URL pattern matching (in PHP for better regex support)
+            $urlPath = parse_url($url, PHP_URL_PATH) ?: '/';
+            $ads = $ads->filter(function ($ad) use ($urlPath) {
+                // If ad has URL patterns, check if any matches
+                if ($ad->urlPatterns->count() > 0) {
+                    $matches = false;
+                    foreach ($ad->urlPatterns as $pattern) {
+                        if (self::matchesUrlPatternStatic($urlPath, $pattern->pattern)) {
+                            $matches = true;
+                            break;
+                        }
+                    }
+                    if (!$matches) {
+                        return false;
+                    }
+                }
+
+                // Check excluded patterns
+                if ($ad->excludedPatterns->count() > 0) {
+                    foreach ($ad->excludedPatterns as $pattern) {
+                        if (self::matchesUrlPatternStatic($urlPath, $pattern->pattern)) {
+                            return false; // Excluded
+                        }
+                    }
+                }
+
+                return true;
+            });
+
+            return $ads->values();
+        });
+    }
+
+    /**
      * Get matching advertisements based on criteria
      */
     public static function getMatchingAds($siteId, $deviceType, $countryCode, $url, $subdomain, $selectors)
@@ -304,6 +385,14 @@ class Advertisement extends Model
      * Match URL pattern with wildcards
      */
     private function matchesUrlPattern($urlPath, $pattern)
+    {
+        return self::matchesUrlPatternStatic($urlPath, $pattern);
+    }
+
+    /**
+     * Match URL pattern with wildcards (static version)
+     */
+    private static function matchesUrlPatternStatic($urlPath, $pattern)
     {
         // Convert pattern wildcard (*) to regex
         $regex = str_replace(['*', '/'], ['.*', '\/'], preg_quote($pattern, '/'));
