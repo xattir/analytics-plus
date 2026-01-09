@@ -726,6 +726,9 @@
                                 @can('announcements-read')
                                 <li><a class="dropdown-item font-1" href="{{route('admin.announcements.index')}}" style="padding-right: 40px;"><span class="fal fa-bullhorn font-1"></span> الاعلانات</a></li>
                                 @endcan
+                                @can('advertisements-read')
+                                <li><a class="dropdown-item font-1" href="{{route('admin.advertisements.index')}}" style="padding-right: 40px;"><span class="fal fa-ad font-1"></span> الوحدات الإعلانية</a></li>
+                                @endcan
                                 @can('pages-read')
                                 <li><a class="dropdown-item font-1" href="{{route('admin.pages.index')}}" style="padding-right: 40px;"><span class="fal fa-file-invoice font-1"></span> الصفحات</a></li>
                                 @endcan
