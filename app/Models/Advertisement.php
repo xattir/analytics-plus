@@ -402,31 +402,24 @@ class Advertisement extends Model
     /**
      * Match URL pattern with wildcards (static version)
      */
-    private static function matchesUrlPatternStatic($urlPath, $pattern)
-    {
-        // Normalize paths - remove leading/trailing slashes for comparison
-        $urlPath = trim($urlPath, '/');
-        $pattern = trim($pattern, '/');
-        
-        // If pattern is empty or just '*', match everything
-        if (empty($pattern) || $pattern === '*') {
-            return true;
-        }
-        
-        // Convert pattern to regex by replacing * with .*
-        // First, escape all special regex characters
-        $escaped = preg_quote($pattern, '/');
-        
-        // Replace escaped \* back to * (preg_quote escapes * as \*)
-        $escaped = str_replace('\\*', '___WILDCARD___', $escaped);
-        
-        // Now replace our placeholder with regex wildcard .*
-        $regex = str_replace('___WILDCARD___', '.*', $escaped);
-        
-        // Match from start to end
-        $regex = '/^' . $regex . '$/';
-        
-        return preg_match($regex, $urlPath) === 1;
+    private static function matchesUrlPatternStatic($url, $pattern): bool
+{
+    // لو URL كامل، استخرج path
+    if (str_contains($url, '://')) {
+        $url = parse_url($url, PHP_URL_PATH) ?? '';
     }
+
+    $url = urldecode(trim($url, '/'));
+    $pattern = urldecode(trim($pattern, '/'));
+
+    if ($pattern === '' || $pattern === '*') {
+        return true;
+    }
+
+    $escaped = preg_quote($pattern, '/');
+    $escaped = str_replace('\*', '.*', $escaped);
+
+    return (bool) preg_match('/^' . $escaped . '$/', $url);
+}
 }
 
