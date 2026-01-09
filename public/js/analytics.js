@@ -438,7 +438,10 @@
             style.id = styleId;
             style.textContent = `
                 .analytics-ad-content-wrapper {
-                    display: block !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    flex-direction: column !important;
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
                     background: transparent !important;
                     width: 100% !important;
@@ -475,25 +478,60 @@
         // Insert content - but first remove any nested ad containers and scripts to prevent nested ads
         let cleanAdHtml = adHtml;
         
-        // Remove nested ad containers and scripts from content
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = adHtml;
-        
-        // Remove any analytics ad containers, script tags, or ad-related elements from content
-        const nestedAds = tempDiv.querySelectorAll('.analytics-ad-interstitial, .analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-wrapper, .analytics-ad-content-wrapper, script[src*="analytics"], script[src*="analytics.js"], script[type*="analytics"]');
-        nestedAds.forEach(function(nestedAd) {
-            // Remove the element and all its content
-            if (nestedAd.parentNode) {
-                nestedAd.parentNode.removeChild(nestedAd);
+        // Only clean if there's actual content
+        if (adHtml && adHtml.trim().length > 0) {
+            // Remove nested ad containers and scripts from content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = adHtml;
+            
+            // Remove any analytics ad containers, script tags, or ad-related elements from content
+            // BUT: Only remove if they are nested inside other content, not if they ARE the content
+            const nestedAds = tempDiv.querySelectorAll('.analytics-ad-interstitial, .analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-wrapper');
+            
+            // Check if the entire content is just an ad container (nested ad)
+            const isWholeContentAnAd = tempDiv.querySelector('.analytics-ad-interstitial, .analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top');
+            if (isWholeContentAnAd && nestedAds.length === 1 && tempDiv.children.length === 1 && tempDiv.children[0] === isWholeContentAnAd) {
+                // The entire content is an ad container - extract its inner content instead
+                // Try to find the actual content inside the nested ad
+                const innerWrapper = isWholeContentAnAd.querySelector('.analytics-ad-wrapper, .analytics-ad-interstitial-wrapper, .analytics-ad-content-wrapper, div[style*="position: relative"], div[style*="max-width"]');
+                if (innerWrapper) {
+                    cleanAdHtml = innerWrapper.innerHTML;
+                } else {
+                    // Try to find any div inside the ad container
+                    const innerDiv = isWholeContentAnAd.querySelector('div');
+                    if (innerDiv) {
+                        cleanAdHtml = innerDiv.innerHTML;
+                    } else {
+                        // Just get the direct children content
+                        cleanAdHtml = isWholeContentAnAd.innerHTML;
+                    }
+                }
+            } else {
+                // Remove nested ads but keep other content - only remove if nested
+                nestedAds.forEach(function(nestedAd) {
+                    // Only remove if it's nested inside other content, not if it's the root element
+                    if (nestedAd.parentNode && nestedAd.parentNode !== tempDiv && nestedAd.parentNode.classList.contains('analytics-ad-content-wrapper') === false) {
+                        if (nestedAd.parentNode) {
+                            nestedAd.parentNode.removeChild(nestedAd);
+                        }
+                    }
+                });
+                cleanAdHtml = tempDiv.innerHTML;
             }
-        });
+            
+            // Also remove any analytics script tags from innerHTML
+            cleanAdHtml = cleanAdHtml.replace(/<script[^>]*analytics[^>]*>[\s\S]*?<\/script>/gi, '');
+            // Remove script tags that load analytics.js
+            cleanAdHtml = cleanAdHtml.replace(/<script[^>]*src[^>]*analytics[^>]*>[\s\S]*?<\/script>/gi, '');
+        }
         
-        // Also remove any analytics script tags from innerHTML
-        cleanAdHtml = tempDiv.innerHTML;
-        // Additional cleanup: remove script tags that might load analytics
-        cleanAdHtml = cleanAdHtml.replace(/<script[^>]*analytics[^>]*>[\s\S]*?<\/script>/gi, '');
+        // Apply flexbox styles to wrapper for centering
+        contentWrapper.style.setProperty('display', 'flex', 'important');
+        contentWrapper.style.setProperty('align-items', 'center', 'important');
+        contentWrapper.style.setProperty('justify-content', 'center', 'important');
+        contentWrapper.style.setProperty('flex-direction', 'column', 'important'); // Allow content to stack vertically if needed
         
-        contentWrapper.innerHTML = cleanAdHtml;
+        contentWrapper.innerHTML = cleanAdHtml || '';
         
         // Force text color on all text elements inside after content is inserted
         // Apply text color to ensure visibility against background

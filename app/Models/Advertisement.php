@@ -120,6 +120,14 @@ class Advertisement extends Model
     public function renderContent()
     {
         $content = $this->content;
+        
+        // For special ad types (pop_from_bottom, pop_from_top, Interstitial), 
+        // return ONLY the raw content - JavaScript will handle the structure
+        // This prevents nested ads and ensures content is displayed correctly
+        if (in_array($this->type, ['pop_from_bottom', 'pop_from_top', 'Interstitial'])) {
+            return $content;
+        }
+        
         $rendered = '';
         $paddingX = $this->padding_x ?? 20;
         $paddingY = $this->padding_y ?? 20;
@@ -129,33 +137,6 @@ class Advertisement extends Model
             case 'in_content':
                 // Regular in-content ad - just return the content as-is
                 $rendered = $content;
-                break;
-                
-            case 'pop_from_bottom':
-                // Pop from bottom - Google AdSense style
-                $rendered = '<div class="analytics-ad-pop-from-bottom" data-ad-id="' . $this->id . '" data-interval="' . ($intervalPeriod ?? '') . '" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.95); padding: ' . $paddingY . 'px ' . $paddingX . 'px; max-width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.3); transform: translateY(100%); transition: transform 0.3s ease-in-out;">';
-                $rendered .= '<div style="position: relative; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">';
-                $rendered .= '<div style="flex: 1;">' . $content . '</div>';
-                $rendered .= '<button class="analytics-ad-close" onclick="closeAdPopup(this)" style="background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 20px; line-height: 1; margin-left: 15px; flex-shrink: 0;">×</button>';
-                $rendered .= '</div></div>';
-                break;
-                
-            case 'pop_from_top':
-                // Pop from top - Google AdSense style
-                $rendered = '<div class="analytics-ad-pop-from-top" data-ad-id="' . $this->id . '" data-interval="' . ($intervalPeriod ?? '') . '" style="position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.95); padding: ' . $paddingY . 'px ' . $paddingX . 'px; max-width: 100%; box-shadow: 0 2px 10px rgba(0,0,0,0.3); transform: translateY(-100%); transition: transform 0.3s ease-in-out;">';
-                $rendered .= '<div style="position: relative; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">';
-                $rendered .= '<div style="flex: 1;">' . $content . '</div>';
-                $rendered .= '<button class="analytics-ad-close" onclick="closeAdPopup(this)" style="background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 20px; line-height: 1; margin-left: 15px; flex-shrink: 0;">×</button>';
-                $rendered .= '</div></div>';
-                break;
-                
-            case 'Interstitial':
-                // Interstitial - full screen overlay with interval support
-                $rendered = '<div class="analytics-ad-interstitial" data-ad-id="' . $this->id . '" data-interval="' . ($intervalPeriod ?? '') . '" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; padding: ' . $paddingY . 'px ' . $paddingX . 'px; opacity: 0; transition: opacity 0.3s ease-in-out;">';
-                $rendered .= '<div style="position: relative; max-width: 90%; max-height: 90%; overflow: auto; background: #fff; border-radius: 8px; padding: 20px;">';
-                $rendered .= '<button class="analytics-ad-close" onclick="closeAdPopup(this)" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: #fff; font-size: 24px; line-height: 1; z-index: 100000;">×</button>';
-                $rendered .= $content;
-                $rendered .= '</div></div>';
                 break;
                 
             default:
