@@ -557,6 +557,21 @@
         
         contentWrapper.innerHTML = cleanAdHtml || '';
         
+        // Force all links to open in new tab immediately after content is inserted
+        setTimeout(function() {
+            const allLinksInContent = contentWrapper.querySelectorAll('a[href]');
+            allLinksInContent.forEach(function(link) {
+                // Force all links to open in new tab
+                link.setAttribute('target', '_blank');
+                link.setAttribute('rel', 'noopener noreferrer');
+                // Remove any conflicting target attributes
+                if (link.getAttribute('target') !== '_blank') {
+                    link.removeAttribute('target');
+                    link.setAttribute('target', '_blank');
+                }
+            });
+        }, 0);
+        
         // Force text color on all text elements inside after content is inserted
         // Apply text color to ensure visibility against background
         setTimeout(function() {
@@ -599,6 +614,13 @@
                 if (!hasInlineColor || isWhite || isTransparent || (textColor === '#ffffff' && isBlack)) {
                     el.style.setProperty('color', textColor, 'important');
                 }
+            });
+            
+            // Re-force all links to open in new tab after DOM manipulation
+            const allLinksAfter = contentWrapper.querySelectorAll('a[href]');
+            allLinksAfter.forEach(function(link) {
+                link.setAttribute('target', '_blank');
+                link.setAttribute('rel', 'noopener noreferrer');
             });
         }, 100);
         
@@ -1235,28 +1257,31 @@
                 allLinks.forEach(function(link) {
                     if (!link.classList.contains('analytics-ad-toggle')) {
                         hasLinks = true;
-                        // Force all links to open in new tab
-                        link.setAttribute('target', '_blank');
-                        link.removeAttribute('target'); // Remove if exists to ensure consistency
-                        link.setAttribute('target', '_blank');
+                        // Remove target attribute to prevent default link behavior
+                        link.removeAttribute('target');
                         link.setAttribute('rel', 'noopener noreferrer');
+                        // Set href to # to prevent default navigation, we'll handle it in JS
+                        const originalHref = link.getAttribute('href');
+                        if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
+                            link.setAttribute('data-original-href', originalHref);
+                            link.setAttribute('href', '#');
+                        }
                         
                         link.addEventListener('click', function(e) {
-                            const href = link.getAttribute('href');
-                            if (href && href !== '#' && !href.startsWith('javascript:')) {
-                                e.preventDefault();
-                                e.stopPropagation();
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                            
+                            const originalHref = link.getAttribute('data-original-href') || link.getAttribute('href');
+                            if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
                                 // Use ad.url if available, otherwise use link href
-                                const targetUrl = ad.url || href;
+                                const targetUrl = ad.url || originalHref;
                                 trackAdClick(ad.id, targetUrl, ad.type, ad.url_pattern_id);
                                 // Always open in new tab
-                                const newWindow = window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                                    // Fallback if popup blocked - navigate in same window
-                                    window.location.href = targetUrl;
-                                }
+                                window.open(targetUrl, '_blank', 'noopener,noreferrer');
                             }
-                        });
+                            return false;
+                        }, true); // Use capture phase to catch event early
                     }
                 });
                 
@@ -1272,17 +1297,20 @@
                                 return;
                             }
                             
+                            // Don't trigger if clicking on a link
+                            if (e.target.closest('a[href]')) {
+                                return;
+                            }
+                            
                             e.preventDefault();
                             e.stopPropagation();
+                            e.stopImmediatePropagation();
                             
                             trackAdClick(ad.id, ad.url, ad.type, ad.url_pattern_id);
                             // Always open in new tab
-                            const newWindow = window.open(ad.url, '_blank', 'noopener,noreferrer');
-                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                                // Fallback if popup blocked - navigate in same window
-                                window.location.href = ad.url;
-                            }
-                        });
+                            window.open(ad.url, '_blank', 'noopener,noreferrer');
+                            return false;
+                        }, true); // Use capture phase
                     }
                 }
 
@@ -1322,43 +1350,51 @@
                     
                     adLinks.forEach(function(link) {
                         hasLinks = true;
-                        // Force all links to open in new tab
-                        link.setAttribute('target', '_blank');
-                        link.removeAttribute('target'); // Remove if exists to ensure consistency
-                        link.setAttribute('target', '_blank');
+                        // Remove target attribute to prevent default link behavior
+                        link.removeAttribute('target');
                         link.setAttribute('rel', 'noopener noreferrer');
+                        // Set href to # to prevent default navigation, we'll handle it in JS
+                        const originalHref = link.getAttribute('href');
+                        if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
+                            link.setAttribute('data-original-href', originalHref);
+                            link.setAttribute('href', '#');
+                        }
                         
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
                             e.stopPropagation();
-                            const href = link.getAttribute('href');
-                            // Use ad.url if available, otherwise use link href
-                            const targetUrl = ad.url || href;
-                            trackAdClick(ad.id, targetUrl, ad.selector, ad.url_pattern_id);
-                            // Always open in new tab
-                            const newWindow = window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                                // Fallback if popup blocked - navigate in same window
-                                window.location.href = targetUrl;
+                            e.stopImmediatePropagation();
+                            
+                            const originalHref = link.getAttribute('data-original-href') || link.getAttribute('href');
+                            if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
+                                // Use ad.url if available, otherwise use link href
+                                const targetUrl = ad.url || originalHref;
+                                trackAdClick(ad.id, targetUrl, ad.selector, ad.url_pattern_id);
+                                // Always open in new tab
+                                window.open(targetUrl, '_blank', 'noopener,noreferrer');
                             }
-                        });
+                            return false;
+                        }, true); // Use capture phase to catch event early
                     });
                     
                     // If ad has URL but no links in content, make entire ad clickable
                     if (!hasLinks) {
                         adElement.style.cursor = 'pointer';
                         adElement.addEventListener('click', function(e) {
+                            // Don't trigger if clicking on a link
+                            if (e.target.closest('a[href]')) {
+                                return;
+                            }
+                            
                             e.preventDefault();
                             e.stopPropagation();
+                            e.stopImmediatePropagation();
                             
                             trackAdClick(ad.id, ad.url, ad.selector, ad.url_pattern_id);
                             // Always open in new tab
-                            const newWindow = window.open(ad.url, '_blank', 'noopener,noreferrer');
-                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                                // Fallback if popup blocked - navigate in same window
-                                window.location.href = ad.url;
-                            }
-                        });
+                            window.open(ad.url, '_blank', 'noopener,noreferrer');
+                            return false;
+                        }, true); // Use capture phase
                     }
                 }
             });
