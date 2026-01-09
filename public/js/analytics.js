@@ -343,44 +343,31 @@
         const isTop = adContainer.classList.contains('analytics-ad-pop-from-top');
         const isInterstitial = adContainer.classList.contains('analytics-ad-interstitial');
         
+        // For Interstitial: closing means permanent removal (no sessionStorage, no toggle back)
+        if (isInterstitial && !isCollapsed) {
+            // Close Interstitial permanently - remove from DOM
+            adContainer.style.opacity = '0';
+            setTimeout(function() {
+                if (adContainer && adContainer.parentNode) {
+                    adContainer.remove();
+                }
+            }, 300);
+            return; // Exit early - don't save to sessionStorage
+        }
+        
+        // For pop_from_bottom and pop_from_top: toggle behavior (can show/hide)
         if (isCollapsed) {
             // Expand - show full ad
             adContainer.classList.remove('analytics-ad-collapsed');
-            if (isInterstitial) {
-                adContainer.style.opacity = '1';
-                adContainer.style.pointerEvents = 'auto';
-                const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
-                if (wrapper) {
-                    wrapper.style.opacity = '1';
-                    wrapper.style.transform = 'scale(1)';
-                    wrapper.style.pointerEvents = 'auto';
-                }
-                btn.innerHTML = '✕';
-            } else {
-                // Smooth slide animation
-                adContainer.style.transform = 'translateY(0)';
-                btn.innerHTML = isBottom ? '▼' : '▲';
-            }
+            adContainer.style.transform = 'translateY(0)';
+            btn.innerHTML = isBottom ? '▼' : '▲';
             sessionStorage.removeItem('analytics_ad_collapsed_' + adId);
         } else {
             // Collapse - show only toggle button
             adContainer.classList.add('analytics-ad-collapsed');
-            if (isInterstitial) {
-                adContainer.style.opacity = '1'; // Keep backdrop visible
-                adContainer.style.pointerEvents = 'auto';
-                const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
-                if (wrapper) {
-                    wrapper.style.opacity = '0';
-                    wrapper.style.transform = 'scale(0.95)';
-                    wrapper.style.pointerEvents = 'none';
-                }
-                btn.innerHTML = '☰';
-            } else {
-                // Collapse to show only toggle button area (28px height)
-                const offset = 28; // Height of toggle button
-                adContainer.style.transform = isBottom ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
-                btn.innerHTML = isBottom ? '▲' : '▼';
-            }
+            const offset = 28; // Height of toggle button
+            adContainer.style.transform = isBottom ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
+            btn.innerHTML = isBottom ? '▲' : '▼';
             sessionStorage.setItem('analytics_ad_collapsed_' + adId, 'true');
         }
     }
@@ -640,7 +627,7 @@
         const wrapper = document.createElement('div');
         if (ad.type === 'Interstitial') {
             wrapper.className = 'analytics-ad-interstitial-wrapper';
-            wrapper.style.cssText = 'position: relative; width: 550px; max-width: 90%; max-height: 90%; overflow: auto; background: #fff; border-radius: 8px; padding: ' + paddingY + 'px ' + paddingX + 'px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: scale(0.9); opacity: 0; transition: transform 0.3s ease-out, opacity 0.3s ease-out;';
+            wrapper.style.cssText = 'position: relative; width: 550px; max-width: 90%; max-height: 90vh; overflow-y: auto; overflow-x: hidden; background: #fff; border-radius: 8px; padding: ' + paddingY + 'px ' + paddingX + 'px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: scale(0.9); opacity: 0; transition: transform 0.3s ease-out, opacity 0.3s ease-out;';
         } else {
             // For pop_from_bottom and pop_from_top: simple centered container
             wrapper.className = 'analytics-ad-wrapper';
@@ -652,12 +639,17 @@
         const isolatedContent = createIsolatedAdContent(adContent, ad.id, ad.type);
         
         if (ad.type === 'Interstitial') {
-            contentDiv.style.cssText = 'width: 100%; min-height: 100px; position: relative; overflow: visible;';
+            // For Interstitial: content goes directly in wrapper
+            contentDiv.style.cssText = 'width: 100%; min-height: 50px; position: relative; overflow: visible; padding: 0; margin: 0;';
+            isolatedContent.style.setProperty('display', 'block', 'important');
+            isolatedContent.style.setProperty('width', '100%', 'important');
+            isolatedContent.style.setProperty('height', 'auto', 'important');
             contentDiv.appendChild(isolatedContent);
+            wrapper.appendChild(contentDiv);
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             // Simple centered content layout - clean and minimal
             contentDiv.style.cssText = 'width: 100%; display: block; min-height: auto;';
-            isolatedContent.style.display = 'block !important';
+            isolatedContent.style.setProperty('display', 'block', 'important');
             isolatedContent.style.width = '100%';
             isolatedContent.style.margin = '0 auto';
             contentDiv.appendChild(isolatedContent);
@@ -678,9 +670,10 @@
             
             if (ad.type === 'Interstitial') {
                 toggleBtn.innerHTML = '✕';
-                toggleBtn.style.cssText = 'position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; color: #fff; font-size: 20px; font-weight: normal; z-index: 100001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.2);';
-                toggleBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; };
-                toggleBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; };
+                // Position toggle button inside the wrapper (frame), not on the page
+                toggleBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 18px; font-weight: normal; z-index: 1001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);';
+                toggleBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; this.style.transform = 'scale(1.1)'; };
+                toggleBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; this.style.transform = 'scale(1)'; };
             } else {
                 // For pop_from_bottom and pop_from_top: simple toggle button at the edge
                 toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▼' : '▲';
@@ -750,11 +743,12 @@
         
         // Assemble structure - simple and clean
         if (ad.type === 'Interstitial') {
+            // For Interstitial: toggle button goes inside wrapper (on the frame itself)
             wrapper.appendChild(contentDiv);
-            container.appendChild(wrapper);
             if (toggleBtn) {
-                wrapper.appendChild(toggleBtn);
+                wrapper.appendChild(toggleBtn); // Button inside wrapper, not container
             }
+            container.appendChild(wrapper);
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             // Simple structure: container -> wrapper -> contentDiv
             container.appendChild(wrapper);
@@ -808,27 +802,16 @@
                     return;
                 }
 
-                // Check sessionStorage for collapsed state (all ad types)
-                const wasCollapsed = sessionStorage.getItem('analytics_ad_collapsed_' + ad.id) === 'true';
-                
-                if (wasCollapsed) {
-                    // Start in collapsed state
-                    adContainer.classList.add('analytics-ad-collapsed');
-                    const toggleBtn = adContainer.querySelector('.analytics-ad-toggle');
+                // Check sessionStorage for collapsed state (only for pop_from_bottom and pop_from_top)
+                // Interstitial does NOT use sessionStorage - if closed, it's removed permanently
+                let wasCollapsed = false;
+                if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
+                    wasCollapsed = sessionStorage.getItem('analytics_ad_collapsed_' + ad.id) === 'true';
                     
-                    if (ad.type === 'Interstitial') {
-                        adContainer.style.opacity = '1';
-                        const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
-                        if (wrapper) {
-                            wrapper.style.opacity = '0';
-                            wrapper.style.transform = 'scale(0.95)';
-                            wrapper.style.pointerEvents = 'none';
-                        }
-                        if (toggleBtn) {
-                            toggleBtn.innerHTML = '☰';
-                        }
-                    } else {
-                        // pop_from_bottom or pop_from_top
+                    if (wasCollapsed) {
+                        // Start in collapsed state
+                        adContainer.classList.add('analytics-ad-collapsed');
+                        const toggleBtn = adContainer.querySelector('.analytics-ad-toggle');
                         const offset = 28; // Height of toggle button
                         adContainer.style.transform = ad.type === 'pop_from_bottom' ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
                         if (toggleBtn) {
