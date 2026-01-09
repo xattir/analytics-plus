@@ -1235,14 +1235,26 @@
                 allLinks.forEach(function(link) {
                     if (!link.classList.contains('analytics-ad-toggle')) {
                         hasLinks = true;
+                        // Force all links to open in new tab
+                        link.setAttribute('target', '_blank');
+                        link.removeAttribute('target'); // Remove if exists to ensure consistency
+                        link.setAttribute('target', '_blank');
+                        link.setAttribute('rel', 'noopener noreferrer');
+                        
                         link.addEventListener('click', function(e) {
                             const href = link.getAttribute('href');
                             if (href && href !== '#' && !href.startsWith('javascript:')) {
                                 e.preventDefault();
+                                e.stopPropagation();
                                 // Use ad.url if available, otherwise use link href
                                 const targetUrl = ad.url || href;
                                 trackAdClick(ad.id, targetUrl, ad.type, ad.url_pattern_id);
-                                window.open(targetUrl, '_blank');
+                                // Always open in new tab
+                                const newWindow = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                                    // Fallback if popup blocked - navigate in same window
+                                    window.location.href = targetUrl;
+                                }
                             }
                         });
                     }
@@ -1260,8 +1272,16 @@
                                 return;
                             }
                             
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
                             trackAdClick(ad.id, ad.url, ad.type, ad.url_pattern_id);
-                            window.open(ad.url, '_blank');
+                            // Always open in new tab
+                            const newWindow = window.open(ad.url, '_blank', 'noopener,noreferrer');
+                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                                // Fallback if popup blocked - navigate in same window
+                                window.location.href = ad.url;
+                            }
                         });
                     }
                 }
@@ -1302,13 +1322,25 @@
                     
                     adLinks.forEach(function(link) {
                         hasLinks = true;
+                        // Force all links to open in new tab
+                        link.setAttribute('target', '_blank');
+                        link.removeAttribute('target'); // Remove if exists to ensure consistency
+                        link.setAttribute('target', '_blank');
+                        link.setAttribute('rel', 'noopener noreferrer');
+                        
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
+                            e.stopPropagation();
                             const href = link.getAttribute('href');
                             // Use ad.url if available, otherwise use link href
                             const targetUrl = ad.url || href;
                             trackAdClick(ad.id, targetUrl, ad.selector, ad.url_pattern_id);
-                            window.open(targetUrl, '_blank');
+                            // Always open in new tab
+                            const newWindow = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                                // Fallback if popup blocked - navigate in same window
+                                window.location.href = targetUrl;
+                            }
                         });
                     });
                     
@@ -1316,8 +1348,16 @@
                     if (!hasLinks) {
                         adElement.style.cursor = 'pointer';
                         adElement.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
                             trackAdClick(ad.id, ad.url, ad.selector, ad.url_pattern_id);
-                            window.open(ad.url, '_blank');
+                            // Always open in new tab
+                            const newWindow = window.open(ad.url, '_blank', 'noopener,noreferrer');
+                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                                // Fallback if popup blocked - navigate in same window
+                                window.location.href = ad.url;
+                            }
                         });
                     }
                 }
