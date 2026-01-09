@@ -898,11 +898,13 @@
                         pointer-events: auto !important;
                     }
                     .analytics-ad-close-interstitial:hover {
-                        background: #f5f5f5 !important;
-                        border-color: rgba(0,0,0,0.2) !important;
+                        background: rgb(99 99 99) !important;
+                        border-color: rgba(255,255,255,0.5) !important;
+                        transform: scale(1.15) !important;
+                        box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
                     }
                     .analytics-ad-close-interstitial:active {
-                        transform: scale(0.95) !important;
+                        transform: scale(1.05) !important;
                     }
                 `;
                 document.head.appendChild(style);
