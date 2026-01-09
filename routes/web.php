@@ -68,6 +68,7 @@ Route::prefix('dashboard')->middleware(['auth','ActiveAccount','verified'])->nam
     Route::get('analytics/{site}/members', [BackendAnalyticsController::class, 'members'])->name('analytics.members');
     Route::get('analytics/{site}/visits/{sessionId}', [BackendAnalyticsController::class, 'visitDetails'])->name('analytics.visit-details');
     Route::get('analytics/{site}/patterns', [BackendAnalyticsController::class, 'patterns'])->name('analytics.patterns');
+    Route::get('analytics/{site}/advertisements', [BackendAnalyticsController::class, 'siteAdvertisements'])->name('analytics.advertisements');
     Route::get('analytics/{site}/patterns/create', [BackendAnalyticsController::class, 'createPattern'])->name('analytics.patterns.create');
     Route::get('analytics/{site}/patterns/{pattern}/edit', [BackendAnalyticsController::class, 'editPattern'])->name('analytics.patterns.edit');
     Route::post('analytics/{site}/patterns', [BackendAnalyticsController::class, 'storePattern'])->name('analytics.patterns.store');

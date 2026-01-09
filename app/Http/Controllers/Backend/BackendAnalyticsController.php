@@ -2515,6 +2515,26 @@ HTML;
     }
 
     /**
+     * Show advertisements for a site
+     */
+    public function siteAdvertisements(Request $request, AnalyticsSite $site)
+    {
+        // Check if user can access this site
+        if (!$site->canAccess(auth()->id()) && !$this->isSuperAdmin()) {
+            abort(403, 'You do not have access to this site.');
+        }
+
+        // Get advertisements for this site
+        $advertisements = \App\Models\Advertisement::whereHas('sites', function ($q) use ($site) {
+            $q->where('analytics_sites.id', $site->id);
+        })
+        ->orderBy('id', 'DESC')
+        ->paginate(20);
+
+        return view('admin.analytics.site-advertisements', compact('site', 'advertisements'));
+    }
+
+    /**
      * Show the form for creating a new pattern
      * 
      * @param Request $request
