@@ -376,14 +376,63 @@
         }
     }
 
+    // Detect if background is light or dark and return appropriate text color
+    function getTextColorForBackground(backgroundColor) {
+        if (!backgroundColor) return '#000000';
+        
+        // Remove rgba/rgb and extract values
+        const rgbaMatch = backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+        if (rgbaMatch) {
+            const r = parseInt(rgbaMatch[1]);
+            const g = parseInt(rgbaMatch[2]);
+            const b = parseInt(rgbaMatch[3]);
+            const a = rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1;
+            
+            // If transparent, assume white background
+            if (a < 0.5) {
+                return '#000000';
+            }
+            
+            // Calculate luminance
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.5 ? '#000000' : '#ffffff';
+        }
+        
+        // Check for hex colors
+        if (backgroundColor.startsWith('#')) {
+            const hex = backgroundColor.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.5 ? '#000000' : '#ffffff';
+        }
+        
+        // Default: white background = black text
+        const lowerBg = backgroundColor.toLowerCase();
+        if (lowerBg.includes('white') || lowerBg === '#fff' || lowerBg === '#ffffff' || lowerBg === 'transparent') {
+            return '#000000';
+        }
+        if (lowerBg.includes('black') || lowerBg === '#000' || lowerBg === '#000000') {
+            return '#ffffff';
+        }
+        
+        return '#000000'; // Default
+    }
+
     // Create isolated ad content with CSS isolation (no iframe)
-    function createIsolatedAdContent(adHtml, adId) {
+    function createIsolatedAdContent(adHtml, adId, adType) {
         // Create wrapper div with CSS isolation
         const contentWrapper = document.createElement('div');
         contentWrapper.className = 'analytics-ad-content-wrapper';
         contentWrapper.setAttribute('data-ad-id', adId || '');
         
-        // Add CSS isolation styles
+        // Determine text color based on background
+        // For pop_from_bottom/top: white background = black text
+        // For Interstitial: white background in wrapper = black text
+        let textColor = '#000000'; // Default black text for white backgrounds
+        
+        // Add CSS isolation styles with dynamic text color
         const styleId = 'analytics-ad-isolation-styles';
         if (!document.getElementById(styleId)) {
             const style = document.createElement('style');
@@ -392,7 +441,6 @@
                 .analytics-ad-content-wrapper {
                     display: block !important;
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-                    color: #000 !important;
                     background: transparent !important;
                     width: 100% !important;
                     min-height: auto !important;
@@ -402,7 +450,9 @@
                     padding: 0 !important;
                     overflow: visible !important;
                 }
+                .analytics-ad-content-wrapper,
                 .analytics-ad-content-wrapper * {
+                    color: inherit !important;
                     box-sizing: border-box !important;
                 }
                 .analytics-ad-content-wrapper img {
@@ -425,8 +475,50 @@
             document.head.appendChild(style);
         }
         
+        // Set text color based on background
+        contentWrapper.style.setProperty('color', textColor, 'important');
+        
         // Insert content
         contentWrapper.innerHTML = adHtml;
+        
+        // Force text color on all text elements inside after content is inserted
+        // Apply text color to ensure visibility against background
+        setTimeout(function() {
+            // First, set text color on wrapper itself
+            contentWrapper.style.setProperty('color', textColor, 'important');
+            
+            // Then apply to all text elements
+            const textElements = contentWrapper.querySelectorAll('p, span, div, h1, h2, h3, h4, h5, h6, a, li, td, th, label, button, input, textarea, strong, b, em, i, small, sub, sup, blockquote, pre, code');
+            textElements.forEach(function(el) {
+                // Skip elements that are images, buttons with icons, or containers
+                if (el.tagName === 'IMG' || el.tagName === 'SVG' || el.classList.contains('analytics-ad-toggle') || el.classList.contains('analytics-ad-close')) {
+                    return;
+                }
+                
+                // Skip if element is a container without direct text (has children with text)
+                if (el.children.length > 0 && el.textContent.trim().length === 0) {
+                    return;
+                }
+                
+                const computedColor = window.getComputedStyle(el).color;
+                const hasInlineColor = el.hasAttribute('style') && el.getAttribute('style').toLowerCase().includes('color:');
+                
+                // Always apply text color to ensure visibility
+                // Only skip if element explicitly has a color that's not white/black/transparent
+                const isWhite = computedColor === 'rgb(255, 255, 255)' || computedColor === 'rgba(255, 255, 255, 1)';
+                const isTransparent = computedColor === 'rgba(0, 0, 0, 0)' || computedColor === 'transparent';
+                const isBlack = computedColor === 'rgb(0, 0, 0)' || computedColor === 'rgba(0, 0, 0, 1)';
+                
+                // Apply text color if:
+                // - No inline color style, OR
+                // - Color is white/transparent on white background (should be black), OR
+                // - Color is black on dark background (should be white), OR
+                // - Just apply it anyway for consistency (textColor is appropriate for background)
+                if (!hasInlineColor || isWhite || isTransparent || (textColor === '#ffffff' && isBlack)) {
+                    el.style.setProperty('color', textColor, 'important');
+                }
+            });
+        }, 100);
         
         return contentWrapper;
     }
@@ -544,7 +636,8 @@
         // Create inner wrapper
         const wrapper = document.createElement('div');
         if (ad.type === 'Interstitial') {
-            wrapper.style.cssText = 'position: relative; width: 350px; max-width: 90%; max-height: 90%; overflow: visible; background: #fff; border-radius: 8px; padding: ' + paddingY + 'px ' + paddingX + 'px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+            wrapper.className = 'analytics-ad-interstitial-wrapper';
+            wrapper.style.cssText = 'position: relative; width: 550px; max-width: 90%; max-height: 90%; overflow: auto; background: #fff; border-radius: 8px; padding: ' + paddingY + 'px ' + paddingX + 'px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: scale(0.9); opacity: 0; transition: transform 0.3s ease-out, opacity 0.3s ease-out;';
         } else {
             // For pop_from_bottom and pop_from_top: full width outer wrapper with centered inner container
             wrapper.className = 'analytics-ad-wrapper';
@@ -560,7 +653,7 @@
         
         // Create content div with isolated content (no iframe)
         const contentDiv = document.createElement('div');
-        const isolatedContent = createIsolatedAdContent(adContent, ad.id);
+        const isolatedContent = createIsolatedAdContent(adContent, ad.id, ad.type);
         
         if (ad.type === 'Interstitial') {
             contentDiv.style.cssText = 'width: 100%; height: 100%; position: relative; overflow: auto;';
@@ -723,13 +816,22 @@
 
                 // Animate in (only if not collapsed)
                 if (!wasCollapsed) {
-                setTimeout(function() {
-                    if (ad.type === 'Interstitial') {
-                        adContainer.style.opacity = '1';
-                    } else {
-                        adContainer.style.transform = 'translateY(0)';
-                    }
-                }, 10);
+                    setTimeout(function() {
+                        if (ad.type === 'Interstitial') {
+                            adContainer.style.opacity = '1';
+                            // Animate wrapper with scale and fade - smooth animation
+                            const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
+                            if (wrapper) {
+                                // Use requestAnimationFrame for smooth animation
+                                requestAnimationFrame(function() {
+                                    wrapper.style.transform = 'scale(1)';
+                                    wrapper.style.opacity = '1';
+                                });
+                            }
+                        } else {
+                            adContainer.style.transform = 'translateY(0)';
+                        }
+                    }, 10);
                 }
 
                 // Store url_pattern_id in container for click tracking
