@@ -330,6 +330,31 @@
         return null;
     }
 
+    // Toggle ad collapse/expand function (for pop_from_bottom and pop_from_top only)
+    function toggleAdCollapse(btn) {
+        const adContainer = btn.closest('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top');
+        if (!adContainer) return;
+        
+        const adId = adContainer.getAttribute('data-ad-id');
+        const isCollapsed = adContainer.classList.contains('analytics-ad-collapsed');
+        const isBottom = adContainer.classList.contains('analytics-ad-pop-from-bottom');
+        
+        if (isCollapsed) {
+            // Expand
+            adContainer.classList.remove('analytics-ad-collapsed');
+            adContainer.style.transform = 'translateY(0)';
+            sessionStorage.removeItem('analytics_ad_collapsed_' + adId);
+            btn.innerHTML = isBottom ? '▼' : '▲';
+        } else {
+            // Collapse - show only 50px (toggle button height + margin)
+            adContainer.classList.add('analytics-ad-collapsed');
+            const offset = 50; // Height of toggle button area
+            adContainer.style.transform = isBottom ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
+            sessionStorage.setItem('analytics_ad_collapsed_' + adId, 'true');
+            btn.innerHTML = isBottom ? '▲' : '▼';
+        }
+    }
+
     // Close ad popup function
     function closeAdPopup(btn) {
         const adContainer = btn.closest('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-interstitial');
@@ -372,9 +397,10 @@
                 left: '0',
                 right: '0',
                 zIndex: '9999',
-                background: 'rgba(0,0,0,0.95)',
-                padding: paddingY + 'px ' + paddingX + 'px',
+                background: '#ffffff',
+                padding: '0',
                 maxWidth: '100%',
+                width: '100%',
                 boxShadow: '0 -2px 10px rgba(0,0,0,0.3)',
                 transform: transformValue,
                 transition: 'transform 0.3s ease-in-out'
@@ -388,9 +414,10 @@
                 left: '0',
                 right: '0',
                 zIndex: '9999',
-                background: 'rgba(0,0,0,0.95)',
-                padding: paddingY + 'px ' + paddingX + 'px',
+                background: '#ffffff',
+                padding: '0',
                 maxWidth: '100%',
+                width: '100%',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
                 transform: transformValue,
                 transition: 'transform 0.3s ease-in-out'
@@ -434,16 +461,71 @@
         if (ad.type === 'Interstitial') {
             wrapper.style.cssText = 'position: relative; max-width: 90%; max-height: 90%; overflow: auto; background: #fff; border-radius: 8px; padding: 20px;';
         } else {
-            wrapper.style.cssText = 'position: relative; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;';
+            // For pop_from_bottom and pop_from_top: full width outer wrapper with centered inner container
+            wrapper.className = 'analytics-ad-wrapper';
+            wrapper.style.cssText = 'width: 100% !important; padding: ' + paddingY + 'px ' + paddingX + 'px; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s ease-in-out;';
+        }
+        
+        // Create centered container for pop_from_bottom and pop_from_top
+        let innerContainer = null;
+        if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
+            innerContainer = document.createElement('div');
+            innerContainer.style.cssText = 'width: 100% !important; max-width: 1000px; margin: 0 auto; position: relative; display: flex; align-items: center; justify-content: center;';
         }
         
         // Create content div
         const contentDiv = document.createElement('div');
         if (ad.type === 'Interstitial') {
             contentDiv.innerHTML = adContent;
+        } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
+            contentDiv.style.cssText = 'flex: 1; text-align: center; display: flex; align-items: center; justify-content: center;';
+            contentDiv.innerHTML = adContent;
         } else {
             contentDiv.style.cssText = 'flex: 1;';
             contentDiv.innerHTML = adContent;
+        }
+        
+        // Create toggle button (for pop_from_bottom and pop_from_top only)
+        let toggleBtn = null;
+        if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
+            toggleBtn = document.createElement('button');
+            toggleBtn.className = 'analytics-ad-toggle';
+            toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▼' : '▲';
+            toggleBtn.setAttribute('onclick', 'toggleAdCollapse(this)');
+            // Position toggle button on the edge of the container
+            toggleBtn.style.cssText = 'position: absolute; ' + 
+                (ad.type === 'pop_from_bottom' ? 'top: -35px;' : 'bottom: -35px;') + 
+                'left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); border: none; ' +
+                (ad.type === 'pop_from_bottom' ? 'border-radius: 4px 4px 0 0;' : 'border-radius: 0 0 4px 4px;') +
+                'width: 60px; height: 30px; cursor: pointer; color: #fff; font-size: 16px; line-height: 1; z-index: 10000; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease-in-out;';
+            
+            // Add styles for collapsed state - button moves to edge
+            if (!document.getElementById('analytics-ad-toggle-styles')) {
+                const style = document.createElement('style');
+                style.id = 'analytics-ad-toggle-styles';
+                style.textContent = `
+                    .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-toggle {
+                        top: auto !important;
+                        bottom: 10px !important;
+                        left: 50% !important;
+                        transform: translateX(-50%) !important;
+                        border-radius: 4px 4px 0 0 !important;
+                    }
+                    .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-toggle {
+                        bottom: auto !important;
+                        top: 10px !important;
+                        left: 50% !important;
+                        transform: translateX(-50%) !important;
+                        border-radius: 0 0 4px 4px !important;
+                    }
+                    .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-wrapper,
+                    .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-wrapper {
+                        opacity: 0;
+                        pointer-events: none;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
         }
         
         // Create close button
@@ -454,6 +536,8 @@
         
         if (ad.type === 'Interstitial') {
             closeBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: #fff; font-size: 24px; line-height: 1; z-index: 100000;';
+        } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
+            closeBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 20px; line-height: 1; z-index: 10001;';
         } else {
             closeBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 20px; line-height: 1; margin-left: 15px; flex-shrink: 0;';
         }
@@ -463,6 +547,12 @@
             wrapper.appendChild(closeBtn);
             wrapper.appendChild(contentDiv);
             container.appendChild(wrapper);
+        } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
+            innerContainer.appendChild(contentDiv);
+            innerContainer.appendChild(closeBtn);
+            wrapper.appendChild(innerContainer);
+            container.appendChild(wrapper);
+            container.appendChild(toggleBtn);
         } else {
             wrapper.appendChild(contentDiv);
             wrapper.appendChild(closeBtn);
@@ -517,17 +607,34 @@
                     return;
                 }
 
+                // Check sessionStorage for collapsed state (pop_from_bottom and pop_from_top only)
+                const wasCollapsed = (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') && 
+                                     sessionStorage.getItem('analytics_ad_collapsed_' + ad.id) === 'true';
+                
+                if (wasCollapsed) {
+                    // Start in collapsed state - show only 50px (toggle button area)
+                    adContainer.classList.add('analytics-ad-collapsed');
+                    const offset = 50;
+                    adContainer.style.transform = ad.type === 'pop_from_bottom' ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
+                    const toggleBtn = adContainer.querySelector('.analytics-ad-toggle');
+                    if (toggleBtn) {
+                        toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▲' : '▼';
+                    }
+                }
+
                 // Inject into body
                 document.body.appendChild(adContainer);
 
-                // Animate in
-                setTimeout(function() {
-                    if (ad.type === 'Interstitial') {
-                        adContainer.style.opacity = '1';
-                    } else {
-                        adContainer.style.transform = 'translateY(0)';
-                    }
-                }, 10);
+                // Animate in (only if not collapsed)
+                if (!wasCollapsed) {
+                    setTimeout(function() {
+                        if (ad.type === 'Interstitial') {
+                            adContainer.style.opacity = '1';
+                        } else {
+                            adContainer.style.transform = 'translateY(0)';
+                        }
+                    }, 10);
+                }
 
                 // Track impression
                 trackAdImpression(ad.id, ad.type, ad.url_pattern_id);
@@ -688,6 +795,7 @@
         loadAds: loadAds,
     };
     
-    // Expose closeAdPopup globally for onclick handlers
+    // Expose closeAdPopup and toggleAdCollapse globally for onclick handlers
     window.closeAdPopup = closeAdPopup;
+    window.toggleAdCollapse = toggleAdCollapse;
 })();
