@@ -40,7 +40,7 @@
                         </div>
                         <div class="col-12 pt-3">
                             <textarea name="content" id="content-editor" required style="display:none;">{{old('content', $advertisement->content)}}</textarea>
-                            <div id="content-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left;"></div>
+                            <div id="content-editor-container" style="direction: ltr; text-align: left;"></div>
                         </div>
                     </div>
                     <div class="col-12 col-lg-6 p-2">
@@ -134,7 +134,7 @@
                         </div>
                         <div class="col-12 pt-3">
                             <textarea name="custom_patterns" id="patterns-editor" style="display:none;">{{old('custom_patterns', $advertisement->custom_patterns ?? '')}}</textarea>
-                            <div id="patterns-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left; min-height: 100px;"></div>
+                            <div id="patterns-editor-container" style="direction: ltr; text-align: left;"></div>
                             <small class="text-muted">أدخل patterns مخصصة (مثل /products/* أو /blog/*). يمكنك استخدام * كـ wildcard.</small>
                         </div>
                     </div>
@@ -168,7 +168,7 @@
                         </div>
                         <div class="col-12 pt-3">
                             <textarea name="custom_selectors" id="selectors-editor" style="display:none;">{{implode("\n", $currentCustomSelectors)}}</textarea>
-                            <div id="selectors-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left; min-height: 100px;"></div>
+                            <div id="selectors-editor-container" style="direction: ltr; text-align: left;"></div>
                         </div>
                     </div>
                     <div class="col-12 p-2">
@@ -177,7 +177,7 @@
                         </div>
                         <div class="col-12 pt-3">
                             <textarea name="subdomains" id="subdomains-editor" style="display:none;">{{$advertisement->subdomains->whereNotNull('subdomain')->pluck('subdomain')->implode(',')}}</textarea>
-                            <div id="subdomains-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left; min-height: 80px;"></div>
+                            <div id="subdomains-editor-container" style="direction: ltr; text-align: left;"></div>
                         </div>
                     </div>
                     <div class="col-12 p-2" id="padding_fields" style="display: none;">
@@ -223,7 +223,7 @@
                 </div>
             </div>
             <div class="col-12 p-3">
-                <button class="btn btn-success" id="submitEvaluation">حفظ</button>
+                <button type="submit" class="btn btn-success" id="submitEvaluation">حفظ</button>
             </div>
         </form>
     </div>
@@ -231,7 +231,133 @@
 @endsection
 
 @section('scripts')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/monokai.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/htmlmixed/htmlmixed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/xml/xml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/css/css.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/clike/clike.js"></script>
+
+<style>
+.CodeMirror {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    direction: ltr;
+    text-align: left;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+}
+.CodeMirror-focused {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+#content-editor-container .CodeMirror,
+#patterns-editor-container .CodeMirror,
+#selectors-editor-container .CodeMirror,
+#subdomains-editor-container .CodeMirror {
+    border: none;
+    height: auto;
+}
+</style>
+
 <script type="module">
+// Initialize CodeMirror editors
+let contentEditor, patternsEditor, selectorsEditor, subdomainsEditor;
+
+function initCodeEditors() {
+    // Check if CodeMirror is loaded
+    if (typeof CodeMirror === 'undefined') {
+        setTimeout(initCodeEditors, 100);
+        return;
+    }
+    
+    // Content Editor
+    const contentTextarea = document.getElementById('content-editor');
+    const contentContainer = document.getElementById('content-editor-container');
+    if (contentTextarea && contentContainer) {
+        contentEditor = CodeMirror(contentContainer, {
+            value: contentTextarea.value || '',
+            mode: 'htmlmixed',
+            theme: 'default',
+            lineNumbers: true,
+            lineWrapping: true,
+            direction: 'ltr',
+            indentUnit: 2,
+            autoCloseTags: true,
+            matchBrackets: true,
+        });
+        contentEditor.setSize('100%', '200px');
+        contentEditor.on('change', function(cm) {
+            contentTextarea.value = cm.getValue();
+        });
+    }
+
+    // Patterns Editor
+    const patternsTextarea = document.getElementById('patterns-editor');
+    const patternsContainer = document.getElementById('patterns-editor-container');
+    if (patternsTextarea && patternsContainer) {
+        patternsEditor = CodeMirror(patternsContainer, {
+            value: patternsTextarea.value || '',
+            mode: 'text/plain',
+            theme: 'default',
+            lineNumbers: true,
+            lineWrapping: true,
+            direction: 'ltr',
+            indentUnit: 2,
+        });
+        patternsEditor.setSize('100%', '100px');
+        patternsEditor.on('change', function(cm) {
+            patternsTextarea.value = cm.getValue();
+        });
+    }
+
+    // Selectors Editor
+    const selectorsTextarea = document.getElementById('selectors-editor');
+    const selectorsContainer = document.getElementById('selectors-editor-container');
+    if (selectorsTextarea && selectorsContainer) {
+        selectorsEditor = CodeMirror(selectorsContainer, {
+            value: selectorsTextarea.value || '',
+            mode: 'css',
+            theme: 'default',
+            lineNumbers: true,
+            lineWrapping: true,
+            direction: 'ltr',
+            indentUnit: 2,
+        });
+        selectorsEditor.setSize('100%', '100px');
+        selectorsEditor.on('change', function(cm) {
+            selectorsTextarea.value = cm.getValue();
+        });
+    }
+
+    // Subdomains Editor
+    const subdomainsTextarea = document.getElementById('subdomains-editor');
+    const subdomainsContainer = document.getElementById('subdomains-editor-container');
+    if (subdomainsTextarea && subdomainsContainer) {
+        // Convert comma-separated to line-separated for better editor display
+        const subdomainsValue = (subdomainsTextarea.value || '').split(',').map(s => s.trim()).filter(s => s).join('\n');
+        subdomainsEditor = CodeMirror(subdomainsContainer, {
+            value: subdomainsValue,
+            mode: 'text/plain',
+            theme: 'default',
+            lineNumbers: false,
+            lineWrapping: true,
+            direction: 'ltr',
+            indentUnit: 2,
+        });
+        subdomainsEditor.setSize('100%', '80px');
+        subdomainsEditor.on('change', function(cm) {
+            // Convert newlines back to comma-separated for form submission
+            const value = cm.getValue().split('\n').map(s => s.trim()).filter(s => s).join(',');
+            subdomainsTextarea.value = value;
+        });
+        // Set initial value
+        subdomainsTextarea.value = subdomainsValue.split('\n').map(s => s.trim()).filter(s => s).join(',');
+    }
+}
+
 // Wait for jQuery and select2 to be available
 function initSelect2() {
     if (typeof window.$ !== 'undefined' && typeof window.$.fn.select2 !== 'undefined') {
@@ -287,6 +413,7 @@ window.toggleSelectorFields = function() {
 
 // Initialize when DOM is ready
 function initializeForm() {
+    initCodeEditors();
     initSelect2();
     // Wait a bit for select2 to initialize, then toggle fields
     setTimeout(function() {
@@ -294,6 +421,27 @@ function initializeForm() {
             window.toggleSelectorFields();
         }
     }, 100);
+    
+    // Sync CodeMirror values before form submission
+    const form = document.getElementById('validate-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (contentEditor) {
+                document.getElementById('content-editor').value = contentEditor.getValue();
+            }
+            if (patternsEditor) {
+                document.getElementById('patterns-editor').value = patternsEditor.getValue();
+            }
+            if (selectorsEditor) {
+                document.getElementById('selectors-editor').value = selectorsEditor.getValue();
+            }
+            if (subdomainsEditor) {
+                // Convert newlines to comma-separated for subdomains
+                const value = subdomainsEditor.getValue().split('\n').map(s => s.trim()).filter(s => s).join(',');
+                document.getElementById('subdomains-editor').value = value;
+            }
+        });
+    }
 }
 
 if (document.readyState === 'loading') {

@@ -368,8 +368,8 @@
             // فتح الإعلان - إرجاعه للظهور بالكامل
             adContainer.classList.remove('analytics-ad-collapsed');
             adContainer.style.transform = 'translateY(0)';
-            // تغيير الأيقونة لاتجاه الطي
-            btn.innerHTML = adType === 'pop_from_bottom' ? '▼' : '▲';
+            // تغيير الأيقونة لاتجاه الطي (⬇️ للأسفل، ⬆️ للأعلى)
+            btn.innerHTML = adType === 'pop_from_bottom' ? '⬇️' : '⬆️';
             // حذف الحالة من localStorage (مفتوح)
             localStorage.removeItem(storageKey);
         } else {
@@ -381,7 +381,7 @@
                 : 'translateY(calc(-100% + ' + toggleHandleHeight + 'px))';
             adContainer.style.transform = translateValue;
             // تغيير الأيقونة لاتجاه الفتح (عكس الاتجاه)
-            btn.innerHTML = adType === 'pop_from_bottom' ? '▲' : '▼';
+            btn.innerHTML = adType === 'pop_from_bottom' ? '⬆️' : '⬇️';
             // حفظ الحالة في localStorage (مطوي)
             localStorage.setItem(storageKey, 'true');
         }
@@ -727,10 +727,14 @@
             wrapper.style.setProperty('max-width', '90%', 'important');
             wrapper.style.setProperty('background', '#fff', 'important');
         } else {
-            // For pop_from_bottom and pop_from_top: simple centered container with clean padding
+            // For pop_from_bottom and pop_from_top: centered container with max-width constraint
             wrapper.className = 'analytics-ad-wrapper';
-            // Use only dashboard padding - no extra padding
-            wrapper.style.cssText = 'width: 100% !important; max-width: 1000px !important; margin: 0 auto !important; padding: ' + paddingY + 'px ' + paddingX + 'px !important; position: relative !important;';
+            // المحتوى في المنتصف أفقيًا وعموديًا
+            // أقصى عرض 1000px، والعرض الكامل للإعلان
+            wrapper.style.cssText = 'width: 100% !important; max-width: 1000px !important; margin: 0 auto !important; ' +
+                'padding: ' + paddingY + 'px ' + paddingX + 'px !important; position: relative !important; ' +
+                'display: flex !important; align-items: center !important; justify-content: center !important; ' +
+                'min-height: 100px !important; box-sizing: border-box !important;';
         }
         
         // Create content div with isolated content (no iframe)
@@ -748,14 +752,25 @@
             contentDiv.appendChild(isolatedContent);
             wrapper.appendChild(contentDiv);
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
-            // Simple centered content layout - ensure proper height, no extra padding
-            contentDiv.style.cssText = 'width: 100% !important; display: block !important; position: relative !important; padding: 0 !important; margin: 0 !important;';
-            isolatedContent.style.setProperty('display', 'block', 'important');
+            /**
+             * محتوى الإعلان في المنتصف أفقيًا وعموديًا
+             * أقصى عرض 1000px مع المحاذاة الوسطى
+             */
+            contentDiv.style.cssText = 'width: 100% !important; max-width: 100% !important; ' +
+                'display: flex !important; align-items: center !important; justify-content: center !important; ' +
+                'position: relative !important; padding: 0 !important; margin: 0 !important; box-sizing: border-box !important;';
+            
+            isolatedContent.style.setProperty('display', 'flex', 'important');
+            isolatedContent.style.setProperty('align-items', 'center', 'important');
+            isolatedContent.style.setProperty('justify-content', 'center', 'important');
             isolatedContent.style.setProperty('width', '100%', 'important');
+            isolatedContent.style.setProperty('max-width', '1000px', 'important');
             isolatedContent.style.setProperty('height', 'auto', 'important');
             isolatedContent.style.setProperty('min-height', 'auto', 'important');
             isolatedContent.style.setProperty('margin', '0 auto', 'important');
             isolatedContent.style.setProperty('padding', '0', 'important');
+            isolatedContent.style.setProperty('box-sizing', 'border-box', 'important');
+            
             contentDiv.appendChild(isolatedContent);
             wrapper.appendChild(contentDiv);
         } else {
@@ -788,7 +803,10 @@
             };
         }
         
-        // Create toggle button for pop_from_bottom and pop_from_top only
+        /**
+         * إنشاء زر التحكم (Toggle Handle) للإعلانات pop_from_bottom و pop_from_top
+         * الزر يكون ثابت وواضح دائمًا، حتى بعد الإغلاق الجزئي
+         */
         let toggleBtn = null;
         if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             toggleBtn = document.createElement('button');
@@ -797,23 +815,67 @@
             toggleBtn.setAttribute('type', 'button');
             toggleBtn.setAttribute('aria-label', 'Toggle ad');
             
-            // For pop_from_bottom and pop_from_top: toggle button at top-left (bottom) or bottom-left (top) - white background
-            toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▼' : '▲';
-            const toggleTop = ad.type === 'pop_from_bottom' ? (paddingY > 10 ? paddingY / 2 : 10) : 'auto';
-            const toggleBottom = ad.type === 'pop_from_top' ? (paddingY > 10 ? paddingY / 2 : 10) : 'auto';
-            toggleBtn.style.cssText = 'position: absolute; ' + 
-                (ad.type === 'pop_from_bottom' ? 'top: ' + toggleTop + 'px;' : 'bottom: ' + toggleBottom + 'px;') + 
-                'left: ' + (paddingX > 10 ? paddingX / 2 : 10) + 'px; background: #fff; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; ' +
-                'width: 32px; height: 32px; cursor: pointer; color: #333; font-size: 16px; font-weight: normal; z-index: 100001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1); pointer-events: auto !important;';
-            toggleBtn.setAttribute('style', toggleBtn.style.cssText); // Ensure styles are applied
-            toggleBtn.onmouseover = function() { this.style.setProperty('background', '#f5f5f5', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.2)', 'important'); this.style.setProperty('transform', 'scale(1.1)', 'important'); };
-            toggleBtn.onmouseout = function() { this.style.setProperty('background', '#fff', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.1)', 'important'); this.style.setProperty('transform', 'scale(1)', 'important'); };
+            // تحديد موضع الزر: أعلى الإعلان لـ pop_from_bottom، أسفل الإعلان لـ pop_from_top
+            const isBottom = ad.type === 'pop_from_bottom';
+            toggleBtn.innerHTML = isBottom ? '⬇️' : '⬆️';
             
-            // Add styles for collapsed state and ensure Interstitial visibility
+            // موضع الزر: أعلى الإعلان للـ bottom، أسفل الإعلان للـ top
+            const toggleTop = isBottom ? '16px' : 'auto';
+            const toggleBottom = isBottom ? 'auto' : '16px';
+            const toggleLeft = '16px';
+            
+            // تصميم الزر: دائري، أبيض، واضح، قابل للنقر دائمًا
+            toggleBtn.style.cssText = 'position: absolute !important; ' + 
+                'top: ' + toggleTop + ' !important; ' +
+                'bottom: ' + toggleBottom + ' !important; ' +
+                'left: ' + toggleLeft + ' !important; ' +
+                'background: #fff !important; ' +
+                'border: 2px solid rgba(0,0,0,0.15) !important; ' +
+                'border-radius: 50% !important; ' +
+                'width: 40px !important; ' +
+                'height: 40px !important; ' +
+                'cursor: pointer !important; ' +
+                'color: #333 !important; ' +
+                'font-size: 18px !important; ' +
+                'font-weight: normal !important; ' +
+                'z-index: 100001 !important; ' +
+                'display: flex !important; ' +
+                'align-items: center !important; ' +
+                'justify-content: center !important; ' +
+                'transition: all 0.2s ease !important; ' +
+                'font-family: arial, sans-serif !important; ' +
+                'box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important; ' +
+                'pointer-events: auto !important; ' +
+                'outline: none !important; ' +
+                'user-select: none !important;';
+            
+            toggleBtn.setAttribute('style', toggleBtn.style.cssText);
+            
+            // تأثيرات hover
+            toggleBtn.onmouseover = function() { 
+                this.style.setProperty('background', '#f5f5f5', 'important'); 
+                this.style.setProperty('border-color', 'rgba(0,0,0,0.25)', 'important'); 
+                this.style.setProperty('transform', 'scale(1.1)', 'important'); 
+                this.style.setProperty('box-shadow', '0 3px 12px rgba(0,0,0,0.18)', 'important');
+            };
+            toggleBtn.onmouseout = function() { 
+                this.style.setProperty('background', '#fff', 'important'); 
+                this.style.setProperty('border-color', 'rgba(0,0,0,0.15)', 'important'); 
+                this.style.setProperty('transform', 'scale(1)', 'important'); 
+                this.style.setProperty('box-shadow', '0 2px 8px rgba(0,0,0,0.12)', 'important');
+            };
+            
+            /**
+             * إضافة أنماط CSS للتحكم في الإعلانات
+             * - الأنيميشن: transform 0.35s ease-in-out
+             * - الـ toggle handle واضح دائمًا حتى بعد الإغلاق
+             * - الحالة المطوية: يظهر فقط handle صغير
+             */
             if (!document.getElementById('analytics-ad-toggle-styles')) {
                 const style = document.createElement('style');
                 style.id = 'analytics-ad-toggle-styles';
                 style.textContent = `
+                    /* أنماط Interstitial */
                     .analytics-ad-interstitial {
                         opacity: 1 !important;
                         display: flex !important;
@@ -831,8 +893,10 @@
                         pointer-events: auto !important;
                         background: #fff !important;
                     }
+                    
+                    /* أنماط Toggle Handle - واضح ودائمًا قابل للنقر */
                     .analytics-ad-toggle {
-                        font-family: arial !important;
+                        font-family: arial, sans-serif !important;
                         outline: none !important;
                         user-select: none !important;
                         -webkit-user-select: none !important;
@@ -842,58 +906,61 @@
                     }
                     .analytics-ad-toggle:hover {
                         background: #f5f5f5 !important;
-                        border-color: rgba(0,0,0,0.2) !important;
+                        border-color: rgba(0,0,0,0.25) !important;
                     }
                     .analytics-ad-toggle:active {
                         transform: scale(0.95) !important;
                     }
-                    .analytics-ad-pop-from-bottom .analytics-ad-toggle,
+                    
+                    /* Toggle Handle في pop_from_bottom - أعلى الإعلان */
+                    .analytics-ad-pop-from-bottom .analytics-ad-toggle {
+                        pointer-events: auto !important;
+                        z-index: 100001 !important;
+                        top: 16px !important;
+                        left: 16px !important;
+                    }
+                    
+                    /* Toggle Handle في pop_from_top - أسفل الإعلان */
                     .analytics-ad-pop-from-top .analytics-ad-toggle {
                         pointer-events: auto !important;
                         z-index: 100001 !important;
+                        bottom: 16px !important;
+                        left: 16px !important;
                     }
+                    
+                    /* الحالة المطوية - Handle يبقى في نفس الموضع */
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-toggle {
-                        top: 10px !important;
-                        left: 10px !important;
+                        top: 16px !important;
+                        left: 16px !important;
                         transform: scale(1) !important;
-                        border-radius: 50% !important;
                         background: #fff !important;
-                        border: 2px solid rgba(0,0,0,0.1) !important;
+                        border: 2px solid rgba(0,0,0,0.15) !important;
                         color: #333 !important;
                     }
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-toggle {
-                        bottom: 10px !important;
-                        left: 10px !important;
+                        bottom: 16px !important;
+                        left: 16px !important;
                         transform: scale(1) !important;
-                        border-radius: 50% !important;
                         background: #fff !important;
-                        border: 2px solid rgba(0,0,0,0.1) !important;
+                        border: 2px solid rgba(0,0,0,0.15) !important;
                         color: #333 !important;
                     }
+                    
+                    /* إخفاء المحتوى عند الطي - المحتوى فقط، وليس الـ handle */
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-wrapper,
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-wrapper {
                         opacity: 0 !important;
                         pointer-events: none !important;
-                        height: 0 !important;
                         overflow: hidden !important;
                     }
-                    .analytics-ad-interstitial {
-                        opacity: 1 !important;
-                        display: flex !important;
-                        visibility: visible !important;
-                        pointer-events: auto !important;
-                        background: rgb(0 0 0 / 68%) !important;
-                        backdrop-filter: blur(10px) !important;
-                        -webkit-backdrop-filter: blur(10px) !important;
-                        z-index: 99999999999990000 !important;
+                    
+                    /* أنيميشن سلس للتحويل */
+                    .analytics-ad-pop-from-bottom,
+                    .analytics-ad-pop-from-top {
+                        transition: transform 0.35s ease-in-out !important;
                     }
-                    .analytics-ad-interstitial-wrapper {
-                        opacity: 1 !important;
-                        display: block !important;
-                        visibility: visible !important;
-                        pointer-events: auto !important;
-                        background: #fff !important;
-                    }
+                    
+                    /* زر الإغلاق لـ Interstitial */
                     .analytics-ad-close-interstitial {
                         font-family: arial !important;
                         outline: none !important;
@@ -932,11 +999,15 @@
             }
             container.appendChild(wrapper);
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
-            // Simple structure: container -> wrapper -> contentDiv -> toggle button inside wrapper
-            if (toggleBtn) {
-                wrapper.appendChild(toggleBtn); // Button inside wrapper, not container
-            }
+            /**
+             * هيكل الإعلان: container (fixed) -> wrapper (centered, max-width) -> contentDiv -> toggle button
+             * الـ toggle button يكون داخل container وليس wrapper لضمان وضعه الثابت
+             */
             container.appendChild(wrapper);
+            if (toggleBtn) {
+                // إضافة الـ toggle button داخل container مباشرة لضمان موضعه الثابت
+                container.appendChild(toggleBtn);
+            }
         } else {
             wrapper.appendChild(contentDiv);
             container.appendChild(wrapper);
@@ -998,21 +1069,30 @@
                     return;
                 }
 
-                // Check sessionStorage for collapsed state (only for pop_from_bottom and pop_from_top)
-                // Interstitial does NOT use sessionStorage - if closed, it's removed permanently
+                /**
+                 * التحقق من حالة الإعلان المطوية من localStorage
+                 * الحالة محفوظة لكل نوع إعلان بشكل منفصل
+                 * لا يُعاد فتح الإعلان تلقائيًا إلا إذا فتحه المستخدم بنفسه
+                 */
                 let wasCollapsed = false;
                 if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
-                    wasCollapsed = sessionStorage.getItem('analytics_ad_collapsed_' + ad.id) === 'true';
+                    const storageKey = 'analytics_ad_collapsed_' + ad.id + '_' + ad.type;
+                    wasCollapsed = localStorage.getItem(storageKey) === 'true';
                     
                     if (wasCollapsed) {
-                        // Start in collapsed state
+                        // البدء في الحالة المطوية
                         adContainer.classList.add('analytics-ad-collapsed');
                         const toggleBtn = adContainer.querySelector('.analytics-ad-toggle');
-                        const offset = 52; // Height of toggle button + margin (32px + 20px)
-                        adContainer.style.transform = ad.type === 'pop_from_bottom' ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
+                        // ارتفاع الـ toggle handle: 40px button + 8px margin = 48px
+                        const toggleHandleHeight = 48;
+                        const translateValue = ad.type === 'pop_from_bottom' 
+                            ? 'translateY(calc(100% - ' + toggleHandleHeight + 'px))' 
+                            : 'translateY(calc(-100% + ' + toggleHandleHeight + 'px))';
+                        adContainer.style.transform = translateValue;
+                        
                         if (toggleBtn) {
-                            // Icon points to expand direction (opposite of collapse)
-                            toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▲' : '▼';
+                            // تغيير الأيقونة لاتجاه الفتح (عكس الاتجاه)
+                            toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '⬆️' : '⬇️';
                         }
                     }
                 }
@@ -1070,24 +1150,28 @@
                     }, 50);
                 }
                 
-                // Animate in (only if not collapsed)
+                /**
+                 * أنيميشن الفتح الأول - الإعلان يظهر من خارج الشاشة
+                 * فقط إذا لم يكن مطويًا (مفتوح من قبل المستخدم)
+                 */
                 if (!wasCollapsed) {
-                    setTimeout(function() {
-                        if (ad.type === 'Interstitial') {
-                            // Container already visible, just ensure wrapper is fully visible
-                            const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
-                            if (wrapper) {
-                                // Use requestAnimationFrame for smooth animation
-                                requestAnimationFrame(function() {
+                    // استخدام requestAnimationFrame لضمان بدء الأنيميشن بعد رسم الإعلان
+                    requestAnimationFrame(function() {
+                        setTimeout(function() {
+                            if (ad.type === 'Interstitial') {
+                                // Container already visible, just ensure wrapper is fully visible
+                                const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
+                                if (wrapper) {
                                     wrapper.style.setProperty('transform', 'scale(1)', 'important');
                                     wrapper.style.setProperty('opacity', '1', 'important');
-                                });
+                                }
+                            } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
+                                // أنيميشن سلس: الإعلان ينزلق للظهور
+                                // الأنيميشن: transform 0.35s ease-in-out (محدد في CSS)
+                                adContainer.style.transform = 'translateY(0)';
                             }
-                        } else {
-                            // Smooth slide up/down animation
-                            adContainer.style.transform = 'translateY(0)';
-                        }
-                    }, 10);
+                        }, 50); // تأخير صغير لضمان تطبيق الأنيميشن
+                    });
                 }
 
                 // Store url_pattern_id in container for click tracking
