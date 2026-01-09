@@ -332,28 +332,29 @@
         return null;
     }
 
-    // Toggle ad collapse/expand function - simple and clean
+    // Close Interstitial ad permanently (no toggle, just close)
+    function closeInterstitialAd(btn) {
+        const adContainer = btn.closest('.analytics-ad-interstitial');
+        if (!adContainer) return;
+        
+        // Close Interstitial permanently - remove from DOM
+        adContainer.style.opacity = '0';
+        adContainer.style.transition = 'opacity 0.3s ease-out';
+        setTimeout(function() {
+            if (adContainer && adContainer.parentNode) {
+                adContainer.remove();
+            }
+        }, 300);
+    }
+    
+    // Toggle ad collapse/expand function - for pop_from_bottom and pop_from_top only
     function toggleAdCollapse(btn) {
-        const adContainer = btn.closest('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-interstitial');
+        const adContainer = btn.closest('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top');
         if (!adContainer) return;
         
         const adId = adContainer.getAttribute('data-ad-id');
         const isCollapsed = adContainer.classList.contains('analytics-ad-collapsed');
         const isBottom = adContainer.classList.contains('analytics-ad-pop-from-bottom');
-        const isTop = adContainer.classList.contains('analytics-ad-pop-from-top');
-        const isInterstitial = adContainer.classList.contains('analytics-ad-interstitial');
-        
-        // For Interstitial: closing means permanent removal (no sessionStorage, no toggle back)
-        if (isInterstitial && !isCollapsed) {
-            // Close Interstitial permanently - remove from DOM
-            adContainer.style.opacity = '0';
-            setTimeout(function() {
-                if (adContainer && adContainer.parentNode) {
-                    adContainer.remove();
-                }
-            }, 300);
-            return; // Exit early - don't save to sessionStorage
-        }
         
         // For pop_from_bottom and pop_from_top: toggle behavior (can show/hide)
         if (isCollapsed) {
@@ -672,31 +673,38 @@
             contentDiv.appendChild(isolatedContent);
         }
         
-        // Create toggle button (simple and clean design)
+        // Create close button for Interstitial (permanent close, no toggle)
+        let closeBtn = null;
+        if (ad.type === 'Interstitial') {
+            closeBtn = document.createElement('button');
+            closeBtn.className = 'analytics-ad-close-interstitial';
+            closeBtn.setAttribute('onclick', 'closeInterstitialAd(this)');
+            closeBtn.setAttribute('type', 'button');
+            closeBtn.setAttribute('aria-label', 'Close ad');
+            closeBtn.innerHTML = '✕';
+            // Position close button in the corner of the wrapper (content frame)
+            closeBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 18px; font-weight: normal; z-index: 1001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);';
+            closeBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; this.style.transform = 'scale(1.1)'; };
+            closeBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; this.style.transform = 'scale(1)'; };
+        }
+        
+        // Create toggle button for pop_from_bottom and pop_from_top only
         let toggleBtn = null;
-        if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top' || ad.type === 'Interstitial') {
+        if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             toggleBtn = document.createElement('button');
             toggleBtn.className = 'analytics-ad-toggle';
             toggleBtn.setAttribute('onclick', 'toggleAdCollapse(this)');
             toggleBtn.setAttribute('type', 'button');
             toggleBtn.setAttribute('aria-label', 'Toggle ad');
             
-            if (ad.type === 'Interstitial') {
-                toggleBtn.innerHTML = '✕';
-                // Position toggle button inside the wrapper (frame), not on the page
-                toggleBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 18px; font-weight: normal; z-index: 1001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);';
-                toggleBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; this.style.transform = 'scale(1.1)'; };
-                toggleBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; this.style.transform = 'scale(1)'; };
-            } else {
-                // For pop_from_bottom and pop_from_top: toggle button at top-left (bottom) or bottom-left (top)
-                toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▼' : '▲';
-                toggleBtn.style.cssText = 'position: absolute; ' + 
-                    (ad.type === 'pop_from_bottom' ? 'top: 10px;' : 'bottom: 10px;') + 
-                    'left: 10px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; ' +
-                    'width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 16px; font-weight: normal; z-index: 10001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; box-shadow: 0 2px 6px rgba(0,0,0,0.25);';
-                toggleBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; this.style.transform = 'scale(1.1)'; };
-                toggleBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; this.style.transform = 'scale(1)'; };
-            }
+            // For pop_from_bottom and pop_from_top: toggle button at top-left (bottom) or bottom-left (top)
+            toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▼' : '▲';
+            toggleBtn.style.cssText = 'position: absolute; ' + 
+                (ad.type === 'pop_from_bottom' ? 'top: 10px;' : 'bottom: 10px;') + 
+                'left: 10px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; ' +
+                'width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 16px; font-weight: normal; z-index: 10001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; box-shadow: 0 2px 6px rgba(0,0,0,0.25);';
+            toggleBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; this.style.transform = 'scale(1.1)'; };
+            toggleBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; this.style.transform = 'scale(1)'; };
             
             // Add styles for collapsed state
             if (!document.getElementById('analytics-ad-toggle-styles')) {
@@ -729,11 +737,6 @@
                         border-radius: 50% !important;
                         background: rgba(0,0,0,0.8) !important;
                     }
-                    .analytics-ad-interstitial.analytics-ad-collapsed .analytics-ad-toggle {
-                        background: rgba(0,0,0,0.8) !important;
-                        opacity: 1 !important;
-                        pointer-events: auto !important;
-                    }
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-wrapper,
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-wrapper {
                         opacity: 0 !important;
@@ -741,9 +744,16 @@
                         height: 0 !important;
                         overflow: hidden !important;
                     }
-                    .analytics-ad-interstitial.analytics-ad-collapsed .analytics-ad-interstitial-wrapper {
-                        opacity: 0 !important;
-                        pointer-events: none !important;
+                    .analytics-ad-close-interstitial {
+                        font-family: arial !important;
+                        outline: none !important;
+                        user-select: none !important;
+                        -webkit-user-select: none !important;
+                    }
+                    .analytics-ad-close-interstitial:hover {
+                        background: rgba(0,0,0,0.9) !important;
+                    }
+                    .analytics-ad-close-interstitial:active {
                         transform: scale(0.95) !important;
                     }
                 `;
@@ -753,10 +763,10 @@
         
         // Assemble structure - simple and clean
         if (ad.type === 'Interstitial') {
-            // For Interstitial: toggle button goes inside wrapper (on the frame itself)
+            // For Interstitial: close button goes inside wrapper (in the corner of the content frame)
             wrapper.appendChild(contentDiv);
-            if (toggleBtn) {
-                wrapper.appendChild(toggleBtn); // Button inside wrapper, not container
+            if (closeBtn) {
+                wrapper.appendChild(closeBtn); // Close button inside wrapper, in the corner
             }
             container.appendChild(wrapper);
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
@@ -1029,7 +1039,8 @@
         loadAds: loadAds,
     };
     
-    // Expose closeAdPopup and toggleAdCollapse globally for onclick handlers
+    // Expose functions globally for onclick handlers
     window.closeAdPopup = closeAdPopup;
     window.toggleAdCollapse = toggleAdCollapse;
+    window.closeInterstitialAd = closeInterstitialAd;
 })();
