@@ -653,16 +653,16 @@
                     
                     if (intervalPeriod !== null && intervalPeriod > 0) {
                         // Has interval period - check if enough time has passed
-                        const lastShown = localStorage.getItem('analytics_ad_interstitial_' + ad.id);
-                        if (lastShown) {
-                            const timeSinceLastShown = (Date.now() - parseInt(lastShown)) / 1000;
+                    const lastShown = localStorage.getItem('analytics_ad_interstitial_' + ad.id);
+                    if (lastShown) {
+                        const timeSinceLastShown = (Date.now() - parseInt(lastShown)) / 1000;
                             if (timeSinceLastShown < intervalPeriod) {
                                 return; // Don't show yet - not enough time has passed
-                            }
                         }
-                        // Store current time for next interval check
-                        localStorage.setItem('analytics_ad_interstitial_' + ad.id, Date.now().toString());
                     }
+                        // Store current time for next interval check
+                    localStorage.setItem('analytics_ad_interstitial_' + ad.id, Date.now().toString());
+                }
                     // If interval_period is null/0, will show and auto-close after 10s (handled below)
                 }
 
@@ -694,13 +694,13 @@
 
                 // Animate in (only if not collapsed)
                 if (!wasCollapsed) {
-                    setTimeout(function() {
-                        if (ad.type === 'Interstitial') {
-                            adContainer.style.opacity = '1';
-                        } else {
-                            adContainer.style.transform = 'translateY(0)';
-                        }
-                    }, 10);
+                setTimeout(function() {
+                    if (ad.type === 'Interstitial') {
+                        adContainer.style.opacity = '1';
+                    } else {
+                        adContainer.style.transform = 'translateY(0)';
+                    }
+                }, 10);
                 }
 
                 // Store url_pattern_id in container for click tracking
@@ -753,12 +753,12 @@
                     
                     if (intervalPeriod === null || intervalPeriod === 0) {
                         // No interval - auto-close after 10 seconds
-                        setTimeout(function() {
-                            const closeBtn = adContainer.querySelector('.analytics-ad-close');
-                            if (closeBtn) {
-                                closeAdPopup(closeBtn);
-                            }
-                        }, 10000);
+                    setTimeout(function() {
+                        const closeBtn = adContainer.querySelector('.analytics-ad-close');
+                        if (closeBtn) {
+                            closeAdPopup(closeBtn);
+                        }
+                    }, 10000);
                     }
                     // If interval_period > 0, don't auto-close - user must close manually
                     // It will show again after the interval period
