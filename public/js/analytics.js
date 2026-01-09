@@ -1026,12 +1026,15 @@
                     }
                     
                     /* إخفاء container background وbox-shadow عند الإغلاق */
-                    /* container يظهر 21px لكن نخفي background وbox-shadow */
+                    /* container يظهر 21px لكن نخفي background وbox-shadow ونجعل height: 0 */
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed,
                     .analytics-ad-pop-from-top.analytics-ad-collapsed {
                         background: transparent !important;
                         box-shadow: none !important;
                         overflow: visible !important;
+                        height: 0 !important;
+                        min-height: 0 !important;
+                        padding: 0 !important;
                     }
                     
                     /* toggle button يبقى ظاهرًا - في top: -21px من container */
