@@ -144,6 +144,30 @@ class Advertisement extends Model
             case 'script':
                 $rendered = '<script>' . $content . '</script>';
                 break;
+            case 'pop-bottom':
+                // Pop from bottom - fixed position at bottom
+                $rendered = '<div class="analytics-ad-pop-bottom" data-ad-id="' . $this->id . '" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.8); padding: 20px; max-width: 100%;">';
+                $rendered .= '<div style="position: relative; max-width: 1200px; margin: 0 auto;">';
+                $rendered .= '<button class="analytics-ad-close" onclick="this.closest(\'.analytics-ad-pop-bottom\').remove()" style="position: absolute; top: -10px; right: -10px; background: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px; line-height: 1;">×</button>';
+                $rendered .= $content;
+                $rendered .= '</div></div>';
+                break;
+            case 'pop-top':
+                // Pop from top - fixed position at top
+                $rendered = '<div class="analytics-ad-pop-top" data-ad-id="' . $this->id . '" style="position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: rgba(0,0,0,0.8); padding: 20px; max-width: 100%;">';
+                $rendered .= '<div style="position: relative; max-width: 1200px; margin: 0 auto;">';
+                $rendered .= '<button class="analytics-ad-close" onclick="this.closest(\'.analytics-ad-pop-top\').remove()" style="position: absolute; top: -10px; right: -10px; background: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px; line-height: 1;">×</button>';
+                $rendered .= $content;
+                $rendered .= '</div></div>';
+                break;
+            case 'interstitial':
+                // Interstitial - full screen overlay
+                $rendered = '<div class="analytics-ad-interstitial" data-ad-id="' . $this->id . '" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; padding: 20px;">';
+                $rendered .= '<div style="position: relative; max-width: 90%; max-height: 90%; overflow: auto;">';
+                $rendered .= '<button class="analytics-ad-close" onclick="this.closest(\'.analytics-ad-interstitial\').remove()" style="position: absolute; top: -10px; right: -10px; background: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 24px; line-height: 1; z-index: 100000;">×</button>';
+                $rendered .= $content;
+                $rendered .= '</div></div>';
+                break;
             default:
                 $rendered = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
         }
@@ -445,6 +469,8 @@ class Advertisement extends Model
         if (method_exists($store, 'tags')) {
             try {
                 Cache::tags(['ads_site_' . $siteId])->flush();
+                // Also clear the tracking set
+                Cache::forget("ads_cache_keys_site_{$siteId}");
                 return;
             } catch (\Exception $e) {
                 // Fallback to manual clearing
@@ -462,6 +488,25 @@ class Advertisement extends Model
         
         // Clear the tracking set
         Cache::forget($cacheKeysSetKey);
+        
+        // Also clear common patterns as fallback (in case some weren't tracked)
+        // This ensures we don't miss any cache entries
+        $deviceTypes = ['desktop', 'mobile', 'tablet'];
+        $commonCountryCodes = [null, 'US', 'GB', 'SA', 'AE', 'EG', 'JO', 'KW', 'QA', 'BH', 'OM', 'FR', 'DE', 'IT', 'ES'];
+        $commonUrls = ['/', '/home', '/index', '/about', '/contact', '/products', '/services'];
+        $commonSubdomains = [null, 'www', 'api', 'blog', 'shop', 'admin', 'app'];
+        
+        foreach ($deviceTypes as $deviceType) {
+            foreach ($commonCountryCodes as $countryCode) {
+                foreach ($commonUrls as $url) {
+                    foreach ($commonSubdomains as $subdomain) {
+                        $countryPart = $countryCode ? "_{$countryCode}" : '';
+                        $cacheKey = "ads_matching_{$siteId}_{$deviceType}{$countryPart}_" . md5($url . ($subdomain ?? ''));
+                        Cache::forget($cacheKey);
+                    }
+                }
+            }
+        }
     }
 
     /**

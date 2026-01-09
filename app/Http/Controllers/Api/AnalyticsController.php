@@ -358,7 +358,40 @@ class AnalyticsController extends Controller
                 $predefinedSelectors = config('advertisements.predefined_selectors', []);
                 $groupedAds = [];
                 
+                // Special ad types that don't need selectors
+                $specialTypes = ['pop-bottom', 'pop-top', 'interstitial'];
+                
                 foreach ($matchingAds as $ad) {
+                    // Handle special ad types (pop-bottom, pop-top, interstitial)
+                    if (in_array($ad->type, $specialTypes)) {
+                        // Find matching URL pattern
+                        $urlPatternId = null;
+                        if ($url) {
+                            $urlPath = parse_url($url, PHP_URL_PATH);
+                            $pattern = $ad->urlPatterns->first(function ($pattern) use ($urlPath) {
+                                return $this->matchesUrlPattern($urlPath, $pattern->pattern);
+                            });
+                            if ($pattern) {
+                                $urlPatternId = $pattern->id;
+                            }
+                        }
+                        
+                        // Use type as key to ensure only one special ad of each type
+                        $key = 'special_' . $ad->type;
+                        if (!isset($groupedAds[$key])) {
+                            $groupedAds[$key] = [
+                                'id' => $ad->id,
+                                'type' => $ad->type,
+                                'selector' => null,
+                                'content' => $ad->renderContent(),
+                                'url' => $ad->url,
+                                'url_pattern_id' => $urlPatternId,
+                            ];
+                        }
+                        continue;
+                    }
+                    
+                    // Regular ad types need selectors
                     foreach ($ad->selectors as $adSelector) {
                         $selectorKey = $adSelector->selector;
                         
@@ -381,6 +414,7 @@ class AnalyticsController extends Controller
                         
                         $groupedAds[$selectorKey] = [
                             'id' => $ad->id,
+                            'type' => $ad->type,
                             'selector' => $selectorKey,
                             'content' => $ad->renderContent(),
                             'url' => $ad->url,

@@ -328,11 +328,49 @@
 
     // Inject ad into page
     function injectAd(ad) {
-        if (!ad.selector || !ad.content) {
+        if (!ad.content) {
             return;
         }
 
         try {
+            // Special ad types (pop-bottom, pop-top, interstitial) don't need selectors
+            const specialTypes = ['pop-bottom', 'pop-top', 'interstitial'];
+            if (specialTypes.includes(ad.type)) {
+                // Inject special ad types directly into body
+                const adElement = document.createElement('div');
+                adElement.innerHTML = ad.content;
+                document.body.appendChild(adElement);
+
+                // Track impression
+                trackAdImpression(ad.id, ad.type, ad.url_pattern_id);
+
+                // Track click if ad has URL
+                if (ad.url) {
+                    const adLinks = adElement.querySelectorAll('a.ad-link, a[href]');
+                    adLinks.forEach(function(link) {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            trackAdClick(ad.id, ad.url, ad.type, ad.url_pattern_id);
+                        });
+                    });
+                }
+
+                // Add click tracking to close buttons
+                const closeButtons = adElement.querySelectorAll('.analytics-ad-close');
+                closeButtons.forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        // Track close as impression (optional)
+                    });
+                });
+
+                return;
+            }
+
+            // Regular ad types need selector
+            if (!ad.selector) {
+                return;
+            }
+
             const elements = document.querySelectorAll(ad.selector);
             if (elements.length === 0) {
                 return;

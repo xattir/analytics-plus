@@ -25,12 +25,15 @@
                             النوع <span class="text-danger">*</span>
                         </div>
                         <div class="col-12 pt-3">
-                            <select class="form-control" name="type" required>
+                            <select class="form-control" name="type" id="ad_type" required onchange="toggleSelectorFields()">
                                 <option value="html" @if(old('type') == 'html') selected @endif>HTML</option>
                                 <option value="image" @if(old('type') == 'image') selected @endif>صورة</option>
                                 <option value="video" @if(old('type') == 'video') selected @endif>فيديو</option>
                                 <option value="text" @if(old('type') == 'text') selected @endif>نص</option>
                                 <option value="script" @if(old('type') == 'script') selected @endif>Script</option>
+                                <option value="pop-bottom" @if(old('type') == 'pop-bottom') selected @endif>Pop from Bottom</option>
+                                <option value="pop-top" @if(old('type') == 'pop-top') selected @endif>Pop from Top</option>
+                                <option value="interstitial" @if(old('type') == 'interstitial') selected @endif>Interstitial</option>
                             </select>
                         </div>
                     </div>
@@ -194,11 +197,31 @@ function initSelect2() {
     }
 }
 
+// Toggle selector fields based on ad type
+function toggleSelectorFields() {
+    const adType = document.getElementById('ad_type').value;
+    const selectorFields = document.getElementById('selector_fields');
+    const customSelectorField = document.getElementById('custom_selector_field');
+    
+    // Special ad types don't need CSS selectors
+    if (adType === 'pop-bottom' || adType === 'pop-top' || adType === 'interstitial') {
+        selectorFields.style.display = 'none';
+        customSelectorField.style.display = 'none';
+    } else {
+        selectorFields.style.display = 'block';
+        customSelectorField.style.display = 'block';
+    }
+}
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSelect2);
+    document.addEventListener('DOMContentLoaded', function() {
+        initSelect2();
+        toggleSelectorFields();
+    });
 } else {
     initSelect2();
+    toggleSelectorFields();
 }
 </script>
 @endsection

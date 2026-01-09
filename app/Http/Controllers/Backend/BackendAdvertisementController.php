@@ -113,24 +113,27 @@ class BackendAdvertisementController extends Controller
             // Clear cache after syncing relationships
             $advertisement->clearAdsCache();
 
-            // Attach selectors
-            $selectors = [];
-            if ($request->predefined_selectors) {
-                $predefinedSelectors = config('advertisements.predefined_selectors', []);
-                foreach ($request->predefined_selectors as $tag) {
-                    if (isset($predefinedSelectors[$tag])) {
-                        $selectors[] = $predefinedSelectors[$tag];
-                    } else {
-                        $selectors[] = $tag; // Use as-is if not found
+            // Attach selectors (only for non-special ad types)
+            $specialTypes = ['pop-bottom', 'pop-top', 'interstitial'];
+            if (!in_array($advertisement->type, $specialTypes)) {
+                $selectors = [];
+                if ($request->predefined_selectors) {
+                    $predefinedSelectors = config('advertisements.predefined_selectors', []);
+                    foreach ($request->predefined_selectors as $tag) {
+                        if (isset($predefinedSelectors[$tag])) {
+                            $selectors[] = $predefinedSelectors[$tag];
+                        } else {
+                            $selectors[] = $tag; // Use as-is if not found
+                        }
                     }
                 }
-            }
-            if ($request->custom_selectors) {
-                $customSelectors = array_filter(array_map('trim', explode("\n", $request->custom_selectors)));
-                $selectors = array_merge($selectors, $customSelectors);
-            }
-            foreach (array_unique($selectors) as $selector) {
-                $advertisement->selectors()->create(['selector' => $selector]);
+                if ($request->custom_selectors) {
+                    $customSelectors = array_filter(array_map('trim', explode("\n", $request->custom_selectors)));
+                    $selectors = array_merge($selectors, $customSelectors);
+                }
+                foreach (array_unique($selectors) as $selector) {
+                    $advertisement->selectors()->create(['selector' => $selector]);
+                }
             }
 
             // Attach subdomains
@@ -265,25 +268,31 @@ class BackendAdvertisementController extends Controller
             // Clear cache after syncing relationships
             $advertisement->clearAdsCache();
 
-            // Sync selectors
-            $advertisement->selectors()->delete();
-            $selectors = [];
-            if ($request->predefined_selectors) {
-                $predefinedSelectors = config('advertisements.predefined_selectors', []);
-                foreach ($request->predefined_selectors as $tag) {
-                    if (isset($predefinedSelectors[$tag])) {
-                        $selectors[] = $predefinedSelectors[$tag];
-                    } else {
-                        $selectors[] = $tag;
+            // Sync selectors (only for non-special ad types)
+            $specialTypes = ['pop-bottom', 'pop-top', 'interstitial'];
+            if (!in_array($advertisement->type, $specialTypes)) {
+                $advertisement->selectors()->delete();
+                $selectors = [];
+                if ($request->predefined_selectors) {
+                    $predefinedSelectors = config('advertisements.predefined_selectors', []);
+                    foreach ($request->predefined_selectors as $tag) {
+                        if (isset($predefinedSelectors[$tag])) {
+                            $selectors[] = $predefinedSelectors[$tag];
+                        } else {
+                            $selectors[] = $tag;
+                        }
                     }
                 }
-            }
-            if ($request->custom_selectors) {
-                $customSelectors = array_filter(array_map('trim', explode("\n", $request->custom_selectors)));
-                $selectors = array_merge($selectors, $customSelectors);
-            }
-            foreach (array_unique($selectors) as $selector) {
-                $advertisement->selectors()->create(['selector' => $selector]);
+                if ($request->custom_selectors) {
+                    $customSelectors = array_filter(array_map('trim', explode("\n", $request->custom_selectors)));
+                    $selectors = array_merge($selectors, $customSelectors);
+                }
+                foreach (array_unique($selectors) as $selector) {
+                    $advertisement->selectors()->create(['selector' => $selector]);
+                }
+            } else {
+                // Remove selectors for special types
+                $advertisement->selectors()->delete();
             }
 
             // Sync subdomains
