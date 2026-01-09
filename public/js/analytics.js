@@ -347,31 +347,43 @@
         }, 300);
     }
     
-    // Toggle ad collapse/expand function - for pop_from_bottom and pop_from_top only
+    /**
+     * Toggle ad collapse/expand function - for pop_from_bottom and pop_from_top only
+     * الإعلان يتحكم به المستخدم - يمكن طيه جزئيًا (collapse) أو فتحه (expand)
+     * الحالة محفوظة في localStorage لكل إعلان
+     */
     function toggleAdCollapse(btn) {
         const adContainer = btn.closest('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top');
         if (!adContainer) return;
         
         const adId = adContainer.getAttribute('data-ad-id');
         const isCollapsed = adContainer.classList.contains('analytics-ad-collapsed');
-        const isBottom = adContainer.classList.contains('analytics-ad-pop-from-bottom');
+        const adType = adContainer.classList.contains('analytics-ad-pop-from-bottom') ? 'pop_from_bottom' : 'pop_from_top';
+        const storageKey = 'analytics_ad_collapsed_' + adId + '_' + adType;
         
-        // For pop_from_bottom and pop_from_top: toggle behavior (can show/hide)
+        // ارتفاع الـ toggle handle (يجب أن يظهر دائمًا حتى بعد الإغلاق)
+        const toggleHandleHeight = 48; // 32px button + 16px margin
+        
         if (isCollapsed) {
-            // Expand - show full ad
+            // فتح الإعلان - إرجاعه للظهور بالكامل
             adContainer.classList.remove('analytics-ad-collapsed');
             adContainer.style.transform = 'translateY(0)';
-            // Change icon to collapse direction
-            btn.innerHTML = isBottom ? '▼' : '▲';
-            sessionStorage.removeItem('analytics_ad_collapsed_' + adId);
+            // تغيير الأيقونة لاتجاه الطي
+            btn.innerHTML = adType === 'pop_from_bottom' ? '▼' : '▲';
+            // حذف الحالة من localStorage (مفتوح)
+            localStorage.removeItem(storageKey);
         } else {
-            // Collapse - hide ad but keep toggle button visible at same position
+            // طي الإعلان - إخفاءه جزئيًا مع إبقاء الـ handle مرئيًا
             adContainer.classList.add('analytics-ad-collapsed');
-            const offset = 52; // Height of toggle button + margin (32px + 20px)
-            adContainer.style.transform = isBottom ? 'translateY(calc(100% - ' + offset + 'px))' : 'translateY(calc(-100% + ' + offset + 'px))';
-            // Change icon to expand direction (opposite)
-            btn.innerHTML = isBottom ? '▲' : '▼';
-            sessionStorage.setItem('analytics_ad_collapsed_' + adId, 'true');
+            // حساب الإزاحة بناءً على ارتفاع الـ handle
+            const translateValue = adType === 'pop_from_bottom' 
+                ? 'translateY(calc(100% - ' + toggleHandleHeight + 'px))' 
+                : 'translateY(calc(-100% + ' + toggleHandleHeight + 'px))';
+            adContainer.style.transform = translateValue;
+            // تغيير الأيقونة لاتجاه الفتح (عكس الاتجاه)
+            btn.innerHTML = adType === 'pop_from_bottom' ? '▲' : '▼';
+            // حفظ الحالة في localStorage (مطوي)
+            localStorage.setItem(storageKey, 'true');
         }
     }
 
@@ -627,9 +639,9 @@
                 padding: '0',
                 maxWidth: '100%',
                 width: '100%',
-                boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+                boxShadow: '0 -4px 12px rgba(0,0,0,0.15)',
                 transform: transformValue,
-                transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                transition: 'transform 0.35s ease-in-out'
             };
         } else if (ad.type === 'pop_from_top') {
             containerClass = 'analytics-ad-pop-from-top';
@@ -644,9 +656,9 @@
                 padding: '0',
                 maxWidth: '100%',
                 width: '100%',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 transform: transformValue,
-                transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                transition: 'transform 0.35s ease-in-out'
             };
         } else if (ad.type === 'Interstitial') {
             containerClass = 'analytics-ad-interstitial';

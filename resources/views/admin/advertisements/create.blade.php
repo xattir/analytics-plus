@@ -38,7 +38,8 @@
                             المحتوى <span class="text-danger">*</span>
                         </div>
                         <div class="col-12 pt-3">
-                            <textarea name="content" required class="form-control" style="min-height:200px" placeholder="لصورة: أدخل رابط الصورة. لـ HTML/Script: أدخل الكود. لـ نص: أدخل النص.">{{old('content')}}</textarea>
+                            <textarea name="content" id="content-editor" required style="display:none;">{{old('content')}}</textarea>
+                            <div id="content-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left;"></div>
                             <small class="text-muted">لصورة: أدخل رابط الصورة فقط. لـ HTML/Script: أدخل الكود. لـ نص: أدخل النص.</small>
                         </div>
                     </div>
@@ -47,7 +48,7 @@
                             رابط الإعلان (اختياري)
                         </div>
                         <div class="col-12 pt-3">
-                            <input type="url" name="url" maxlength="2048" class="form-control" value="{{old('url')}}" placeholder="https://example.com">
+                            <input type="url" name="url" id="url-editor" maxlength="2048" class="form-control" value="{{old('url')}}" placeholder="https://example.com" style="direction: ltr; text-align: left;">
                         </div>
                     </div>
                     <div class="col-12 col-lg-6 p-2">
@@ -133,7 +134,8 @@
                             Custom URL Patterns (سطر واحد لكل pattern)
                         </div>
                         <div class="col-12 pt-3">
-                            <textarea name="custom_patterns" class="form-control" style="min-height:100px" placeholder="/products/*&#10;/blog/*&#10;/category/*">{{old('custom_patterns')}}</textarea>
+                            <textarea name="custom_patterns" id="patterns-editor" style="display:none;">{{old('custom_patterns')}}</textarea>
+                            <div id="patterns-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left; min-height: 100px;"></div>
                             <small class="text-muted">أدخل patterns مخصصة (مثل /products/* أو /blog/*). يمكنك استخدام * كـ wildcard.</small>
                         </div>
                     </div>
@@ -166,7 +168,8 @@
                             Selectors مخصصة (سطر واحد لكل selector)
                         </div>
                         <div class="col-12 pt-3">
-                            <textarea name="custom_selectors" class="form-control" style="min-height:100px" placeholder="#my-id&#10;.my-class&#10;[data-ad-zone]">{{old('custom_selectors')}}</textarea>
+                            <textarea name="custom_selectors" id="selectors-editor" style="display:none;">{{old('custom_selectors')}}</textarea>
+                            <div id="selectors-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left; min-height: 100px;"></div>
                         </div>
                     </div>
                     <div class="col-12 p-2">
@@ -174,7 +177,8 @@
                             Subdomains (مفصولة بفواصل، اترك فارغاً للكل)
                         </div>
                         <div class="col-12 pt-3">
-                            <input type="text" name="subdomains" class="form-control" value="{{old('subdomains')}}" placeholder="blog, shop, admin">
+                            <textarea name="subdomains" id="subdomains-editor" style="display:none;">{{old('subdomains')}}</textarea>
+                            <div id="subdomains-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left; min-height: 80px;"></div>
                         </div>
                     </div>
                     <div class="col-12 p-2" id="padding_fields" style="display: none;">
@@ -228,7 +232,99 @@
 @endsection
 
 @section('scripts')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/monokai.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/htmlmixed/htmlmixed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/xml/xml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/css/css.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/clike/clike.js"></script>
+
 <script type="module">
+// Initialize CodeMirror editors
+let contentEditor, patternsEditor, selectorsEditor, subdomainsEditor;
+
+function initCodeEditors() {
+    // Content Editor
+    const contentTextarea = document.getElementById('content-editor');
+    const contentContainer = document.getElementById('content-editor-container');
+    if (contentTextarea && contentContainer) {
+        contentEditor = CodeMirror(contentContainer, {
+            value: contentTextarea.value || '',
+            mode: 'htmlmixed',
+            theme: 'default',
+            lineNumbers: true,
+            lineWrapping: true,
+            direction: 'ltr',
+            indentUnit: 2,
+            autoCloseTags: true,
+            matchBrackets: true,
+        });
+        contentEditor.setSize('100%', '200px');
+        contentEditor.on('change', function(cm) {
+            contentTextarea.value = cm.getValue();
+        });
+    }
+
+    // Patterns Editor
+    const patternsTextarea = document.getElementById('patterns-editor');
+    const patternsContainer = document.getElementById('patterns-editor-container');
+    if (patternsTextarea && patternsContainer) {
+        patternsEditor = CodeMirror(patternsContainer, {
+            value: patternsTextarea.value || '',
+            mode: 'text/plain',
+            theme: 'default',
+            lineNumbers: true,
+            lineWrapping: true,
+            direction: 'ltr',
+            indentUnit: 2,
+        });
+        patternsEditor.setSize('100%', '100px');
+        patternsEditor.on('change', function(cm) {
+            patternsTextarea.value = cm.getValue();
+        });
+    }
+
+    // Selectors Editor
+    const selectorsTextarea = document.getElementById('selectors-editor');
+    const selectorsContainer = document.getElementById('selectors-editor-container');
+    if (selectorsTextarea && selectorsContainer) {
+        selectorsEditor = CodeMirror(selectorsContainer, {
+            value: selectorsTextarea.value || '',
+            mode: 'css',
+            theme: 'default',
+            lineNumbers: true,
+            lineWrapping: true,
+            direction: 'ltr',
+            indentUnit: 2,
+        });
+        selectorsEditor.setSize('100%', '100px');
+        selectorsEditor.on('change', function(cm) {
+            selectorsTextarea.value = cm.getValue();
+        });
+    }
+
+    // Subdomains Editor
+    const subdomainsTextarea = document.getElementById('subdomains-editor');
+    const subdomainsContainer = document.getElementById('subdomains-editor-container');
+    if (subdomainsTextarea && subdomainsContainer) {
+        subdomainsEditor = CodeMirror(subdomainsContainer, {
+            value: subdomainsTextarea.value || '',
+            mode: 'text/plain',
+            theme: 'default',
+            lineNumbers: false,
+            lineWrapping: true,
+            direction: 'ltr',
+            indentUnit: 2,
+        });
+        subdomainsEditor.setSize('100%', '80px');
+        subdomainsEditor.on('change', function(cm) {
+            subdomainsTextarea.value = cm.getValue();
+        });
+    }
+}
+
 // Wait for jQuery and select2 to be available
 function initSelect2() {
     if (typeof window.$ !== 'undefined' && typeof window.$.fn.select2 !== 'undefined') {
@@ -284,6 +380,7 @@ window.toggleSelectorFields = function() {
 
 // Initialize when DOM is ready
 function initializeForm() {
+    initCodeEditors();
     initSelect2();
     // Wait a bit for select2 to initialize, then toggle fields
     setTimeout(function() {

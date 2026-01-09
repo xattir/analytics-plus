@@ -39,7 +39,8 @@
                             المحتوى <span class="text-danger">*</span>
                         </div>
                         <div class="col-12 pt-3">
-                            <textarea name="content" required class="form-control" style="min-height:200px">{{old('content', $advertisement->content)}}</textarea>
+                            <textarea name="content" id="content-editor" required style="display:none;">{{old('content', $advertisement->content)}}</textarea>
+                            <div id="content-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left;"></div>
                         </div>
                     </div>
                     <div class="col-12 col-lg-6 p-2">
@@ -47,7 +48,7 @@
                             رابط الإعلان (اختياري)
                         </div>
                         <div class="col-12 pt-3">
-                            <input type="url" name="url" maxlength="2048" class="form-control" value="{{old('url', $advertisement->url)}}">
+                            <input type="url" name="url" id="url-editor" maxlength="2048" class="form-control" value="{{old('url', $advertisement->url)}}" style="direction: ltr; text-align: left;">
                         </div>
                     </div>
                     <div class="col-12 col-lg-6 p-2">
@@ -132,7 +133,8 @@
                             Custom URL Patterns (سطر واحد لكل pattern)
                         </div>
                         <div class="col-12 pt-3">
-                            <textarea name="custom_patterns" class="form-control" style="min-height:100px" placeholder="/products/*&#10;/blog/*&#10;/category/*">{{old('custom_patterns', $advertisement->custom_patterns ?? '')}}</textarea>
+                            <textarea name="custom_patterns" id="patterns-editor" style="display:none;">{{old('custom_patterns', $advertisement->custom_patterns ?? '')}}</textarea>
+                            <div id="patterns-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left; min-height: 100px;"></div>
                             <small class="text-muted">أدخل patterns مخصصة (مثل /products/* أو /blog/*). يمكنك استخدام * كـ wildcard.</small>
                         </div>
                     </div>
@@ -165,7 +167,8 @@
                             Selectors مخصصة (سطر واحد لكل selector)
                         </div>
                         <div class="col-12 pt-3">
-                            <textarea name="custom_selectors" class="form-control" style="min-height:100px">{{implode("\n", $currentCustomSelectors)}}</textarea>
+                            <textarea name="custom_selectors" id="selectors-editor" style="display:none;">{{implode("\n", $currentCustomSelectors)}}</textarea>
+                            <div id="selectors-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left; min-height: 100px;"></div>
                         </div>
                     </div>
                     <div class="col-12 p-2">
@@ -173,7 +176,8 @@
                             Subdomains (مفصولة بفواصل، اترك فارغاً للكل)
                         </div>
                         <div class="col-12 pt-3">
-                            <input type="text" name="subdomains" class="form-control" value="{{$advertisement->subdomains->whereNotNull('subdomain')->pluck('subdomain')->implode(',')}}">
+                            <textarea name="subdomains" id="subdomains-editor" style="display:none;">{{$advertisement->subdomains->whereNotNull('subdomain')->pluck('subdomain')->implode(',')}}</textarea>
+                            <div id="subdomains-editor-container" style="border: 1px solid #ddd; border-radius: 4px; direction: ltr; text-align: left; min-height: 80px;"></div>
                         </div>
                     </div>
                     <div class="col-12 p-2" id="padding_fields" style="display: none;">
