@@ -657,7 +657,7 @@
                 bottom: '0',
                 left: '0',
                 right: '0',
-                zIndex: '9999',
+                zIndex: '99999999999',
                 background: '#ffffff',
                 padding: '0',
                 maxWidth: '100%',
@@ -674,7 +674,7 @@
                 top: '0',
                 left: '0',
                 right: '0',
-                zIndex: '9999',
+                zIndex: '99999999999',
                 background: '#ffffff',
                 padding: '0',
                 maxWidth: '100%',
@@ -719,9 +719,10 @@
             container.style[key] = positionStyles[key];
         });
         
-        // Force correct background colors (prevent any CSS override from page)
+        // Force correct background colors and z-index (prevent any CSS override from page)
         if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             container.style.setProperty('background', '#ffffff', 'important');
+            container.style.setProperty('z-index', '99999999999', 'important');
         } else if (ad.type === 'Interstitial') {
             // Force white background and visibility immediately - prevent any external CSS override
             container.style.setProperty('background', 'rgb(0 0 0 / 68%)', 'important');
@@ -851,8 +852,8 @@
             const togglePosition = isBottom ? 'top' : 'bottom';
             const toggleValue = '-21px';
             
-            // border-radius: 8px 8px 0 0
-            const borderRadius = '8px 8px 0px 0px';
+            // border-radius حسب الاتجاه: top للـ bottom، bottom للـ top
+            const borderRadius = isBottom ? '8px 8px 0px 0px' : '0px 0px 8px 8px';
             
             // حساب موضع left: في أقصى يسار الـ wrapper (width 1000px centered)
             // left = calc((100% - 1000px) / 2) لكن مع max(0px, ...) لضمان عدم الخروج عن الشاشة
@@ -876,7 +877,7 @@
                 'height: 22px !important; ' +
                 'cursor: pointer !important; ' +
                 'color: rgb(51, 51, 51) !important; ' +
-                'z-index: 100001 !important; ' +
+                'z-index: 99999999999 !important; ' +
                 'display: flex !important; ' +
                 'align-items: center !important; ' +
                 'justify-content: center !important; ' +
@@ -940,7 +941,7 @@
                         -webkit-user-select: none !important;
                         pointer-events: auto !important;
                         cursor: pointer !important;
-                        z-index: 100001 !important;
+                        z-index: 99999999999 !important;
                     }
                     .analytics-ad-toggle:hover {
                         background: #f5f5f5 !important;
@@ -950,8 +951,8 @@
                     }
                     .analytics-ad-toggle svg {
                         display: block !important;
-                        width: 16px !important;
-                        height: 16px !important;
+                        width: 20px !important;
+                        height: 20px !important;
                     }
                     
                     /* Toggle Button - خارج wrapper (المحتوى) تمامًا، داخل container، يتحرك معه */
@@ -961,12 +962,11 @@
                         /* في أقصى يسار الـ wrapper (width 1000px centered) */
                         left: max(0px, calc((100% - 1000px) / 2)) !important;
                         transform: translateX(-50%) !important;
-                        border-radius: 8px 8px 0px 0px !important;
                         background: rgb(255, 255, 255) !important;
                         width: 48px !important;
                         height: 22px !important;
                         color: rgb(51, 51, 51) !important;
-                        z-index: 100001 !important;
+                        z-index: 99999999999 !important;
                         display: flex !important;
                         align-items: center !important;
                         justify-content: center !important;
@@ -983,12 +983,14 @@
                     /* Toggle Button - موضع top للـ pop_from_bottom */
                     .analytics-ad-pop-from-bottom .analytics-ad-toggle {
                         top: -21px !important;
+                        border-radius: 8px 8px 0px 0px !important;
                         box-shadow: rgba(0, 0, 0, 0.2) 0px -7px 8px !important;
                     }
                     
                     /* Toggle Button - موضع bottom للـ pop_from_top */
                     .analytics-ad-pop-from-top .analytics-ad-toggle {
                         bottom: -21px !important;
+                        border-radius: 0px 0px 8px 8px !important;
                         box-shadow: rgba(0, 0, 0, 0.2) 0px 7px 8px !important;
                     }
                     
@@ -1024,6 +1026,7 @@
                     .analytics-ad-pop-from-bottom,
                     .analytics-ad-pop-from-top {
                         transition: transform 0.35s ease-in-out !important;
+                        z-index: 99999999999 !important;
                     }
                     
                     /* SVG icons أكبر */
