@@ -1,5 +1,42 @@
 @extends('layouts.admin')
 @section('content')
+<style>
+    .badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #ffffff !important;
+    }
+    .badge-info {
+        background-color: #3b82f6 !important;
+        color: #ffffff !important;
+    }
+    .badge-primary {
+        background-color: #6366f1 !important;
+        color: #ffffff !important;
+    }
+    .badge-warning {
+        background-color: #f59e0b !important;
+        color: #ffffff !important;
+    }
+    .badge-secondary {
+        background-color: #6b7280 !important;
+        color: #ffffff !important;
+    }
+    .badge-dark {
+        background-color: #1f2937 !important;
+        color: #ffffff !important;
+    }
+    .table td {
+        color: #111827 !important;
+    }
+    .table th {
+        color: #1f2937 !important;
+        font-weight: 600;
+    }
+</style>
 <div class="col-12 p-3">
 	<div class="col-12 col-lg-12 p-0 main-box">
 	 
