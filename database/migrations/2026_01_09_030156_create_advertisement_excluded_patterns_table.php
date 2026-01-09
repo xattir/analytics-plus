@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('advertisement_excluded_patterns')) {
+            return;
+        }
+        
         Schema::create('advertisement_excluded_patterns', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('advertisement_id');

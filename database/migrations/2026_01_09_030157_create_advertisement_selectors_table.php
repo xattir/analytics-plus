@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('advertisement_selectors')) {
+            return;
+        }
+        
         Schema::create('advertisement_selectors', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('advertisement_id');

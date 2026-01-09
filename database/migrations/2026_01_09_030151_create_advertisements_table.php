@@ -34,6 +34,18 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Drop tables with foreign keys first
+        Schema::dropIfExists('advertisement_clicks');
+        Schema::dropIfExists('advertisement_impressions');
+        Schema::dropIfExists('advertisement_subdomains');
+        Schema::dropIfExists('advertisement_selectors');
+        Schema::dropIfExists('advertisement_excluded_patterns');
+        Schema::dropIfExists('advertisement_url_patterns');
+        Schema::dropIfExists('advertisement_devices');
+        Schema::dropIfExists('advertisement_countries');
+        Schema::dropIfExists('advertisement_sites');
+        
+        // Finally drop the main table
         Schema::dropIfExists('advertisements');
     }
 };

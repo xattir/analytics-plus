@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('advertisement_url_patterns')) {
+            return;
+        }
+        
         Schema::create('advertisement_url_patterns', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('advertisement_id');
