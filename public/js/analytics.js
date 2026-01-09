@@ -726,8 +726,17 @@
         const isolatedContent = createIsolatedAdContent(adContent, ad.id, ad.type);
         
         if (ad.type === 'Interstitial') {
-            // For Interstitial: content goes directly in wrapper - no extra padding
-            contentDiv.style.cssText = 'width: 100% !important; min-height: 50px !important; position: relative !important; overflow: visible !important; padding: 0 !important; margin: 0 !important;';
+            // For Interstitial: content goes directly in wrapper - add padding-top and padding-right to prevent close button overlap
+            // Calculate padding needed for close button: button top position (paddingY/2 or 10px) + button height (32px) + spacing (5px)
+            const buttonTopPos = paddingY > 10 ? paddingY / 2 : 10;
+            const buttonRightPos = paddingX > 10 ? paddingX / 2 : 10;
+            const buttonHeight = 32;
+            const buttonWidth = 32;
+            const spacing = 5;
+            const paddingTopForButton = buttonTopPos + buttonHeight + spacing;
+            const paddingRightForButton = buttonRightPos + buttonWidth + spacing;
+            
+            contentDiv.style.cssText = 'width: 100% !important; min-height: 50px !important; position: relative !important; overflow: visible !important; padding-top: ' + paddingTopForButton + 'px !important; padding-right: ' + paddingRightForButton + 'px !important; padding-bottom: 0 !important; padding-left: 0 !important; margin: 0 !important;';
             isolatedContent.style.setProperty('display', 'block', 'important');
             isolatedContent.style.setProperty('width', '100%', 'important');
             isolatedContent.style.setProperty('height', 'auto', 'important');
