@@ -599,13 +599,13 @@
                 right: '0',
                 bottom: '0',
                 zIndex: '99999',
-                background: 'rgba(0,0,0,0.5)',
+                background: 'rgba(255,255,255,0.95)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '20px',
+                padding: '0',
                 opacity: '1',
                 transition: 'opacity 0.3s ease-in-out'
             };
@@ -630,7 +630,7 @@
         if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             container.style.setProperty('background', '#ffffff', 'important');
         } else if (ad.type === 'Interstitial') {
-            container.style.setProperty('background', 'rgba(0,0,0,0.5)', 'important');
+            container.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
             container.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
             container.style.setProperty('-webkit-backdrop-filter', 'blur(10px)', 'important');
             container.style.setProperty('opacity', '1', 'important');
@@ -639,21 +639,23 @@
             container.style.setProperty('pointer-events', 'auto', 'important');
         }
         
-        // Create inner wrapper
+        // Create inner wrapper - clean and modern padding
         const wrapper = document.createElement('div');
         if (ad.type === 'Interstitial') {
             wrapper.className = 'analytics-ad-interstitial-wrapper';
-            // Set styles with !important to override any external CSS
-            wrapper.style.cssText = 'position: relative !important; width: 550px !important; max-width: 90% !important; max-height: 90vh !important; overflow-y: auto !important; overflow-x: hidden !important; background: #fff !important; border-radius: 8px !important; padding: ' + paddingY + 'px ' + paddingX + 'px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; transform: scale(0.9) !important; opacity: 0 !important; transition: transform 0.3s ease-out, opacity 0.3s ease-out !important;';
+            // Modern, clean padding - only use padding from dashboard (padding_x, padding_y)
+            // No extra padding in container or contentDiv
+            wrapper.style.cssText = 'position: relative !important; width: 550px !important; max-width: 90% !important; max-height: 90vh !important; overflow-y: auto !important; overflow-x: hidden !important; background: #fff !important; border-radius: 8px !important; padding: ' + paddingY + 'px ' + paddingX + 'px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important; transform: scale(0.9) !important; opacity: 0 !important; transition: transform 0.3s ease-out, opacity 0.3s ease-out !important;';
             // Also set properties individually to ensure they're applied
             wrapper.style.setProperty('position', 'relative', 'important');
             wrapper.style.setProperty('width', '550px', 'important');
             wrapper.style.setProperty('max-width', '90%', 'important');
             wrapper.style.setProperty('background', '#fff', 'important');
         } else {
-            // For pop_from_bottom and pop_from_top: simple centered container
+            // For pop_from_bottom and pop_from_top: simple centered container with clean padding
             wrapper.className = 'analytics-ad-wrapper';
-            wrapper.style.cssText = 'width: 100% !important; max-width: 1000px; margin: 0 auto; padding: ' + paddingY + 'px ' + paddingX + 'px; position: relative;';
+            // Use only dashboard padding - no extra padding
+            wrapper.style.cssText = 'width: 100% !important; max-width: 1000px !important; margin: 0 auto !important; padding: ' + paddingY + 'px ' + paddingX + 'px !important; position: relative !important;';
         }
         
         // Create content div with isolated content (no iframe)
@@ -661,25 +663,28 @@
         const isolatedContent = createIsolatedAdContent(adContent, ad.id, ad.type);
         
         if (ad.type === 'Interstitial') {
-            // For Interstitial: content goes directly in wrapper
-            contentDiv.style.cssText = 'width: 100%; min-height: 50px; position: relative; overflow: visible; padding: 0; margin: 0;';
+            // For Interstitial: content goes directly in wrapper - no extra padding
+            contentDiv.style.cssText = 'width: 100% !important; min-height: 50px !important; position: relative !important; overflow: visible !important; padding: 0 !important; margin: 0 !important;';
             isolatedContent.style.setProperty('display', 'block', 'important');
             isolatedContent.style.setProperty('width', '100%', 'important');
             isolatedContent.style.setProperty('height', 'auto', 'important');
+            isolatedContent.style.setProperty('padding', '0', 'important');
+            isolatedContent.style.setProperty('margin', '0', 'important');
             contentDiv.appendChild(isolatedContent);
             wrapper.appendChild(contentDiv);
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
-            // Simple centered content layout - ensure proper height
-            contentDiv.style.cssText = 'width: 100%; display: block; position: relative;';
+            // Simple centered content layout - ensure proper height, no extra padding
+            contentDiv.style.cssText = 'width: 100% !important; display: block !important; position: relative !important; padding: 0 !important; margin: 0 !important;';
             isolatedContent.style.setProperty('display', 'block', 'important');
             isolatedContent.style.setProperty('width', '100%', 'important');
             isolatedContent.style.setProperty('height', 'auto', 'important');
             isolatedContent.style.setProperty('min-height', 'auto', 'important');
             isolatedContent.style.setProperty('margin', '0 auto', 'important');
+            isolatedContent.style.setProperty('padding', '0', 'important');
             contentDiv.appendChild(isolatedContent);
             wrapper.appendChild(contentDiv);
         } else {
-            contentDiv.style.cssText = 'width: 100%; display: block;';
+            contentDiv.style.cssText = 'width: 100%; display: block; padding: 0; margin: 0;';
             contentDiv.appendChild(isolatedContent);
         }
         
@@ -692,10 +697,10 @@
             closeBtn.setAttribute('type', 'button');
             closeBtn.setAttribute('aria-label', 'Close ad');
             closeBtn.innerHTML = '✕';
-            // Position close button in the corner of the wrapper (content frame)
-            closeBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 18px; font-weight: normal; z-index: 1001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);';
-            closeBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; this.style.transform = 'scale(1.1)'; };
-            closeBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; this.style.transform = 'scale(1)'; };
+            // Position close button in the corner of the wrapper (content frame) - white background with border
+            closeBtn.style.cssText = 'position: absolute; top: ' + (paddingY > 10 ? paddingY / 2 : 10) + 'px; right: ' + (paddingX > 10 ? paddingX / 2 : 10) + 'px; background: #fff; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #333; font-size: 18px; font-weight: normal; z-index: 1001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+            closeBtn.onmouseover = function() { this.style.setProperty('background', '#f5f5f5', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.2)', 'important'); this.style.setProperty('transform', 'scale(1.1)', 'important'); };
+            closeBtn.onmouseout = function() { this.style.setProperty('background', '#fff', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.1)', 'important'); this.style.setProperty('transform', 'scale(1)', 'important'); };
         }
         
         // Create toggle button for pop_from_bottom and pop_from_top only
@@ -707,15 +712,17 @@
             toggleBtn.setAttribute('type', 'button');
             toggleBtn.setAttribute('aria-label', 'Toggle ad');
             
-            // For pop_from_bottom and pop_from_top: toggle button at top-left (bottom) or bottom-left (top)
+            // For pop_from_bottom and pop_from_top: toggle button at top-left (bottom) or bottom-left (top) - white background
             toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '▼' : '▲';
+            const toggleTop = ad.type === 'pop_from_bottom' ? (paddingY > 10 ? paddingY / 2 : 10) : 'auto';
+            const toggleBottom = ad.type === 'pop_from_top' ? (paddingY > 10 ? paddingY / 2 : 10) : 'auto';
             toggleBtn.style.cssText = 'position: absolute; ' + 
-                (ad.type === 'pop_from_bottom' ? 'top: 10px;' : 'bottom: 10px;') + 
-                'left: 10px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; ' +
-                'width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 16px; font-weight: normal; z-index: 100001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; box-shadow: 0 2px 6px rgba(0,0,0,0.25); pointer-events: auto !important;';
+                (ad.type === 'pop_from_bottom' ? 'top: ' + toggleTop + 'px;' : 'bottom: ' + toggleBottom + 'px;') + 
+                'left: ' + (paddingX > 10 ? paddingX / 2 : 10) + 'px; background: #fff; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; ' +
+                'width: 32px; height: 32px; cursor: pointer; color: #333; font-size: 16px; font-weight: normal; z-index: 100001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1); pointer-events: auto !important;';
             toggleBtn.setAttribute('style', toggleBtn.style.cssText); // Ensure styles are applied
-            toggleBtn.onmouseover = function() { this.style.setProperty('background', 'rgba(0,0,0,0.9)', 'important'); this.style.setProperty('transform', 'scale(1.1)', 'important'); };
-            toggleBtn.onmouseout = function() { this.style.setProperty('background', 'rgba(0,0,0,0.8)', 'important'); this.style.setProperty('transform', 'scale(1)', 'important'); };
+            toggleBtn.onmouseover = function() { this.style.setProperty('background', '#f5f5f5', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.2)', 'important'); this.style.setProperty('transform', 'scale(1.1)', 'important'); };
+            toggleBtn.onmouseout = function() { this.style.setProperty('background', '#fff', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.1)', 'important'); this.style.setProperty('transform', 'scale(1)', 'important'); };
             
             // Add styles for collapsed state and ensure Interstitial visibility
             if (!document.getElementById('analytics-ad-toggle-styles')) {
@@ -727,7 +734,7 @@
                         display: flex !important;
                         visibility: visible !important;
                         pointer-events: auto !important;
-                        background: rgba(0,0,0,0.5) !important;
+                        background: rgba(255,255,255,0.95) !important;
                         backdrop-filter: blur(10px) !important;
                         -webkit-backdrop-filter: blur(10px) !important;
                     }
@@ -748,7 +755,8 @@
                         z-index: 100001 !important;
                     }
                     .analytics-ad-toggle:hover {
-                        background: rgba(0,0,0,0.9) !important;
+                        background: #f5f5f5 !important;
+                        border-color: rgba(0,0,0,0.2) !important;
                     }
                     .analytics-ad-toggle:active {
                         transform: scale(0.95) !important;
@@ -763,14 +771,18 @@
                         left: 10px !important;
                         transform: scale(1) !important;
                         border-radius: 50% !important;
-                        background: rgba(0,0,0,0.8) !important;
+                        background: #fff !important;
+                        border: 2px solid rgba(0,0,0,0.1) !important;
+                        color: #333 !important;
                     }
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-toggle {
                         bottom: 10px !important;
                         left: 10px !important;
                         transform: scale(1) !important;
                         border-radius: 50% !important;
-                        background: rgba(0,0,0,0.8) !important;
+                        background: #fff !important;
+                        border: 2px solid rgba(0,0,0,0.1) !important;
+                        color: #333 !important;
                     }
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-wrapper,
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-wrapper {
@@ -784,7 +796,7 @@
                         display: flex !important;
                         visibility: visible !important;
                         pointer-events: auto !important;
-                        background: rgba(0,0,0,0.5) !important;
+                        background: rgba(255,255,255,0.95) !important;
                         backdrop-filter: blur(10px) !important;
                         -webkit-backdrop-filter: blur(10px) !important;
                     }
@@ -802,7 +814,8 @@
                         -webkit-user-select: none !important;
                     }
                     .analytics-ad-close-interstitial:hover {
-                        background: rgba(0,0,0,0.9) !important;
+                        background: #f5f5f5 !important;
+                        border-color: rgba(0,0,0,0.2) !important;
                     }
                     .analytics-ad-close-interstitial:active {
                         transform: scale(0.95) !important;
@@ -904,7 +917,7 @@
                             adContainer.style.setProperty('display', 'flex', 'important');
                             adContainer.style.setProperty('visibility', 'visible', 'important');
                             adContainer.style.setProperty('pointer-events', 'auto', 'important');
-                            adContainer.style.setProperty('background', 'rgba(0,0,0,0.5)', 'important');
+                            adContainer.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
                             
                             // Animate wrapper with scale and fade - smooth animation
                             const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
