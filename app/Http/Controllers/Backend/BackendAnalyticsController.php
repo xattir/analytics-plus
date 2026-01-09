@@ -2418,24 +2418,39 @@ HTML;
         }
 
         /**
-         * 5️⃣ Persist
+         * 5️⃣ Persist - Only add new patterns, don't update existing ones
          */
-        $result = [];
+        $result = [
+            'patterns' => [],
+            'added_count' => 0,
+            'existing_count' => 0,
+        ];
 
         foreach ($finalPatterns as $domain => $patterns) {
             foreach ($patterns as $pattern) {
-                DB::table('analytics_url_patterns')->updateOrInsert(
-                    [
+                // Check if pattern already exists
+                $exists = DB::table('analytics_url_patterns')
+                    ->where('site_id', $siteId)
+                    ->where('domain', $domain)
+                    ->where('pattern', $pattern)
+                    ->exists();
+
+                if (!$exists) {
+                    // Only insert if it doesn't exist
+                    DB::table('analytics_url_patterns')->insert([
                         'site_id' => $siteId,
                         'domain'  => $domain,
                         'pattern' => $pattern,
-                    ],
-                    [
                         'generated_at' => now(),
-                    ]
-                );
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $result['added_count']++;
+                } else {
+                    $result['existing_count']++;
+                }
 
-                $result[] = [
+                $result['patterns'][] = [
                     'site_id' => $siteId,
                     'domain'  => $domain,
                     'pattern' => $pattern,
@@ -2688,12 +2703,24 @@ HTML;
         $limit = $request->input('limit', 10000);
 
         try {
-            $patterns = $this->extractUrlPatternsForSite($site->id, $limit);
+            $result = $this->extractUrlPatternsForSite($site->id, $limit);
 
             $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
+            
+            $message = 'URL patterns processed successfully. ';
+            if ($result['added_count'] > 0) {
+                $message .= 'Added ' . $result['added_count'] . ' new pattern(s). ';
+            }
+            if ($result['existing_count'] > 0) {
+                $message .= $result['existing_count'] . ' pattern(s) already exist.';
+            }
+            if ($result['added_count'] == 0 && $result['existing_count'] == 0) {
+                $message = 'No new patterns found.';
+            }
+            
             return redirect()
                 ->route($routeName, $site)
-                ->with('success', 'URL patterns regenerated successfully. Found ' . count($patterns) . ' unique patterns.');
+                ->with('success', $message);
         } catch (\Exception $e) {
             $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
             return redirect()

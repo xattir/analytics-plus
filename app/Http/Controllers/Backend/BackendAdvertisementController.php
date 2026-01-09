@@ -109,6 +109,9 @@ class BackendAdvertisementController extends Controller
             if ($request->excluded_pattern_ids) {
                 $advertisement->excludedPatterns()->sync($request->excluded_pattern_ids);
             }
+            
+            // Clear cache after syncing relationships
+            $advertisement->clearAdsCache();
 
             // Attach selectors
             $selectors = [];
@@ -258,6 +261,9 @@ class BackendAdvertisementController extends Controller
             if ($request->has('excluded_pattern_ids')) {
                 $advertisement->excludedPatterns()->sync($request->excluded_pattern_ids ?? []);
             }
+            
+            // Clear cache after syncing relationships
+            $advertisement->clearAdsCache();
 
             // Sync selectors
             $advertisement->selectors()->delete();
@@ -290,6 +296,9 @@ class BackendAdvertisementController extends Controller
             } else {
                 $advertisement->subdomains()->create(['subdomain' => null]);
             }
+            
+            // Clear cache after all syncing is done
+            $advertisement->clearAdsCache();
 
             DB::commit();
             flash()->success('تم تحديث الإعلان بنجاح');

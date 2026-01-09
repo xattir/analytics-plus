@@ -39,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Page::observe(\App\Observers\PageObserver::class);
         \App\Models\Article::observe(\App\Observers\ArticleObserver::class);
         \App\Models\Plugin::observe(\App\Observers\PluginObserver::class);
+        \App\Models\Advertisement::observe(\App\Observers\AdvertisementObserver::class);
 
 
         Paginator::useBootstrapFive();

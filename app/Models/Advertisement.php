@@ -179,9 +179,35 @@ class Advertisement extends Model
      */
     public static function getMatchingAdsForSite($siteId, $deviceType, $countryCode, $url, $subdomain)
     {
-        $cacheKey = "ads_matching_{$siteId}_{$deviceType}_{$countryCode}_" . md5($url . $subdomain);
+        $countryPart = $countryCode ? "_{$countryCode}" : '';
+        $cacheKey = "ads_matching_{$siteId}_{$deviceType}{$countryPart}_" . md5($url . ($subdomain ?? ''));
+        
+        // Track this cache key for efficient deletion
+        $cacheKeysSetKey = "ads_cache_keys_site_{$siteId}";
+        $cacheKeys = Cache::get($cacheKeysSetKey, []);
+        if (!in_array($cacheKey, $cacheKeys)) {
+            $cacheKeys[] = $cacheKey;
+            Cache::put($cacheKeysSetKey, $cacheKeys, 86400); // Store for 24 hours
+        }
+        
+        // Try to use cache tags if available
+        $store = Cache::getStore();
+        if (method_exists($store, 'tags')) {
+            return Cache::tags(['ads_site_' . $siteId])->remember($cacheKey, 300, function () use ($siteId, $deviceType, $countryCode, $url, $subdomain) {
+                return self::getMatchingAdsForSiteQuery($siteId, $deviceType, $countryCode, $url, $subdomain);
+            });
+        }
         
         return Cache::remember($cacheKey, 300, function () use ($siteId, $deviceType, $countryCode, $url, $subdomain) {
+            return self::getMatchingAdsForSiteQuery($siteId, $deviceType, $countryCode, $url, $subdomain);
+        });
+    }
+    
+    /**
+     * Get matching ads query (extracted for reuse)
+     */
+    private static function getMatchingAdsForSiteQuery($siteId, $deviceType, $countryCode, $url, $subdomain)
+    {
             $query = self::where('is_active', true)
                 ->whereHas('sites', function ($q) use ($siteId) {
                     $q->where('analytics_sites.id', $siteId);
@@ -252,7 +278,6 @@ class Advertisement extends Model
             });
 
             return $ads->values();
-        });
     }
 
     /**
@@ -397,6 +422,46 @@ class Advertisement extends Model
     private function matchesUrlPattern($urlPath, $pattern)
     {
         return self::matchesUrlPatternStatic($urlPath, $pattern);
+    }
+
+    /**
+     * Clear cache for all sites associated with this advertisement
+     */
+    public function clearAdsCache(): void
+    {
+        $sites = $this->sites()->get();
+        foreach ($sites as $site) {
+            $this->clearCacheForSite($site->id);
+        }
+    }
+
+    /**
+     * Clear cache for a specific site
+     */
+    public static function clearCacheForSite(int $siteId): void
+    {
+        // Try to use cache tags if available
+        $store = Cache::getStore();
+        if (method_exists($store, 'tags')) {
+            try {
+                Cache::tags(['ads_site_' . $siteId])->flush();
+                return;
+            } catch (\Exception $e) {
+                // Fallback to manual clearing
+            }
+        }
+        
+        // Use tracked cache keys for efficient deletion
+        $cacheKeysSetKey = "ads_cache_keys_site_{$siteId}";
+        $cacheKeys = Cache::get($cacheKeysSetKey, []);
+        
+        // Delete all tracked cache keys
+        foreach ($cacheKeys as $cacheKey) {
+            Cache::forget($cacheKey);
+        }
+        
+        // Clear the tracking set
+        Cache::forget($cacheKeysSetKey);
     }
 
     /**
