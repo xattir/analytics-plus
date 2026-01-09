@@ -631,15 +631,25 @@
             container.style.setProperty('background', '#ffffff', 'important');
         } else if (ad.type === 'Interstitial') {
             container.style.setProperty('background', 'rgba(0,0,0,0.5)', 'important');
+            container.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
+            container.style.setProperty('-webkit-backdrop-filter', 'blur(10px)', 'important');
             container.style.setProperty('opacity', '1', 'important');
             container.style.setProperty('display', 'flex', 'important');
+            container.style.setProperty('visibility', 'visible', 'important');
+            container.style.setProperty('pointer-events', 'auto', 'important');
         }
         
         // Create inner wrapper
         const wrapper = document.createElement('div');
         if (ad.type === 'Interstitial') {
             wrapper.className = 'analytics-ad-interstitial-wrapper';
-            wrapper.style.cssText = 'position: relative; width: 550px; max-width: 90%; max-height: 90vh; overflow-y: auto; overflow-x: hidden; background: #fff; border-radius: 8px; padding: ' + paddingY + 'px ' + paddingX + 'px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: scale(0.9); opacity: 0; transition: transform 0.3s ease-out, opacity 0.3s ease-out;';
+            // Set styles with !important to override any external CSS
+            wrapper.style.cssText = 'position: relative !important; width: 550px !important; max-width: 90% !important; max-height: 90vh !important; overflow-y: auto !important; overflow-x: hidden !important; background: #fff !important; border-radius: 8px !important; padding: ' + paddingY + 'px ' + paddingX + 'px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; transform: scale(0.9) !important; opacity: 0 !important; transition: transform 0.3s ease-out, opacity 0.3s ease-out !important;';
+            // Also set properties individually to ensure they're applied
+            wrapper.style.setProperty('position', 'relative', 'important');
+            wrapper.style.setProperty('width', '550px', 'important');
+            wrapper.style.setProperty('max-width', '90%', 'important');
+            wrapper.style.setProperty('background', '#fff', 'important');
         } else {
             // For pop_from_bottom and pop_from_top: simple centered container
             wrapper.className = 'analytics-ad-wrapper';
@@ -702,26 +712,51 @@
             toggleBtn.style.cssText = 'position: absolute; ' + 
                 (ad.type === 'pop_from_bottom' ? 'top: 10px;' : 'bottom: 10px;') + 
                 'left: 10px; background: rgba(0,0,0,0.8); border: none; border-radius: 50%; ' +
-                'width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 16px; font-weight: normal; z-index: 10001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; box-shadow: 0 2px 6px rgba(0,0,0,0.25);';
-            toggleBtn.onmouseover = function() { this.style.background = 'rgba(0,0,0,0.9)'; this.style.transform = 'scale(1.1)'; };
-            toggleBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; this.style.transform = 'scale(1)'; };
+                'width: 32px; height: 32px; cursor: pointer; color: #fff; font-size: 16px; font-weight: normal; z-index: 100001; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; box-shadow: 0 2px 6px rgba(0,0,0,0.25); pointer-events: auto !important;';
+            toggleBtn.setAttribute('style', toggleBtn.style.cssText); // Ensure styles are applied
+            toggleBtn.onmouseover = function() { this.style.setProperty('background', 'rgba(0,0,0,0.9)', 'important'); this.style.setProperty('transform', 'scale(1.1)', 'important'); };
+            toggleBtn.onmouseout = function() { this.style.setProperty('background', 'rgba(0,0,0,0.8)', 'important'); this.style.setProperty('transform', 'scale(1)', 'important'); };
             
-            // Add styles for collapsed state
+            // Add styles for collapsed state and ensure Interstitial visibility
             if (!document.getElementById('analytics-ad-toggle-styles')) {
                 const style = document.createElement('style');
                 style.id = 'analytics-ad-toggle-styles';
                 style.textContent = `
+                    .analytics-ad-interstitial {
+                        opacity: 1 !important;
+                        display: flex !important;
+                        visibility: visible !important;
+                        pointer-events: auto !important;
+                        background: rgba(0,0,0,0.5) !important;
+                        backdrop-filter: blur(10px) !important;
+                        -webkit-backdrop-filter: blur(10px) !important;
+                    }
+                    .analytics-ad-interstitial-wrapper {
+                        opacity: 1 !important;
+                        display: block !important;
+                        visibility: visible !important;
+                        pointer-events: auto !important;
+                        background: #fff !important;
+                    }
                     .analytics-ad-toggle {
                         font-family: arial !important;
                         outline: none !important;
                         user-select: none !important;
                         -webkit-user-select: none !important;
+                        pointer-events: auto !important;
+                        cursor: pointer !important;
+                        z-index: 100001 !important;
                     }
                     .analytics-ad-toggle:hover {
                         background: rgba(0,0,0,0.9) !important;
                     }
                     .analytics-ad-toggle:active {
-                        transform: translateX(-50%) scale(0.95) !important;
+                        transform: scale(0.95) !important;
+                    }
+                    .analytics-ad-pop-from-bottom .analytics-ad-toggle,
+                    .analytics-ad-pop-from-top .analytics-ad-toggle {
+                        pointer-events: auto !important;
+                        z-index: 100001 !important;
                     }
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-toggle {
                         top: 10px !important;
@@ -743,6 +778,22 @@
                         pointer-events: none !important;
                         height: 0 !important;
                         overflow: hidden !important;
+                    }
+                    .analytics-ad-interstitial {
+                        opacity: 1 !important;
+                        display: flex !important;
+                        visibility: visible !important;
+                        pointer-events: auto !important;
+                        background: rgba(0,0,0,0.5) !important;
+                        backdrop-filter: blur(10px) !important;
+                        -webkit-backdrop-filter: blur(10px) !important;
+                    }
+                    .analytics-ad-interstitial-wrapper {
+                        opacity: 1 !important;
+                        display: block !important;
+                        visibility: visible !important;
+                        pointer-events: auto !important;
+                        background: #fff !important;
                     }
                     .analytics-ad-close-interstitial {
                         font-family: arial !important;
@@ -848,16 +899,20 @@
                 if (!wasCollapsed) {
                     setTimeout(function() {
                         if (ad.type === 'Interstitial') {
-                            // Ensure container is visible
+                            // Force container visibility with all necessary properties
                             adContainer.style.setProperty('opacity', '1', 'important');
                             adContainer.style.setProperty('display', 'flex', 'important');
+                            adContainer.style.setProperty('visibility', 'visible', 'important');
+                            adContainer.style.setProperty('pointer-events', 'auto', 'important');
+                            adContainer.style.setProperty('background', 'rgba(0,0,0,0.5)', 'important');
+                            
                             // Animate wrapper with scale and fade - smooth animation
                             const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
                             if (wrapper) {
                                 // Use requestAnimationFrame for smooth animation
                                 requestAnimationFrame(function() {
-                                    wrapper.style.transform = 'scale(1)';
-                                    wrapper.style.opacity = '1';
+                                    wrapper.style.setProperty('transform', 'scale(1)', 'important');
+                                    wrapper.style.setProperty('opacity', '1', 'important');
                                 });
                             }
                             
@@ -876,6 +931,8 @@
                     if (ad.type === 'Interstitial') {
                         adContainer.style.setProperty('opacity', '1', 'important');
                         adContainer.style.setProperty('display', 'flex', 'important');
+                        adContainer.style.setProperty('visibility', 'visible', 'important');
+                        adContainer.style.setProperty('pointer-events', 'auto', 'important');
                         
                         // Remove close buttons
                         const closeButtons = adContainer.querySelectorAll('.analytics-ad-close');
