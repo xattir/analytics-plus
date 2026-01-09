@@ -228,7 +228,15 @@
             selectors: selectors
         };
 
-        const adsApiUrl = (window.ANALYTICS_API_URL || '/api/analytics/track').replace('/track', '/ads/get');
+        // Get base URL and construct ads API URL
+        const baseApiUrl = window.ANALYTICS_API_URL || '/api/analytics/track';
+        // Extract base path - if it contains /api, use everything before /api + /api, otherwise use /api
+        let basePath = '/api';
+        if (baseApiUrl.includes('/api')) {
+            const parts = baseApiUrl.split('/api');
+            basePath = parts[0] + '/api';
+        }
+        const adsApiUrl = basePath + '/ads/get';
 
         fetch(adsApiUrl, {
             method: 'POST',
@@ -361,7 +369,13 @@
             url_pattern_id: urlPatternId || null
         };
 
-        const impressionUrl = (window.ANALYTICS_API_URL || '/api/analytics/track').replace('/track', '/ads/impression');
+        const baseApiUrl = window.ANALYTICS_API_URL || '/api/analytics/track';
+        let basePath = '/api';
+        if (baseApiUrl.includes('/api')) {
+            const parts = baseApiUrl.split('/api');
+            basePath = parts[0] + '/api';
+        }
+        const impressionUrl = basePath + '/ads/impression';
 
         fetch(impressionUrl, {
             method: 'POST',
@@ -390,7 +404,9 @@
             url_pattern_id: urlPatternId || null
         };
 
-        const clickUrl = (window.ANALYTICS_API_URL || '/api/analytics/track').replace('/track', '/ads/click');
+        const baseApiUrl = window.ANALYTICS_API_URL || '/api/analytics/track';
+        const basePath = baseApiUrl.includes('/api') ? baseApiUrl.split('/api')[0] + '/api' : '/api';
+        const clickUrl = basePath + '/ads/click';
 
         fetch(clickUrl, {
             method: 'POST',
