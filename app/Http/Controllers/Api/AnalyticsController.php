@@ -364,15 +364,23 @@ class AnalyticsController extends Controller
                 foreach ($matchingAds as $ad) {
                     // Handle special ad types (pop-bottom, pop-top, interstitial)
                     if (in_array($ad->type, $specialTypes)) {
-                        // Find matching URL pattern
+                        // Find matching URL pattern using priority resolution
                         $urlPatternId = null;
                         if ($url) {
-                            $urlPath = parse_url($url, PHP_URL_PATH);
-                            $pattern = $ad->urlPatterns->first(function ($pattern) use ($urlPath) {
-                                return $this->matchesUrlPattern($urlPath, $pattern->pattern);
-                            });
-                            if ($pattern) {
-                                $urlPatternId = $pattern->id;
+                            // Get all regular patterns for this ad (as array of objects)
+                            $regularPatterns = $ad->urlPatterns->all();
+                            
+                            // Resolve pattern using priority system
+                            $resolvedPattern = $ad->resolveUrlPattern($url, $regularPatterns);
+                            
+                            if ($resolvedPattern) {
+                                // Find the pattern object to get its ID
+                                $pattern = $ad->urlPatterns->first(function ($p) use ($resolvedPattern) {
+                                    return $p->pattern === $resolvedPattern;
+                                });
+                                if ($pattern) {
+                                    $urlPatternId = $pattern->id;
+                                }
                             }
                         }
                         
@@ -401,15 +409,23 @@ class AnalyticsController extends Controller
                             continue;
                         }
                         
-                        // Find matching URL pattern
+                        // Find matching URL pattern using priority resolution
                         $urlPatternId = null;
                         if ($url) {
-                            $urlPath = parse_url($url, PHP_URL_PATH);
-                            $pattern = $ad->urlPatterns->first(function ($pattern) use ($urlPath) {
-                                return $this->matchesUrlPattern($urlPath, $pattern->pattern);
-                            });
-                            if ($pattern) {
-                                $urlPatternId = $pattern->id;
+                            // Get all regular patterns for this ad (as array of objects)
+                            $regularPatterns = $ad->urlPatterns->all();
+                            
+                            // Resolve pattern using priority system
+                            $resolvedPattern = $ad->resolveUrlPattern($url, $regularPatterns);
+                            
+                            if ($resolvedPattern) {
+                                // Find the pattern object to get its ID
+                                $pattern = $ad->urlPatterns->first(function ($p) use ($resolvedPattern) {
+                                    return $p->pattern === $resolvedPattern;
+                                });
+                                if ($pattern) {
+                                    $urlPatternId = $pattern->id;
+                                }
                             }
                         }
                         

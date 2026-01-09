@@ -528,5 +528,43 @@ class Advertisement extends Model
         
         return preg_match($regex, $urlPath) === 1;
     }
+
+    /**
+     * Get custom patterns from this advertisement
+     * 
+     * @return array Array of custom pattern strings
+     */
+    public function getCustomPatterns(): array
+    {
+        if (empty($this->custom_patterns)) {
+            return [];
+        }
+        
+        // Split by newlines and filter empty lines
+        $patterns = array_filter(
+            array_map('trim', explode("\n", $this->custom_patterns)),
+            function ($pattern) {
+                return !empty($pattern);
+            }
+        );
+        
+        return array_values($patterns);
+    }
+
+    /**
+     * Resolve URL pattern with priority rules for this advertisement
+     * 
+     * This method combines custom patterns from this advertisement with regular patterns
+     * and resolves the best matching pattern using strict priority rules.
+     * 
+     * @param string $url The URL to match
+     * @param array $regularPatterns Array of regular patterns (AnalyticsUrlPattern models or strings)
+     * @return string|null The resolved pattern, or null if no match
+     */
+    public function resolveUrlPattern(string $url, array $regularPatterns = []): ?string
+    {
+        $customPatterns = $this->getCustomPatterns();
+        return AnalyticsUrlPattern::resolveUrlPattern($url, $customPatterns, $regularPatterns);
+    }
 }
 
