@@ -17,72 +17,11 @@
         // Generate device fingerprint
         deviceFingerprint = generateFingerprint();
         
-        // Initialize iframe message listener for auto-resize
-        initIframeMessageListener();
+        // No iframe message listener needed - using direct content injection
         
         // Track page view (ONLY main event - no periodic updates)
         // Ads will be loaded from the response
         trackPageView();
-    }
-    
-    // Initialize iframe message listener for auto-resize and click tracking
-    function initIframeMessageListener() {
-        window.addEventListener('message', function(event) {
-            if (!event.data || typeof event.data !== 'object') return;
-            
-            // Handle iframe height resize
-            if (event.data.type === 'analytics-ad-height') {
-                const adId = event.data.adId;
-                let iframe = null;
-                
-                if (adId) {
-                    // Find specific iframe by ad ID
-                    const adContainer = document.querySelector('[data-ad-id="' + adId + '"]');
-                    if (adContainer) {
-                        iframe = adContainer.querySelector('iframe[data-analytics-ad]');
-                    }
-                } else {
-                    // Fallback: find any analytics ad iframe
-                    iframe = document.querySelector('iframe[data-analytics-ad]');
-                }
-                
-                if (iframe && event.data.height) {
-                    iframe.style.height = event.data.height + 'px';
-                }
-                return;
-            }
-            
-            // Handle click tracking from iframe
-            if (event.data.type === 'analytics-ad-click') {
-                const adId = event.data.adId;
-                const targetUrl = event.data.url;
-                
-                if (adId && targetUrl) {
-                    // Find ad container to get ad type and url_pattern_id
-                    const adContainer = document.querySelector('[data-ad-id="' + adId + '"]');
-                    if (adContainer) {
-                        // Determine ad type from container classes
-                        let adType = null;
-                        if (adContainer.classList.contains('analytics-ad-interstitial')) {
-                            adType = 'Interstitial';
-                        } else if (adContainer.classList.contains('analytics-ad-pop-from-bottom')) {
-                            adType = 'pop_from_bottom';
-                        } else if (adContainer.classList.contains('analytics-ad-pop-from-top')) {
-                            adType = 'pop_from_top';
-                        }
-                        
-                        // Get url_pattern_id from data attribute if exists
-                        const urlPatternId = adContainer.getAttribute('data-url-pattern-id') || null;
-                        
-                        trackAdClick(adId, targetUrl, adType, urlPatternId);
-                        
-                        // Open URL in new tab
-                        window.open(targetUrl, '_blank');
-                    }
-                }
-                return;
-            }
-        });
     }
     
     // Get or create session ID
@@ -418,173 +357,61 @@
         }
     }
 
-    // Create isolated ad iframe with auto-resize
-    function createIsolatedAdIframe(adHtml, adId) {
-        const iframe = document.createElement('iframe');
+    // Create isolated ad content with CSS isolation (no iframe)
+    function createIsolatedAdContent(adHtml, adId) {
+        // Create wrapper div with CSS isolation
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'analytics-ad-content-wrapper';
+        contentWrapper.setAttribute('data-ad-id', adId || '');
         
-        // Security: use sandbox for isolation
-        iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-forms allow-same-origin');
-        iframe.setAttribute('scrolling', 'no');
-        iframe.setAttribute('data-analytics-ad', '1');
-        if (adId) {
-            iframe.setAttribute('data-ad-id', adId);
-        }
-        
-        // Styling
-        iframe.style.border = '0';
-        iframe.style.width = '100%';
-        iframe.style.display = 'block';
-        iframe.style.background = '#fff';
-        iframe.style.overflow = 'hidden';
-        // Initial height, will be updated by postMessage
-        iframe.style.height = '100px';
-        iframe.style.minHeight = '100px';
-        
-        // Create srcdoc with auto-resize script
-        // Escape HTML content to prevent XSS and ensure proper rendering
-        const escapedAdHtml = adHtml.replace(/`/g, '\\`').replace(/\${/g, '\\${');
-        
-        const iframeContent = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #fff !important;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            width: 100% !important;
-            height: auto !important;
-            overflow: visible !important;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-        /* Reset any external styles that might leak in */
-        div, p, span, h1, h2, h3, h4, h5, h6 {
-            margin: 0;
-            padding: 0;
-        }
-    </style>
-</head>
-<body>
-    ${escapedAdHtml}
-    <script>
-        (function() {
-            var adId = ${adId ? JSON.stringify(String(adId)) : 'null'};
-            
-            function sendHeight() {
-                try {
-                    var height = Math.max(
-                        document.body.scrollHeight,
-                        document.body.offsetHeight,
-                        document.documentElement.clientHeight,
-                        document.documentElement.scrollHeight,
-                        document.documentElement.offsetHeight
-                    );
-                    
-                    parent.postMessage({
-                        type: 'analytics-ad-height',
-                        height: height,
-                        adId: adId
-                    }, '*');
-                } catch(e) {
-                    console.error('Error sending height:', e);
+        // Add CSS isolation styles
+        const styleId = 'analytics-ad-isolation-styles';
+        if (!document.getElementById(styleId)) {
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                .analytics-ad-content-wrapper {
+                    all: initial !important;
+                    display: block !important;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                    color: #000 !important;
+                    background: #fff !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
                 }
-            }
-            
-            // Send height on load
-            if (document.readyState === 'loading') {
-                window.addEventListener('load', sendHeight);
-            } else {
-                sendHeight();
-            }
-            
-            // Watch for content changes (images, videos, async content)
-            var observer = new MutationObserver(function() {
-                sendHeight();
-            });
-            
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['src', 'style', 'class']
-            });
-            
-            // Track image loads
-            var images = document.getElementsByTagName('img');
-            for (var i = 0; i < images.length; i++) {
-                if (images[i].complete) {
-                    sendHeight();
-                } else {
-                    images[i].addEventListener('load', sendHeight);
-                    images[i].addEventListener('error', sendHeight);
+                .analytics-ad-content-wrapper * {
+                    box-sizing: border-box !important;
                 }
-            }
-            
-            // Fallback: periodic check (every 1 second for first 10 seconds, then every 5 seconds)
-            var checkCount = 0;
-            var intervalId = setInterval(function() {
-                sendHeight();
-                checkCount++;
-                if (checkCount >= 10) {
-                    clearInterval(intervalId);
-                    // Continue with slower interval
-                    setInterval(sendHeight, 5000);
+                .analytics-ad-content-wrapper img {
+                    max-width: 100% !important;
+                    height: auto !important;
+                    display: block !important;
                 }
-            }, 1000);
-            
-            // Handle click tracking for links
-            document.addEventListener('click', function(e) {
-                var target = e.target;
-                while (target && target.tagName !== 'A' && target !== document.body) {
-                    target = target.parentElement;
+                .analytics-ad-content-wrapper a {
+                    text-decoration: none !important;
+                    color: inherit !important;
                 }
-                
-                if (target && target.tagName === 'A' && target.href) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    var targetUrl = target.href;
-                    
-                    // Send click event to parent
-                    try {
-                        parent.postMessage({
-                            type: 'analytics-ad-click',
-                            adId: adId,
-                            url: targetUrl,
-                            adType: null, // Will be set by parent
-                            urlPatternId: null // Will be set by parent
-                        }, '*');
-                    } catch(err) {
-                        console.error('Error sending click:', err);
-                        // Fallback: try to open in same window if postMessage fails
-                        window.location.href = targetUrl;
-                    }
+                /* Reset common styles that might leak from page */
+                .analytics-ad-content-wrapper div,
+                .analytics-ad-content-wrapper p,
+                .analytics-ad-content-wrapper span,
+                .analytics-ad-content-wrapper h1,
+                .analytics-ad-content-wrapper h2,
+                .analytics-ad-content-wrapper h3,
+                .analytics-ad-content-wrapper h4,
+                .analytics-ad-content-wrapper h5,
+                .analytics-ad-content-wrapper h6 {
+                    margin: 0 !important;
+                    padding: 0 !important;
                 }
-            }, true);
-        })();
-    </script>
-</body>
-</html>`;
+            `;
+            document.head.appendChild(style);
+        }
         
-        iframe.srcdoc = iframeContent;
+        // Insert content
+        contentWrapper.innerHTML = adHtml;
         
-        return iframe;
+        return contentWrapper;
     }
 
     // Close ad popup function
@@ -714,21 +541,21 @@
             innerContainer.style.cssText = 'width: 100% !important; max-width: 1000px; margin: 0 auto; position: relative; display: flex; align-items: center; justify-content: center;';
         }
         
-        // Create content div with isolated iframe
+        // Create content div with isolated content (no iframe)
         const contentDiv = document.createElement('div');
-        const iframe = createIsolatedAdIframe(adContent, ad.id);
+        const isolatedContent = createIsolatedAdContent(adContent, ad.id);
         
         if (ad.type === 'Interstitial') {
             contentDiv.style.cssText = 'width: 100%; min-height: 100px;';
-            contentDiv.appendChild(iframe);
+            contentDiv.appendChild(isolatedContent);
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
-            contentDiv.style.cssText = 'flex: 1; width: 100%; height: 100%;';
-            iframe.style.maxWidth = '1000px';
-            iframe.style.margin = '0 auto';
-            contentDiv.appendChild(iframe);
+            contentDiv.style.cssText = 'flex: 1; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center;';
+            isolatedContent.style.maxWidth = '1000px';
+            isolatedContent.style.margin = '0 auto';
+            contentDiv.appendChild(isolatedContent);
         } else {
-            contentDiv.style.cssText = 'flex: 1; width: 100%; height: 100%;';
-            contentDiv.appendChild(iframe);
+            contentDiv.style.cssText = 'flex: 1; width: 100%;';
+            contentDiv.appendChild(isolatedContent);
         }
         
         // Create toggle button (for pop_from_bottom and pop_from_top only)
@@ -876,7 +703,7 @@
                     }, 10);
                 }
 
-                // Store url_pattern_id in container for click tracking from iframe
+                // Store url_pattern_id in container for click tracking
                 if (ad.url_pattern_id) {
                     adContainer.setAttribute('data-url-pattern-id', ad.url_pattern_id);
                 }
@@ -884,8 +711,32 @@
                 // Track impression
                 trackAdImpression(ad.id, ad.type, ad.url_pattern_id);
 
-                // Click tracking is now handled via postMessage from iframe
-                // No need for direct event listeners on links
+                // Track click if ad has URL
+                if (ad.url) {
+                    const adLinks = adContainer.querySelectorAll('.analytics-ad-content-wrapper a, .analytics-ad-content-wrapper a[href]');
+                    adLinks.forEach(function(link) {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            trackAdClick(ad.id, ad.url, ad.type, ad.url_pattern_id);
+                            window.open(ad.url, '_blank');
+                        });
+                    });
+                }
+                
+                // Also track clicks on any links inside the ad content
+                const allLinks = adContainer.querySelectorAll('a[href]');
+                allLinks.forEach(function(link) {
+                    if (!link.classList.contains('analytics-ad-close')) {
+                        link.addEventListener('click', function(e) {
+                            const href = link.getAttribute('href');
+                            if (href && href !== '#' && !href.startsWith('javascript:')) {
+                                e.preventDefault();
+                                trackAdClick(ad.id, href, ad.type, ad.url_pattern_id);
+                                window.open(href, '_blank');
+                            }
+                        });
+                    }
+                });
 
                 // Add click tracking to close buttons
                 const closeButtons = adContainer.querySelectorAll('.analytics-ad-close');
