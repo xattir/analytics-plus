@@ -656,7 +656,7 @@
                 left: '0',
                 right: '0',
                 bottom: '0',
-                zIndex: '99999',
+                zIndex: '99999999999990000',
                 background: 'rgb(0 0 0 / 68%)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
@@ -800,6 +800,7 @@
                         background: rgb(0 0 0 / 68%) !important;
                         backdrop-filter: blur(10px) !important;
                         -webkit-backdrop-filter: blur(10px) !important;
+                        z-index: 99999999999990000 !important;
                     }
                     .analytics-ad-interstitial-wrapper {
                         opacity: 1 !important;
@@ -862,6 +863,7 @@
                         background: rgb(0 0 0 / 68%) !important;
                         backdrop-filter: blur(10px) !important;
                         -webkit-backdrop-filter: blur(10px) !important;
+                        z-index: 99999999999990000 !important;
                     }
                     .analytics-ad-interstitial-wrapper {
                         opacity: 1 !important;
