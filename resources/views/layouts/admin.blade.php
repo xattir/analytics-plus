@@ -585,7 +585,7 @@
                                 'can'=>"advertisements-read",
                                 'text'=>"الوحدات الإعلانية",
                                 'url'=>route('admin.advertisements.index'),
-                                'icon'=>"fal fa-ad"
+                                'icon'=>"fal fa-bullhorn"
                             ],
                             [
                                 'can'=>"settings-update",

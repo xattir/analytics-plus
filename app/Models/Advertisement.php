@@ -30,7 +30,7 @@ class Advertisement extends Model
      */
     public function sites()
     {
-        return $this->belongsToMany(AnalyticsSite::class, 'advertisement_sites');
+        return $this->belongsToMany(AnalyticsSite::class, 'advertisement_sites', 'advertisement_id', 'site_id');
     }
 
     /**
