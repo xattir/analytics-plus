@@ -22,21 +22,26 @@
         margin: 0;
         font-size: 28px;
         font-weight: 700;
-        color: var(--color-1, #1f2937);
+        color: #1f2937 !important;
     }
     
     .info-card {
-        background: var(--background-0, #f8fafc);
+        background: #f8fafc;
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .info-card h3 {
+        color: #1f2937 !important;
     }
     
     .info-row {
         display: flex;
         justify-content: space-between;
         padding: 12px 0;
-        border-bottom: 1px solid var(--border-color, #e5e7eb);
+        border-bottom: 1px solid #e5e7eb;
     }
     
     .info-row:last-child {
@@ -45,14 +50,15 @@
     
     .info-label {
         font-weight: 600;
-        color: var(--color-2, #575f66);
+        color: #374151 !important;
         font-size: 14px;
     }
     
     .info-value {
-        color: var(--color-1, #1f2937);
+        color: #111827 !important;
         font-size: 14px;
         text-align: left;
+        font-weight: 500;
     }
     
     .paths-table {
@@ -89,14 +95,20 @@
     .paths-table tbody td {
         padding: 16px;
         font-size: 14px;
-        color: var(--color-2, #575f66);
+        color: #374151 !important;
         text-align: left;
+        background: #ffffff;
+    }
+    
+    .paths-table tbody tr:hover td {
+        background: #f9fafb !important;
     }
     
     .path-url {
         font-family: 'Courier New', monospace;
-        color: var(--analytics-primary, #7b60fb);
+        color: #7b60fb !important;
         word-break: break-all;
+        font-weight: 500;
     }
     
     .btn-modern {
@@ -145,7 +157,7 @@
         <div class="visit-header">
             <div>
                 <h2>تفاصيل الزيارة</h2>
-                <p style="margin: 8px 0 0 0; color: var(--color-2, #575f66); font-size: 14px;">
+                <p style="margin: 8px 0 0 0; color: #6b7280 !important; font-size: 14px;">
                     {{ $site->title }} ({{ $site->domain }})
                 </p>
             </div>
@@ -159,7 +171,7 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="info-card">
-                    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; color: var(--color-1, #1f2937);">معلومات الجلسة</h3>
+                    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; color: #1f2937 !important;">معلومات الجلسة</h3>
                     <div class="info-row">
                         <span class="info-label">معرف الجلسة:</span>
                         <span class="info-value">{{ $session->session_id }}</span>
@@ -185,7 +197,7 @@
             
             <div class="col-md-6">
                 <div class="info-card">
-                    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; color: var(--color-1, #1f2937);">معلومات الجهاز</h3>
+                    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; color: #1f2937 !important;">معلومات الجهاز</h3>
                     <div class="info-row">
                         <span class="info-label">نوع الجهاز:</span>
                         <span class="info-value">
@@ -215,7 +227,7 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="info-card">
-                    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; color: var(--color-1, #1f2937);">معلومات الزيارة</h3>
+                    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; color: #1f2937 !important;">معلومات الزيارة</h3>
                     <div class="info-row">
                         <span class="info-label">تاريخ البدء:</span>
                         <span class="info-value">{{ $session->first_seen->format('Y-m-d H:i:s') }}</span>
@@ -251,7 +263,7 @@
             
             <div class="col-md-6">
                 <div class="info-card">
-                    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; color: var(--color-1, #1f2937);">معلومات إضافية</h3>
+                    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; color: #1f2937 !important;">معلومات إضافية</h3>
                     <div class="info-row">
                         <span class="info-label">عائد:</span>
                         <span class="info-value">
@@ -299,7 +311,7 @@
         </div>
 
         @if($paths->count() > 0)
-            <h3 style="margin-top: 32px; margin-bottom: 16px; font-size: 20px; color: var(--color-1, #1f2937);">مسار الصفحات</h3>
+            <h3 style="margin-top: 32px; margin-bottom: 16px; font-size: 20px; color: #1f2937 !important;">مسار الصفحات</h3>
             <div style="overflow-x: auto; direction: ltr;">
                 <table class="paths-table" style="direction: ltr;">
                     <thead>
@@ -325,7 +337,7 @@
                                             <div style="flex: 1; height: 8px; background: var(--background-0, #f8fafc); border-radius: 4px; overflow: hidden;">
                                                 <div style="height: 100%; width: {{ $path['scroll_percent'] }}%; background: linear-gradient(135deg, #7b60fb 0%, #667eea 100%);"></div>
                                             </div>
-                                            <span style="font-size: 12px; color: var(--color-2, #575f66);">{{ $path['scroll_percent'] }}%</span>
+                                            <span style="font-size: 12px; color: #374151 !important;">{{ $path['scroll_percent'] }}%</span>
                                         </div>
                                     @else
                                         N/A
