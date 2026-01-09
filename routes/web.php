@@ -66,6 +66,9 @@ Route::prefix('dashboard')->middleware(['auth','ActiveAccount','verified'])->nam
     Route::post('analytics/{site}/search', [BackendAnalyticsController::class, 'searchResults'])->name('analytics.search-results');
     Route::get('analytics/{site}/members', [BackendAnalyticsController::class, 'members'])->name('analytics.members');
     Route::get('analytics/{site}/visits/{sessionId}', [BackendAnalyticsController::class, 'visitDetails'])->name('analytics.visit-details');
+    Route::get('analytics/{site}/patterns', [BackendAnalyticsController::class, 'patterns'])->name('analytics.patterns');
+    Route::post('analytics/{site}/patterns/regenerate', [BackendAnalyticsController::class, 'regeneratePatterns'])->name('analytics.patterns.regenerate');
+    Route::delete('analytics/{site}/patterns/{pattern}', [BackendAnalyticsController::class, 'deletePattern'])->name('analytics.patterns.delete');
     Route::post('analytics/{site}/invite', [BackendAnalyticsController::class, 'sendInvitation'])->name('analytics.invite');
     Route::post('analytics/{site}/remove-member', [BackendAnalyticsController::class, 'removeMember'])->name('analytics.remove-member');
     Route::delete('analytics/invitations/{invitation}', [BackendAnalyticsController::class, 'cancelInvitation'])->name('analytics.cancel-invitation');
@@ -136,6 +139,9 @@ Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->gr
         Route::post('analytics/{site}/search', [BackendAnalyticsController::class, 'searchResults'])->name('analytics.search-results');
         Route::get('analytics/{site}/members', [BackendAnalyticsController::class, 'members'])->name('analytics.members');
         Route::get('analytics/{site}/visits/{sessionId}', [BackendAnalyticsController::class, 'visitDetails'])->name('analytics.visit-details');
+        Route::get('analytics/{site}/patterns', [BackendAnalyticsController::class, 'patterns'])->name('analytics.patterns');
+        Route::post('analytics/{site}/patterns/regenerate', [BackendAnalyticsController::class, 'regeneratePatterns'])->name('analytics.patterns.regenerate');
+        Route::delete('analytics/{site}/patterns/{pattern}', [BackendAnalyticsController::class, 'deletePattern'])->name('analytics.patterns.delete');
         Route::post('analytics/{site}/invite', [BackendAnalyticsController::class, 'sendInvitation'])->name('analytics.invite');
         Route::post('analytics/{site}/remove-member', [BackendAnalyticsController::class, 'removeMember'])->name('analytics.remove-member');
         Route::delete('analytics/invitations/{invitation}', [BackendAnalyticsController::class, 'cancelInvitation'])->name('analytics.cancel-invitation');

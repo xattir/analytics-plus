@@ -1144,6 +1144,9 @@
                         <a class="dropdown-item" href="{{ request()->routeIs('admin.*') ? route('admin.analytics.search', ['site' => $site->site_key]) : route('user.analytics.search', ['site' => $site->site_key]) }}">
                             <i class="fa fa-search"></i> بحث في التحليلات
                         </a>
+                        <a class="dropdown-item" href="{{ request()->routeIs('admin.*') ? route('admin.analytics.patterns', ['site' => $site->site_key]) : route('user.analytics.patterns', ['site' => $site->site_key]) }}">
+                            <i class="fa fa-code"></i> أنماط URL
+                        </a>
                         <a class="dropdown-item" href="{{ $trackingCodeRoute }}">
                             <i class="fa fa-code"></i> كود التتبع
                         </a>

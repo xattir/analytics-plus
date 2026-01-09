@@ -2472,4 +2472,111 @@ HTML;
         return $hasWildcard;
     }
 
+    /**
+     * Show URL patterns for a site
+     * 
+     * @param Request $request
+     * @param AnalyticsSite $site
+     * @return \Illuminate\View\View
+     */
+    public function patterns(Request $request, AnalyticsSite $site)
+    {
+        // Check if user can access this site
+        if (!$site->canAccess(auth()->id()) && !$this->isSuperAdmin()) {
+            abort(403, 'You do not have access to this site.');
+        }
+
+        // Get patterns for this site
+        $patternsQuery = \App\Models\AnalyticsUrlPattern::where('site_id', $site->id);
+
+        // Filter by domain if provided
+        if ($request->has('domain') && $request->domain) {
+            $patternsQuery->where('domain', 'like', '%' . $request->domain . '%');
+        }
+
+        // Filter by pattern if provided
+        if ($request->has('pattern') && $request->pattern) {
+            $patternsQuery->where('pattern', 'like', '%' . $request->pattern . '%');
+        }
+
+        // Order by domain, then by pattern
+        $patterns = $patternsQuery->orderBy('domain')
+            ->orderBy('pattern')
+            ->paginate(50);
+
+        // Get unique domains for filter
+        $domains = \App\Models\AnalyticsUrlPattern::where('site_id', $site->id)
+            ->distinct()
+            ->pluck('domain')
+            ->sort()
+            ->values();
+
+        return view('admin.analytics.patterns', compact('site', 'patterns', 'domains'));
+    }
+
+    /**
+     * Regenerate URL patterns for a site
+     * 
+     * @param Request $request
+     * @param AnalyticsSite $site
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function regeneratePatterns(Request $request, AnalyticsSite $site)
+    {
+        // Check if user can access this site
+        if (!$site->canAccess(auth()->id()) && !$this->isSuperAdmin()) {
+            abort(403, 'You do not have access to this site.');
+        }
+
+        $limit = $request->input('limit', 10000);
+
+        try {
+            $patterns = $this->extractUrlPatternsForSite($site->id, $limit);
+
+            $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
+            return redirect()
+                ->route($routeName, $site)
+                ->with('success', 'URL patterns regenerated successfully. Found ' . count($patterns) . ' unique patterns.');
+        } catch (\Exception $e) {
+            $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
+            return redirect()
+                ->route($routeName, $site)
+                ->with('error', 'Failed to regenerate patterns: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a URL pattern
+     * 
+     * @param Request $request
+     * @param AnalyticsSite $site
+     * @param int $pattern Pattern ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function deletePattern(Request $request, AnalyticsSite $site, $pattern)
+    {
+        // Check if user can access this site
+        if (!$site->canAccess(auth()->id()) && !$this->isSuperAdmin()) {
+            abort(403, 'You do not have access to this site.');
+        }
+
+        try {
+            $patternModel = \App\Models\AnalyticsUrlPattern::where('id', $pattern)
+                ->where('site_id', $site->id)
+                ->firstOrFail();
+
+            $patternModel->delete();
+
+            $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
+            return redirect()
+                ->route($routeName, $site)
+                ->with('success', 'Pattern deleted successfully.');
+        } catch (\Exception $e) {
+            $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
+            return redirect()
+                ->route($routeName, $site)
+                ->with('error', 'Failed to delete pattern: ' . $e->getMessage());
+        }
+    }
+
 }
