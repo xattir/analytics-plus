@@ -1230,8 +1230,11 @@
 
                 // Track click if ad has URL - track all links in content
                 const allLinks = adContainer.querySelectorAll('.analytics-ad-content-wrapper a[href], a[href]');
+                let hasLinks = false;
+                
                 allLinks.forEach(function(link) {
                     if (!link.classList.contains('analytics-ad-toggle')) {
+                        hasLinks = true;
                         link.addEventListener('click', function(e) {
                             const href = link.getAttribute('href');
                             if (href && href !== '#' && !href.startsWith('javascript:')) {
@@ -1244,6 +1247,24 @@
                         });
                     }
                 });
+                
+                // If ad has URL but no links in content, make entire ad clickable
+                if (ad.url && !hasLinks && ad.url.trim() !== '') {
+                    // Make wrapper clickable (but not toggle button)
+                    const wrapper = adContainer.querySelector('.analytics-ad-wrapper, .analytics-ad-interstitial-wrapper');
+                    if (wrapper) {
+                        wrapper.style.cursor = 'pointer';
+                        wrapper.addEventListener('click', function(e) {
+                            // Don't trigger if clicking on toggle button or close button
+                            if (e.target.closest('.analytics-ad-toggle, .analytics-ad-close-interstitial')) {
+                                return;
+                            }
+                            
+                            trackAdClick(ad.id, ad.url, ad.type, ad.url_pattern_id);
+                            window.open(ad.url, '_blank');
+                        });
+                    }
+                }
 
                 // No auto-close for Interstitial - user controls via toggle if needed
                 // Interstitial will be hidden/shown based on interval_period logic only
@@ -1275,15 +1296,30 @@
                 trackAdImpression(ad.id, ad.selector, ad.url_pattern_id);
 
                 // Track click if ad has URL
-                if (ad.url) {
+                if (ad.url && ad.url.trim() !== '') {
                     const adLinks = adElement.querySelectorAll('a.ad-link, a[href]');
+                    let hasLinks = false;
+                    
                     adLinks.forEach(function(link) {
+                        hasLinks = true;
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
+                            const href = link.getAttribute('href');
+                            // Use ad.url if available, otherwise use link href
+                            const targetUrl = ad.url || href;
+                            trackAdClick(ad.id, targetUrl, ad.selector, ad.url_pattern_id);
+                            window.open(targetUrl, '_blank');
+                        });
+                    });
+                    
+                    // If ad has URL but no links in content, make entire ad clickable
+                    if (!hasLinks) {
+                        adElement.style.cursor = 'pointer';
+                        adElement.addEventListener('click', function(e) {
                             trackAdClick(ad.id, ad.url, ad.selector, ad.url_pattern_id);
                             window.open(ad.url, '_blank');
                         });
-                    });
+                    }
                 }
             });
         } catch (error) {
