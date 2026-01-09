@@ -19,7 +19,7 @@ return new class extends Migration
             
             $table->foreign('advertisement_id')->references('id')->on('advertisements')->onDelete('cascade');
             $table->foreign('site_id')->references('id')->on('analytics_sites')->onDelete('cascade');
-            $table->unique(['advertisement_id', 'site_id']);
+            $table->unique(['advertisement_id', 'site_id'], 'ad_sites_unique');
             $table->index('site_id');
         });
     }

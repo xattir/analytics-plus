@@ -19,7 +19,7 @@ return new class extends Migration
             
             $table->foreign('advertisement_id')->references('id')->on('advertisements')->onDelete('cascade');
             $table->foreign('url_pattern_id')->references('id')->on('analytics_url_patterns')->onDelete('cascade');
-            $table->unique(['advertisement_id', 'url_pattern_id']);
+            $table->unique(['advertisement_id', 'url_pattern_id'], 'ad_url_patterns_unique');
             $table->index('url_pattern_id');
         });
     }

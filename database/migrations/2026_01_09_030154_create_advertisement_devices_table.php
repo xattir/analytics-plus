@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->foreign('advertisement_id')->references('id')->on('advertisements')->onDelete('cascade');
-            $table->unique(['advertisement_id', 'device_type']);
+            $table->unique(['advertisement_id', 'device_type'], 'ad_devices_unique');
             $table->index('device_type');
         });
     }

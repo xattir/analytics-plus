@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->foreign('advertisement_id')->references('id')->on('advertisements')->onDelete('cascade');
-            $table->unique(['advertisement_id', 'country_code']);
+            $table->unique(['advertisement_id', 'country_code'], 'ad_countries_unique');
             $table->index('country_code');
         });
     }
