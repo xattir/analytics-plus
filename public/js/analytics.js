@@ -441,34 +441,47 @@
         iframe.style.minHeight = '100px';
         
         // Create srcdoc with auto-resize script
+        // Escape HTML content to prevent XSS and ensure proper rendering
+        const escapedAdHtml = adHtml.replace(/`/g, '\\`').replace(/\${/g, '\\${');
+        
         const iframeContent = `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        html, body {
+        * {
             margin: 0;
             padding: 0;
-            background: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            width: 100%;
-        }
-        * {
             box-sizing: border-box;
+        }
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
         }
         img {
             max-width: 100%;
             height: auto;
+            display: block;
         }
         a {
             text-decoration: none;
             color: inherit;
         }
+        /* Reset any external styles that might leak in */
+        div, p, span, h1, h2, h3, h4, h5, h6 {
+            margin: 0;
+            padding: 0;
+        }
     </style>
 </head>
 <body>
-    ${adHtml}
+    ${escapedAdHtml}
     <script>
         (function() {
             var adId = ${adId ? JSON.stringify(String(adId)) : 'null'};
@@ -672,10 +685,17 @@
             container.setAttribute('data-interval', intervalPeriod);
         }
         
-        // Apply styles
+        // Apply styles - force background color to ensure no old styles persist
         Object.keys(positionStyles).forEach(function(key) {
             container.style[key] = positionStyles[key];
         });
+        
+        // Force correct background colors (prevent any CSS override from page)
+        if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
+            container.style.setProperty('background', '#ffffff', 'important');
+        } else if (ad.type === 'Interstitial') {
+            container.style.setProperty('background', 'rgba(0,0,0,0.5)', 'important');
+        }
         
         // Create inner wrapper
         const wrapper = document.createElement('div');
@@ -811,23 +831,9 @@
                     localStorage.setItem('analytics_ad_interstitial_' + ad.id, Date.now().toString());
                 }
 
-                // Check if content already has the proper structure
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = ad.content;
-                const existingContainer = tempDiv.querySelector('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-interstitial');
-                
-                let adContainer;
-                if (existingContainer) {
-                    // Server provided the structure, use it
-                    adContainer = existingContainer;
-                    // Ensure it's not already in the DOM
-                    if (adContainer.parentNode) {
-                        adContainer = adContainer.cloneNode(true);
-                    }
-                } else {
-                    // Create structure standalone in JavaScript
-                    adContainer = createPopupAdStructure(ad);
-                }
+                // Always create structure with iframe isolation in JavaScript
+                // Don't use server-provided structure to ensure iframe isolation
+                const adContainer = createPopupAdStructure(ad);
                 
                 if (!adContainer) {
                     return;
