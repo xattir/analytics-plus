@@ -472,8 +472,28 @@
         // Set text color based on background
         contentWrapper.style.setProperty('color', textColor, 'important');
         
-        // Insert content
-        contentWrapper.innerHTML = adHtml;
+        // Insert content - but first remove any nested ad containers and scripts to prevent nested ads
+        let cleanAdHtml = adHtml;
+        
+        // Remove nested ad containers and scripts from content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = adHtml;
+        
+        // Remove any analytics ad containers, script tags, or ad-related elements from content
+        const nestedAds = tempDiv.querySelectorAll('.analytics-ad-interstitial, .analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-wrapper, .analytics-ad-content-wrapper, script[src*="analytics"], script[src*="analytics.js"], script[type*="analytics"]');
+        nestedAds.forEach(function(nestedAd) {
+            // Remove the element and all its content
+            if (nestedAd.parentNode) {
+                nestedAd.parentNode.removeChild(nestedAd);
+            }
+        });
+        
+        // Also remove any analytics script tags from innerHTML
+        cleanAdHtml = tempDiv.innerHTML;
+        // Additional cleanup: remove script tags that might load analytics
+        cleanAdHtml = cleanAdHtml.replace(/<script[^>]*analytics[^>]*>[\s\S]*?<\/script>/gi, '');
+        
+        contentWrapper.innerHTML = cleanAdHtml;
         
         // Force text color on all text elements inside after content is inserted
         // Apply text color to ensure visibility against background
@@ -599,7 +619,7 @@
                 right: '0',
                 bottom: '0',
                 zIndex: '99999',
-                background: 'rgba(255,255,255,0.95)',
+                background: 'rgb(0 0 0 / 68%)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
                 display: 'flex',
@@ -631,7 +651,7 @@
             container.style.setProperty('background', '#ffffff', 'important');
         } else if (ad.type === 'Interstitial') {
             // Force white background and visibility immediately - prevent any external CSS override
-            container.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
+            container.style.setProperty('background', 'rgb(0 0 0 / 68%)', 'important');
             container.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
             container.style.setProperty('-webkit-backdrop-filter', 'blur(10px)', 'important');
             container.style.setProperty('opacity', '1', 'important');
@@ -641,7 +661,7 @@
             // Remove any inline styles that might override
             container.style.removeProperty('color');
             // Force all styles to override external CSS
-            container.setAttribute('style', container.getAttribute('style') + '; background: rgba(255,255,255,0.95) !important; opacity: 1 !important; display: flex !important;');
+            container.setAttribute('style', container.getAttribute('style') + '; background: rgb(0 0 0 / 68%) !important; opacity: 1 !important; display: flex !important;');
         }
         
         // Create inner wrapper - clean and modern padding
@@ -702,10 +722,10 @@
             closeBtn.setAttribute('type', 'button');
             closeBtn.setAttribute('aria-label', 'Close ad');
             closeBtn.innerHTML = '✕';
-            // Position close button in the corner of the wrapper (content frame) - white background with border
-            closeBtn.style.cssText = 'position: absolute; top: ' + (paddingY > 10 ? paddingY / 2 : 10) + 'px; right: ' + (paddingX > 10 ? paddingX / 2 : 10) + 'px; background: #fff; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #333; font-size: 18px; font-weight: normal; z-index: 1000000; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
-            closeBtn.onmouseover = function() { this.style.setProperty('background', '#f5f5f5', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.2)', 'important'); this.style.setProperty('transform', 'scale(1.1)', 'important'); };
-            closeBtn.onmouseout = function() { this.style.setProperty('background', '#fff', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.1)', 'important'); this.style.setProperty('transform', 'scale(1)', 'important'); };
+            // Position close button in the corner of the wrapper (content frame) - gray background with white text
+            closeBtn.style.cssText = 'position: absolute; top: ' + (paddingY > 10 ? paddingY / 2 : 10) + 'px; right: ' + (paddingX > 10 ? paddingX / 2 : 10) + 'px; background: rgb(79 79 79) !important; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: rgb(255 255 255); font-size: 18px; font-weight: normal; z-index: 1000000; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; font-family: arial !important; line-height: 1; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+            closeBtn.onmouseover = function() { this.style.setProperty('background', 'rgb(99 99 99)', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.2)', 'important'); this.style.setProperty('transform', 'scale(1.1)', 'important'); };
+            closeBtn.onmouseout = function() { this.style.setProperty('background', 'rgb(79 79 79)', 'important'); this.style.setProperty('border-color', 'rgba(0,0,0,0.1)', 'important'); this.style.setProperty('transform', 'scale(1)', 'important'); };
         }
         
         // Create toggle button for pop_from_bottom and pop_from_top only
@@ -739,7 +759,7 @@
                         display: flex !important;
                         visibility: visible !important;
                         pointer-events: auto !important;
-                        background: rgba(255,255,255,0.95) !important;
+                        background: rgb(0 0 0 / 68%) !important;
                         backdrop-filter: blur(10px) !important;
                         -webkit-backdrop-filter: blur(10px) !important;
                     }
@@ -801,7 +821,7 @@
                         display: flex !important;
                         visibility: visible !important;
                         pointer-events: auto !important;
-                        background: rgba(255,255,255,0.95) !important;
+                        background: rgb(0 0 0 / 68%) !important;
                         backdrop-filter: blur(10px) !important;
                         -webkit-backdrop-filter: blur(10px) !important;
                     }
@@ -818,9 +838,9 @@
                         user-select: none !important;
                         -webkit-user-select: none !important;
                         z-index: 1000000 !important;
-                        background: #fff !important;
+                        background: rgb(79 79 79) !important;
                         border: 2px solid rgba(0,0,0,0.1) !important;
-                        color: #333 !important;
+                        color: rgb(255 255 255) !important;
                     }
                     .analytics-ad-close-interstitial:hover {
                         background: #f5f5f5 !important;
@@ -860,6 +880,20 @@
     function injectAd(ad) {
         if (!ad.content) {
             return;
+        }
+        
+        // Prevent nested ads - don't inject ads inside ad content
+        // Check if we're being called from within an ad container
+        const activeElement = document.activeElement || document.body;
+        const isInsideAd = activeElement.closest && activeElement.closest('.analytics-ad-interstitial, .analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top, .analytics-ad-content-wrapper');
+        if (isInsideAd) {
+            return; // Don't inject ads inside ad content
+        }
+        
+        // Also check if there's an ad container in the process of being created
+        if (document.body.querySelector('.analytics-ad-interstitial, .analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top')) {
+            // If an ad is already visible, skip to prevent nested ads
+            // (This is a simple check - can be improved)
         }
 
         try {
@@ -924,7 +958,7 @@
                     adContainer.style.setProperty('display', 'flex', 'important');
                     adContainer.style.setProperty('visibility', 'visible', 'important');
                     adContainer.style.setProperty('pointer-events', 'auto', 'important');
-                    adContainer.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
+                    adContainer.style.setProperty('background', 'rgb(0 0 0 / 68%)', 'important');
                     adContainer.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
                     adContainer.style.setProperty('-webkit-backdrop-filter', 'blur(10px)', 'important');
                     
@@ -932,7 +966,7 @@
                     adContainer.style.opacity = '1';
                     adContainer.style.display = 'flex';
                     adContainer.style.visibility = 'visible';
-                    adContainer.style.background = 'rgba(255,255,255,0.95)';
+                    adContainer.style.background = 'rgb(0 0 0 / 68%)';
                     
                     // Also set wrapper visibility immediately
                     const wrapper = adContainer.querySelector('.analytics-ad-interstitial-wrapper');
@@ -957,9 +991,9 @@
                     // Force styles again after a tiny delay to override any external CSS
                     setTimeout(function() {
                         adContainer.style.setProperty('opacity', '1', 'important');
-                        adContainer.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
+                        adContainer.style.setProperty('background', 'rgb(0 0 0 / 68%)', 'important');
                         adContainer.style.opacity = '1';
-                        adContainer.style.background = 'rgba(255,255,255,0.95)';
+                        adContainer.style.background = 'rgb(0 0 0 / 68%)';
                         if (wrapper) {
                             wrapper.style.setProperty('opacity', '1', 'important');
                             wrapper.style.opacity = '1';
