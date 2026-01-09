@@ -353,10 +353,11 @@
      * @returns {string} SVG string
      */
     function createToggleIcon(direction) {
+        // تكبير الأيقونات - من 16px إلى 20px
         if (direction === 'up') {
-            return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4L4 8L12 8L8 4Z" fill="currentColor"/></svg>';
+            return '<svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4L4 8L12 8L8 4Z" fill="currentColor"/></svg>';
         } else {
-            return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 12L12 8L4 8L8 12Z" fill="currentColor"/></svg>';
+            return '<svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 12L12 8L4 8L8 12Z" fill="currentColor"/></svg>';
         }
     }
 
@@ -377,34 +378,31 @@
         const siteKey = window.ANALYTICS_SITE_KEY || 'default';
         const storageKey = 'analytics_ad_collapsed_' + siteKey + '_' + adId + '_' + adType;
         
-        // ارتفاع الـ toggle button فقط (يظهر بعد الإغلاق)
-        const toggleButtonHeight = 56; // 48px button + 8px padding
-        
         if (isCollapsed) {
             // فتح الإعلان - إرجاعه للظهور بالكامل
             adContainer.classList.remove('analytics-ad-collapsed');
             adContainer.style.transform = 'translateY(0)';
             
-            // تغيير الأيقونة لاتجاه الإغلاق
-            // pop_from_bottom: ▲ (up arrow) | pop_from_top: ▼ (down arrow)
-            const iconDirection = adType === 'pop_from_bottom' ? 'up' : 'down';
+            // تغيير الأيقونة لاتجاه الإغلاق (عكس الأيقونات)
+            // pop_from_bottom مفتوح: ▼ (down) لأن الإغلاق للأسفل | pop_from_top مفتوح: ▲ (up) لأن الإغلاق للأعلى
+            const iconDirection = adType === 'pop_from_bottom' ? 'down' : 'up';
             btn.innerHTML = createToggleIcon(iconDirection);
             
             // حذف الحالة من localStorage (مفتوح)
             localStorage.removeItem(storageKey);
         } else {
-            // إغلاق الإعلان - إخفاءه بالكامل خارج الشاشة
+            // إغلاق الإعلان - إخفاءه بالكامل خارج الشاشة (لا يظهر أي جزء)
             adContainer.classList.add('analytics-ad-collapsed');
             
-            // حساب الإزاحة: الإعلان يختفي بالكامل + يظهر فقط toggle button
+            // المحتوى يختفي تمامًا - translateY(100%) للـ bottom و translateY(-100%) للـ top
             const translateValue = adType === 'pop_from_bottom' 
-                ? 'translateY(calc(100% - ' + toggleButtonHeight + 'px))' 
-                : 'translateY(calc(-100% + ' + toggleButtonHeight + 'px))';
+                ? 'translateY(100%)' 
+                : 'translateY(-100%)';
             adContainer.style.transform = translateValue;
             
             // تغيير الأيقونة لاتجاه الفتح (عكس الاتجاه)
-            // pop_from_bottom: ▼ (down arrow) | pop_from_top: ▲ (up arrow)
-            const iconDirection = adType === 'pop_from_bottom' ? 'down' : 'up';
+            // pop_from_bottom مغلق: ▲ (up) لأن الفتح للأعلى | pop_from_top مغلق: ▼ (down) لأن الفتح للأسفل
+            const iconDirection = adType === 'pop_from_bottom' ? 'up' : 'down';
             btn.innerHTML = createToggleIcon(iconDirection);
             
             // حفظ الحالة في localStorage (مطوي)
@@ -843,54 +841,66 @@
             
             const isBottom = ad.type === 'pop_from_bottom';
             
-            // تحديد الأيقونة الأولية (مفتوح → يشير لاتجاه الإغلاق)
-            // pop_from_bottom مفتوح: ▲ (up) | pop_from_top مفتوح: ▼ (down)
-            const initialIconDirection = isBottom ? 'up' : 'down';
+            // تحديد الأيقونة الأولية (مفتوح → يشير لاتجاه الإغلاق) - عكس الأيقونات
+            // pop_from_bottom مفتوح: ▼ (down) لأن الإغلاق للأسفل | pop_from_top مفتوح: ▲ (up) لأن الإغلاق للأعلى
+            const initialIconDirection = isBottom ? 'down' : 'up';
             toggleBtn.innerHTML = createToggleIcon(initialIconDirection);
             
-            // موضع الزر: ملتصق بحافة الإعلان
-            // pop_from_bottom: أعلى الإعلان | pop_from_top: أسفل الإعلان
+            // موضع الزر: خارج container، في أقصى يسار الـ wrapper (width 1000px)
+            // للـ pop_from_bottom: أعلى container (top: -21px) | للـ pop_from_top: أسفل container (bottom: -21px)
             const togglePosition = isBottom ? 'top' : 'bottom';
-            const toggleValue = '0px';
+            const toggleValue = '-21px';
             
-            // border-radius حسب الاتجاه: أعلى مستدير للـ bottom، أسفل مستدير للـ top
-            const borderRadius = isBottom ? '8px 8px 0 0' : '0 0 8px 8px';
+            // border-radius: 8px 8px 0 0
+            const borderRadius = '8px 8px 0px 0px';
             
-            // تصميم الزر: ملتصق بالإعلان، نفس الخلفية والظل
+            // حساب موضع left: في أقصى يسار الـ wrapper (width 1000px centered)
+            // left = calc((100% - 1000px) / 2) لكن مع max(0px, ...) لضمان عدم الخروج عن الشاشة
+            const leftPosition = 'max(0px, calc((100% - 1000px) / 2))';
+            
+            // box-shadow حسب الاتجاه: للأعلى للـ bottom، للأسفل للـ top
+            const boxShadow = isBottom 
+                ? 'rgba(0, 0, 0, 0.2) 0px -7px 8px' 
+                : 'rgba(0, 0, 0, 0.2) 0px 7px 8px';
+            
+            // تصميم الزر: خارج wrapper تمامًا، داخل container، يتحرك معه
             toggleBtn.style.cssText = 
                 'position: absolute !important; ' +
                 togglePosition + ': ' + toggleValue + ' !important; ' +
-                'left: 50% !important; ' +
+                'left: ' + leftPosition + ' !important; ' +
                 'transform: translateX(-50%) !important; ' +
-                'background: #fff !important; ' +
+                'background: rgb(255, 255, 255) !important; ' +
                 'border: none !important; ' +
                 'border-radius: ' + borderRadius + ' !important; ' +
                 'width: 48px !important; ' +
-                'height: 48px !important; ' +
+                'height: 22px !important; ' +
                 'cursor: pointer !important; ' +
-                'color: #333 !important; ' +
+                'color: rgb(51, 51, 51) !important; ' +
                 'z-index: 100001 !important; ' +
                 'display: flex !important; ' +
                 'align-items: center !important; ' +
                 'justify-content: center !important; ' +
-                'transition: all 0.2s ease !important; ' +
-                'box-shadow: 0 0 12px rgba(0,0,0,0.2) !important; ' +
+                'transition: 0.2s !important; ' +
+                'box-shadow: ' + boxShadow + ' !important; ' +
                 'pointer-events: auto !important; ' +
                 'outline: none !important; ' +
                 'user-select: none !important; ' +
-                'padding: 0 !important; ' +
-                'margin: 0 !important;';
+                'padding: 0px !important; ' +
+                'margin: 0px !important;';
             
             toggleBtn.setAttribute('style', toggleBtn.style.cssText);
             
             // تأثيرات hover
+            const hoverShadowValue = isBottom 
+                ? 'rgba(0, 0, 0, 0.25) 0px -7px 8px' 
+                : 'rgba(0, 0, 0, 0.25) 0px 7px 8px';
             toggleBtn.onmouseover = function() { 
                 this.style.setProperty('background', '#f5f5f5', 'important'); 
-                this.style.setProperty('box-shadow', '0 0 16px rgba(0,0,0,0.25)', 'important');
+                this.style.setProperty('box-shadow', hoverShadowValue, 'important');
             };
             toggleBtn.onmouseout = function() { 
-                this.style.setProperty('background', '#fff', 'important'); 
-                this.style.setProperty('box-shadow', '0 0 12px rgba(0,0,0,0.2)', 'important');
+                this.style.setProperty('background', 'rgb(255, 255, 255)', 'important'); 
+                this.style.setProperty('box-shadow', boxShadow, 'important');
             };
             
             /**
@@ -944,42 +954,82 @@
                         height: 16px !important;
                     }
                     
-                    /* Toggle Button - ملتصق بأعلى container للـ pop_from_bottom */
-                    .analytics-ad-pop-from-bottom .analytics-ad-toggle {
-                        position: absolute !important;
-                        top: 0px !important;
-                        left: 50% !important;
-                        transform: translateX(-50%) !important;
-                        border-radius: 8px 8px 0 0 !important;
-                        background: #fff !important;
-                        box-shadow: 0 0 12px rgba(0,0,0,0.2) !important;
-                    }
-                    
-                    /* Toggle Button - ملتصق بأسفل container للـ pop_from_top */
+                    /* Toggle Button - خارج wrapper (المحتوى) تمامًا، داخل container، يتحرك معه */
+                    .analytics-ad-pop-from-bottom .analytics-ad-toggle,
                     .analytics-ad-pop-from-top .analytics-ad-toggle {
                         position: absolute !important;
-                        bottom: 0px !important;
-                        left: 50% !important;
+                        /* في أقصى يسار الـ wrapper (width 1000px centered) */
+                        left: max(0px, calc((100% - 1000px) / 2)) !important;
                         transform: translateX(-50%) !important;
-                        border-radius: 0 0 8px 8px !important;
-                        background: #fff !important;
-                        box-shadow: 0 0 12px rgba(0,0,0,0.2) !important;
+                        border-radius: 8px 8px 0px 0px !important;
+                        background: rgb(255, 255, 255) !important;
+                        width: 48px !important;
+                        height: 22px !important;
+                        color: rgb(51, 51, 51) !important;
+                        z-index: 100001 !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        transition: 0.2s !important;
+                        outline: none !important;
+                        user-select: none !important;
+                        padding: 0px !important;
+                        margin: 0px !important;
+                        cursor: pointer !important;
+                        pointer-events: auto !important;
+                        border: none !important;
+                    }
+                    
+                    /* Toggle Button - موضع top للـ pop_from_bottom */
+                    .analytics-ad-pop-from-bottom .analytics-ad-toggle {
+                        top: -21px !important;
+                        box-shadow: rgba(0, 0, 0, 0.2) 0px -7px 8px !important;
+                    }
+                    
+                    /* Toggle Button - موضع bottom للـ pop_from_top */
+                    .analytics-ad-pop-from-top .analytics-ad-toggle {
+                        bottom: -21px !important;
+                        box-shadow: rgba(0, 0, 0, 0.2) 0px 7px 8px !important;
                     }
                     
                     /* الحالة المطوية - Toggle يبقى في نفس الموضع النسبي */
                     .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-toggle {
-                        top: 0px !important;
+                        top: -21px !important;
                         transform: translateX(-50%) !important;
                     }
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-toggle {
-                        bottom: 0px !important;
+                        bottom: -21px !important;
                         transform: translateX(-50%) !important;
+                    }
+                    
+                    /* تأثيرات hover */
+                    .analytics-ad-pop-from-bottom .analytics-ad-toggle:hover {
+                        background: #f5f5f5 !important;
+                        box-shadow: rgba(0, 0, 0, 0.25) 0px -7px 8px !important;
+                    }
+                    .analytics-ad-pop-from-top .analytics-ad-toggle:hover {
+                        background: #f5f5f5 !important;
+                        box-shadow: rgba(0, 0, 0, 0.25) 0px 7px 8px !important;
+                    }
+                    
+                    /* إخفاء المحتوى تمامًا عند الإغلاق */
+                    .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-wrapper,
+                    .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-wrapper {
+                        opacity: 0 !important;
+                        visibility: hidden !important;
+                        pointer-events: none !important;
                     }
                     
                     /* أنيميشن سلس للتحويل - container كامل (wrapper + toggle) يتحرك معًا */
                     .analytics-ad-pop-from-bottom,
                     .analytics-ad-pop-from-top {
                         transition: transform 0.35s ease-in-out !important;
+                    }
+                    
+                    /* SVG icons أكبر */
+                    .analytics-ad-toggle svg {
+                        width: 20px !important;
+                        height: 20px !important;
                     }
                     
                     /* زر الإغلاق لـ Interstitial */
@@ -1023,16 +1073,18 @@
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             /**
              * هيكل الإعلان: 
-             * container (fixed, position) 
-             *   ├── wrapper (المحتوى - centered, max-width)
-             *   └── toggle button (خارج wrapper، ملتصق بحافة container)
+             * container (fixed, position, width: 100%) 
+             *   ├── wrapper (المحتوى - centered, max-width: 1000px)
+             *   └── toggle button (خارج wrapper، داخل container، في أقصى يسار wrapper)
              * 
-             * عند الإغلاق: container يتحرك، toggle button يبقى ظاهرًا على الحافة
+             * toggle button يكون خارج wrapper (المحتوى) تمامًا لكن داخل container
+             * يتحرك مع container عند الفتح/الإغلاق
+             * عند الإغلاق: المحتوى يختفي تمامًا، toggle button يبقى ظاهرًا
              */
             // إضافة wrapper أولاً (المحتوى)
             container.appendChild(wrapper);
             
-            // إضافة toggle button خارج wrapper (عنصر مستقل ملتصق بالحافة)
+            // إضافة toggle button خارج wrapper (عنصر مستقل، يتحرك مع container)
             if (toggleBtn) {
                 container.appendChild(toggleBtn);
             }
@@ -1109,21 +1161,20 @@
                     wasCollapsed = localStorage.getItem(storageKey) === 'true';
                     
                     if (wasCollapsed) {
-                        // البدء في الحالة المطوية - الإعلان مخفي بالكامل
+                        // البدء في الحالة المطوية - المحتوى يختفي تمامًا (لا يظهر أي جزء)
                         adContainer.classList.add('analytics-ad-collapsed');
                         const toggleBtn = adContainer.querySelector('.analytics-ad-toggle');
                         
-                        // ارتفاع toggle button فقط (يظهر بعد الإغلاق)
-                        const toggleButtonHeight = 56; // 48px button + 8px padding
+                        // المحتوى يختفي تمامًا - translateY(100%) للـ bottom و translateY(-100%) للـ top
                         const translateValue = ad.type === 'pop_from_bottom' 
-                            ? 'translateY(calc(100% - ' + toggleButtonHeight + 'px))' 
-                            : 'translateY(calc(-100% + ' + toggleButtonHeight + 'px))';
+                            ? 'translateY(100%)' 
+                            : 'translateY(-100%)';
                         adContainer.style.transform = translateValue;
                         
                         if (toggleBtn) {
-                            // تغيير الأيقونة لاتجاه الفتح (مغلق → يشير لاتجاه الفتح)
-                            // pop_from_bottom مغلق: ▼ (down) | pop_from_top مغلق: ▲ (up)
-                            const iconDirection = ad.type === 'pop_from_bottom' ? 'down' : 'up';
+                            // تغيير الأيقونة لاتجاه الفتح (مغلق → يشير لاتجاه الفتح) - عكس الأيقونات
+                            // pop_from_bottom مغلق: ▲ (up) لأن الفتح للأعلى | pop_from_top مغلق: ▼ (down) لأن الفتح للأسفل
+                            const iconDirection = ad.type === 'pop_from_bottom' ? 'up' : 'down';
                             toggleBtn.innerHTML = createToggleIcon(iconDirection);
                         }
                     }
