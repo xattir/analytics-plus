@@ -228,8 +228,8 @@ class BackendAdvertisementController extends Controller
             }
         }
 
-        // Get current custom patterns from custom_patterns table
-        $currentCustomPatterns = $advertisement->customPatterns->pluck('pattern')->toArray();
+        // Get current custom patterns from custom_patterns field
+        $currentCustomPatterns = $advertisement->getCustomPatterns();
 
         return view('admin.advertisements.edit', compact(
             'advertisement',
