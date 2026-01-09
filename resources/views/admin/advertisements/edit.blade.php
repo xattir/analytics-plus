@@ -254,15 +254,21 @@ function toggleSelectorFields() {
     if (adType === 'pop_from_bottom' || adType === 'pop_from_top') {
         if (selectorFields) selectorFields.style.display = 'none';
         if (customSelectorField) customSelectorField.style.display = 'none';
-        if (paddingFields) paddingFields.style.display = 'block';
+        if (paddingFields) {
+            paddingFields.style.setProperty('display', 'block', 'important');
+        }
         if (interstitialPaddingField) interstitialPaddingField.style.display = 'none';
         if (intervalField) intervalField.style.display = 'none';
     } else if (adType === 'Interstitial') {
         if (selectorFields) selectorFields.style.display = 'none';
         if (customSelectorField) customSelectorField.style.display = 'none';
         if (paddingFields) paddingFields.style.display = 'none';
-        if (interstitialPaddingField) interstitialPaddingField.style.display = 'block';
-        if (intervalField) intervalField.style.display = 'block';
+        if (interstitialPaddingField) {
+            interstitialPaddingField.style.setProperty('display', 'block', 'important');
+        }
+        if (intervalField) {
+            intervalField.style.setProperty('display', 'block', 'important');
+        }
     } else {
         if (selectorFields) selectorFields.style.display = 'block';
         if (customSelectorField) customSelectorField.style.display = 'block';
@@ -273,14 +279,18 @@ function toggleSelectorFields() {
 }
 
 // Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        initSelect2();
-        toggleSelectorFields();
-    });
-} else {
+function initializeForm() {
     initSelect2();
-    toggleSelectorFields();
+    // Wait a bit for select2 to initialize, then toggle fields
+    setTimeout(function() {
+        toggleSelectorFields();
+    }, 100);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeForm);
+} else {
+    initializeForm();
 }
 </script>
 @endsection

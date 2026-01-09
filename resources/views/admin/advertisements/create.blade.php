@@ -213,7 +213,7 @@
                             Interval Period (بالثواني) - للـ Interstitial
                         </div>
                         <div class="col-12 pt-3">
-                            <input type="number" name="interval_period" min="0" class="form-control" value="{{old('interval_period')}}" placeholder="3600">
+                            <input type="number" name="interval_period" id="interval_period_input" min="0" class="form-control" value="{{old('interval_period')}}" placeholder="3600">
                             <small class="text-muted">المدة بالثواني قبل إظهار الإعلان مرة أخرى (0 = إظهار دائماً، اترك فارغاً = إخفاء تلقائي بعد 10 ثوانٍ)</small>
                         </div>
                     </div>
@@ -244,7 +244,10 @@ function initSelect2() {
 
 // Toggle selector fields based on ad type
 function toggleSelectorFields() {
-    const adType = document.getElementById('ad_type').value;
+    const adTypeSelect = document.getElementById('ad_type');
+    if (!adTypeSelect) return;
+    
+    const adType = adTypeSelect.value;
     const selectorFields = document.getElementById('selector_fields');
     const customSelectorField = document.getElementById('custom_selector_field');
     const paddingFields = document.getElementById('padding_fields');
@@ -253,20 +256,26 @@ function toggleSelectorFields() {
     
     // Special ad types don't need CSS selectors
     if (adType === 'pop_from_bottom' || adType === 'pop_from_top') {
-        selectorFields.style.display = 'none';
-        customSelectorField.style.display = 'none';
-        if (paddingFields) paddingFields.style.display = 'block';
+        if (selectorFields) selectorFields.style.display = 'none';
+        if (customSelectorField) customSelectorField.style.display = 'none';
+        if (paddingFields) {
+            paddingFields.style.setProperty('display', 'block', 'important');
+        }
         if (interstitialPaddingField) interstitialPaddingField.style.display = 'none';
         if (intervalField) intervalField.style.display = 'none';
     } else if (adType === 'Interstitial') {
-        selectorFields.style.display = 'none';
-        customSelectorField.style.display = 'none';
+        if (selectorFields) selectorFields.style.display = 'none';
+        if (customSelectorField) customSelectorField.style.display = 'none';
         if (paddingFields) paddingFields.style.display = 'none';
-        if (interstitialPaddingField) interstitialPaddingField.style.display = 'block';
-        if (intervalField) intervalField.style.display = 'block';
+        if (interstitialPaddingField) {
+            interstitialPaddingField.style.setProperty('display', 'block', 'important');
+        }
+        if (intervalField) {
+            intervalField.style.setProperty('display', 'block', 'important');
+        }
     } else {
-        selectorFields.style.display = 'block';
-        customSelectorField.style.display = 'block';
+        if (selectorFields) selectorFields.style.display = 'block';
+        if (customSelectorField) customSelectorField.style.display = 'block';
         if (paddingFields) paddingFields.style.display = 'none';
         if (interstitialPaddingField) interstitialPaddingField.style.display = 'none';
         if (intervalField) intervalField.style.display = 'none';
@@ -274,14 +283,18 @@ function toggleSelectorFields() {
 }
 
 // Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        initSelect2();
-        toggleSelectorFields();
-    });
-} else {
+function initializeForm() {
     initSelect2();
-    toggleSelectorFields();
+    // Wait a bit for select2 to initialize, then toggle fields
+    setTimeout(function() {
+        toggleSelectorFields();
+    }, 100);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeForm);
+} else {
+    initializeForm();
 }
 </script>
 @endsection
