@@ -348,9 +348,22 @@
     }
     
     /**
+     * إنشاء SVG icon للسهم - بديل عن emoji
+     * @param {string} direction - 'up' أو 'down'
+     * @returns {string} SVG string
+     */
+    function createToggleIcon(direction) {
+        if (direction === 'up') {
+            return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4L4 8L12 8L8 4Z" fill="currentColor"/></svg>';
+        } else {
+            return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 12L12 8L4 8L8 12Z" fill="currentColor"/></svg>';
+        }
+    }
+
+    /**
      * Toggle ad collapse/expand function - for pop_from_bottom and pop_from_top only
-     * الإعلان يتحكم به المستخدم - يمكن طيه جزئيًا (collapse) أو فتحه (expand)
-     * الحالة محفوظة في localStorage لكل إعلان
+     * عند الإغلاق: محتوى الإعلان كله يختفي بالكامل خارج الشاشة
+     * يظل فقط زر الـ toggle ظاهرًا على الحافة
      */
     function toggleAdCollapse(btn) {
         const adContainer = btn.closest('.analytics-ad-pop-from-bottom, .analytics-ad-pop-from-top');
@@ -359,30 +372,41 @@
         const adId = adContainer.getAttribute('data-ad-id');
         const isCollapsed = adContainer.classList.contains('analytics-ad-collapsed');
         const adType = adContainer.classList.contains('analytics-ad-pop-from-bottom') ? 'pop_from_bottom' : 'pop_from_top';
-        const storageKey = 'analytics_ad_collapsed_' + adId + '_' + adType;
         
-        // ارتفاع الـ toggle handle (يجب أن يظهر دائمًا حتى بعد الإغلاق)
-        // الزر: 40px + margin: 8px (top/bottom) = 48px
-        const toggleHandleHeight = 48;
+        // localStorage key شامل: site + ad id + ad type
+        const siteKey = window.ANALYTICS_SITE_KEY || 'default';
+        const storageKey = 'analytics_ad_collapsed_' + siteKey + '_' + adId + '_' + adType;
+        
+        // ارتفاع الـ toggle button فقط (يظهر بعد الإغلاق)
+        const toggleButtonHeight = 56; // 48px button + 8px padding
         
         if (isCollapsed) {
             // فتح الإعلان - إرجاعه للظهور بالكامل
             adContainer.classList.remove('analytics-ad-collapsed');
             adContainer.style.transform = 'translateY(0)';
-            // تغيير الأيقونة لاتجاه الطي (⬇️ للأسفل، ⬆️ للأعلى)
-            btn.innerHTML = adType === 'pop_from_bottom' ? '⬇️' : '⬆️';
+            
+            // تغيير الأيقونة لاتجاه الإغلاق
+            // pop_from_bottom: ▲ (up arrow) | pop_from_top: ▼ (down arrow)
+            const iconDirection = adType === 'pop_from_bottom' ? 'up' : 'down';
+            btn.innerHTML = createToggleIcon(iconDirection);
+            
             // حذف الحالة من localStorage (مفتوح)
             localStorage.removeItem(storageKey);
         } else {
-            // طي الإعلان - إخفاءه جزئيًا مع إبقاء الـ handle مرئيًا
+            // إغلاق الإعلان - إخفاءه بالكامل خارج الشاشة
             adContainer.classList.add('analytics-ad-collapsed');
-            // حساب الإزاحة بناءً على ارتفاع الـ handle
+            
+            // حساب الإزاحة: الإعلان يختفي بالكامل + يظهر فقط toggle button
             const translateValue = adType === 'pop_from_bottom' 
-                ? 'translateY(calc(100% - ' + toggleHandleHeight + 'px))' 
-                : 'translateY(calc(-100% + ' + toggleHandleHeight + 'px))';
+                ? 'translateY(calc(100% - ' + toggleButtonHeight + 'px))' 
+                : 'translateY(calc(-100% + ' + toggleButtonHeight + 'px))';
             adContainer.style.transform = translateValue;
+            
             // تغيير الأيقونة لاتجاه الفتح (عكس الاتجاه)
-            btn.innerHTML = adType === 'pop_from_bottom' ? '⬆️' : '⬇️';
+            // pop_from_bottom: ▼ (down arrow) | pop_from_top: ▲ (up arrow)
+            const iconDirection = adType === 'pop_from_bottom' ? 'down' : 'up';
+            btn.innerHTML = createToggleIcon(iconDirection);
+            
             // حفظ الحالة في localStorage (مطوي)
             localStorage.setItem(storageKey, 'true');
         }
@@ -805,8 +829,9 @@
         }
         
         /**
-         * إنشاء زر التحكم (Toggle Handle) للإعلانات pop_from_bottom و pop_from_top
-         * الزر يكون ثابت وواضح دائمًا، حتى بعد الإغلاق الجزئي
+         * إنشاء زر التحكم (Toggle Button) للإعلانات pop_from_bottom و pop_from_top
+         * الزر يكون خارج محتوى الإعلان تمامًا - عنصر UI مستقل ملتصق بحافة الإعلان
+         * ملتصق بأعلى الإعلان للـ pop_from_bottom، وأسفل الإعلان للـ pop_from_top
          */
         let toggleBtn = null;
         if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
@@ -816,54 +841,56 @@
             toggleBtn.setAttribute('type', 'button');
             toggleBtn.setAttribute('aria-label', 'Toggle ad');
             
-            // تحديد موضع الزر: أعلى الإعلان لـ pop_from_bottom، أسفل الإعلان لـ pop_from_top
             const isBottom = ad.type === 'pop_from_bottom';
-            toggleBtn.innerHTML = isBottom ? '⬇️' : '⬆️';
             
-            // موضع الزر: أعلى الإعلان للـ bottom، أسفل الإعلان للـ top
-            const toggleTop = isBottom ? '16px' : 'auto';
-            const toggleBottom = isBottom ? 'auto' : '16px';
-            const toggleLeft = '16px';
+            // تحديد الأيقونة الأولية (مفتوح → يشير لاتجاه الإغلاق)
+            // pop_from_bottom مفتوح: ▲ (up) | pop_from_top مفتوح: ▼ (down)
+            const initialIconDirection = isBottom ? 'up' : 'down';
+            toggleBtn.innerHTML = createToggleIcon(initialIconDirection);
             
-            // تصميم الزر: دائري، أبيض، واضح، قابل للنقر دائمًا
-            toggleBtn.style.cssText = 'position: absolute !important; ' + 
-                'top: ' + toggleTop + ' !important; ' +
-                'bottom: ' + toggleBottom + ' !important; ' +
-                'left: ' + toggleLeft + ' !important; ' +
+            // موضع الزر: ملتصق بحافة الإعلان
+            // pop_from_bottom: أعلى الإعلان | pop_from_top: أسفل الإعلان
+            const togglePosition = isBottom ? 'top' : 'bottom';
+            const toggleValue = '0px';
+            
+            // border-radius حسب الاتجاه: أعلى مستدير للـ bottom، أسفل مستدير للـ top
+            const borderRadius = isBottom ? '8px 8px 0 0' : '0 0 8px 8px';
+            
+            // تصميم الزر: ملتصق بالإعلان، نفس الخلفية والظل
+            toggleBtn.style.cssText = 
+                'position: absolute !important; ' +
+                togglePosition + ': ' + toggleValue + ' !important; ' +
+                'left: 50% !important; ' +
+                'transform: translateX(-50%) !important; ' +
                 'background: #fff !important; ' +
-                'border: 2px solid rgba(0,0,0,0.15) !important; ' +
-                'border-radius: 50% !important; ' +
-                'width: 40px !important; ' +
-                'height: 40px !important; ' +
+                'border: none !important; ' +
+                'border-radius: ' + borderRadius + ' !important; ' +
+                'width: 48px !important; ' +
+                'height: 48px !important; ' +
                 'cursor: pointer !important; ' +
                 'color: #333 !important; ' +
-                'font-size: 18px !important; ' +
-                'font-weight: normal !important; ' +
                 'z-index: 100001 !important; ' +
                 'display: flex !important; ' +
                 'align-items: center !important; ' +
                 'justify-content: center !important; ' +
                 'transition: all 0.2s ease !important; ' +
-                'font-family: arial, sans-serif !important; ' +
-                'box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important; ' +
+                'box-shadow: 0 0 12px rgba(0,0,0,0.2) !important; ' +
                 'pointer-events: auto !important; ' +
                 'outline: none !important; ' +
-                'user-select: none !important;';
+                'user-select: none !important; ' +
+                'padding: 0 !important; ' +
+                'margin: 0 !important;';
             
             toggleBtn.setAttribute('style', toggleBtn.style.cssText);
             
             // تأثيرات hover
             toggleBtn.onmouseover = function() { 
                 this.style.setProperty('background', '#f5f5f5', 'important'); 
-                this.style.setProperty('border-color', 'rgba(0,0,0,0.25)', 'important'); 
-                this.style.setProperty('transform', 'scale(1.1)', 'important'); 
-                this.style.setProperty('box-shadow', '0 3px 12px rgba(0,0,0,0.18)', 'important');
+                this.style.setProperty('box-shadow', '0 0 16px rgba(0,0,0,0.25)', 'important');
             };
             toggleBtn.onmouseout = function() { 
                 this.style.setProperty('background', '#fff', 'important'); 
-                this.style.setProperty('border-color', 'rgba(0,0,0,0.15)', 'important'); 
-                this.style.setProperty('transform', 'scale(1)', 'important'); 
-                this.style.setProperty('box-shadow', '0 2px 8px rgba(0,0,0,0.12)', 'important');
+                this.style.setProperty('box-shadow', '0 0 12px rgba(0,0,0,0.2)', 'important');
             };
             
             /**
@@ -895,7 +922,7 @@
                         background: #fff !important;
                     }
                     
-                    /* أنماط Toggle Handle - واضح ودائمًا قابل للنقر */
+                    /* أنماط Toggle Button - خارج محتوى الإعلان، ملتصق بالحافة */
                     .analytics-ad-toggle {
                         font-family: arial, sans-serif !important;
                         outline: none !important;
@@ -907,55 +934,49 @@
                     }
                     .analytics-ad-toggle:hover {
                         background: #f5f5f5 !important;
-                        border-color: rgba(0,0,0,0.25) !important;
                     }
                     .analytics-ad-toggle:active {
-                        transform: scale(0.95) !important;
+                        transform: translateX(-50%) scale(0.95) !important;
+                    }
+                    .analytics-ad-toggle svg {
+                        display: block !important;
+                        width: 16px !important;
+                        height: 16px !important;
                     }
                     
-                    /* Toggle Handle في pop_from_bottom - أعلى الإعلان */
+                    /* Toggle Button - ملتصق بأعلى container للـ pop_from_bottom */
                     .analytics-ad-pop-from-bottom .analytics-ad-toggle {
-                        pointer-events: auto !important;
-                        z-index: 100001 !important;
-                        top: 16px !important;
-                        left: 16px !important;
-                    }
-                    
-                    /* Toggle Handle في pop_from_top - أسفل الإعلان */
-                    .analytics-ad-pop-from-top .analytics-ad-toggle {
-                        pointer-events: auto !important;
-                        z-index: 100001 !important;
-                        bottom: 16px !important;
-                        left: 16px !important;
-                    }
-                    
-                    /* الحالة المطوية - Handle يبقى في نفس الموضع */
-                    .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-toggle {
-                        top: 16px !important;
-                        left: 16px !important;
-                        transform: scale(1) !important;
+                        position: absolute !important;
+                        top: 0px !important;
+                        left: 50% !important;
+                        transform: translateX(-50%) !important;
+                        border-radius: 8px 8px 0 0 !important;
                         background: #fff !important;
-                        border: 2px solid rgba(0,0,0,0.15) !important;
-                        color: #333 !important;
+                        box-shadow: 0 0 12px rgba(0,0,0,0.2) !important;
+                    }
+                    
+                    /* Toggle Button - ملتصق بأسفل container للـ pop_from_top */
+                    .analytics-ad-pop-from-top .analytics-ad-toggle {
+                        position: absolute !important;
+                        bottom: 0px !important;
+                        left: 50% !important;
+                        transform: translateX(-50%) !important;
+                        border-radius: 0 0 8px 8px !important;
+                        background: #fff !important;
+                        box-shadow: 0 0 12px rgba(0,0,0,0.2) !important;
+                    }
+                    
+                    /* الحالة المطوية - Toggle يبقى في نفس الموضع النسبي */
+                    .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-toggle {
+                        top: 0px !important;
+                        transform: translateX(-50%) !important;
                     }
                     .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-toggle {
-                        bottom: 16px !important;
-                        left: 16px !important;
-                        transform: scale(1) !important;
-                        background: #fff !important;
-                        border: 2px solid rgba(0,0,0,0.15) !important;
-                        color: #333 !important;
+                        bottom: 0px !important;
+                        transform: translateX(-50%) !important;
                     }
                     
-                    /* إخفاء المحتوى عند الطي - المحتوى فقط، وليس الـ handle */
-                    .analytics-ad-pop-from-bottom.analytics-ad-collapsed .analytics-ad-wrapper,
-                    .analytics-ad-pop-from-top.analytics-ad-collapsed .analytics-ad-wrapper {
-                        opacity: 0 !important;
-                        pointer-events: none !important;
-                        overflow: hidden !important;
-                    }
-                    
-                    /* أنيميشن سلس للتحويل */
+                    /* أنيميشن سلس للتحويل - container كامل (wrapper + toggle) يتحرك معًا */
                     .analytics-ad-pop-from-bottom,
                     .analytics-ad-pop-from-top {
                         transition: transform 0.35s ease-in-out !important;
@@ -1001,12 +1022,18 @@
             container.appendChild(wrapper);
         } else if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
             /**
-             * هيكل الإعلان: container (fixed) -> wrapper (centered, max-width) -> contentDiv -> toggle button
-             * الـ toggle button يكون داخل container وليس wrapper لضمان وضعه الثابت
+             * هيكل الإعلان: 
+             * container (fixed, position) 
+             *   ├── wrapper (المحتوى - centered, max-width)
+             *   └── toggle button (خارج wrapper، ملتصق بحافة container)
+             * 
+             * عند الإغلاق: container يتحرك، toggle button يبقى ظاهرًا على الحافة
              */
+            // إضافة wrapper أولاً (المحتوى)
             container.appendChild(wrapper);
+            
+            // إضافة toggle button خارج wrapper (عنصر مستقل ملتصق بالحافة)
             if (toggleBtn) {
-                // إضافة الـ toggle button داخل container مباشرة لضمان موضعه الثابت
                 container.appendChild(toggleBtn);
             }
         } else {
@@ -1072,28 +1099,32 @@
 
                 /**
                  * التحقق من حالة الإعلان المطوية من localStorage
-                 * الحالة محفوظة لكل نوع إعلان بشكل منفصل
-                 * لا يُعاد فتح الإعلان تلقائيًا إلا إذا فتحه المستخدم بنفسه
+                 * localStorage key شامل: site_key + ad_id + ad_type
+                 * لا يُعاد فتح الإعلان تلقائيًا بعد الإغلاق
                  */
                 let wasCollapsed = false;
                 if (ad.type === 'pop_from_bottom' || ad.type === 'pop_from_top') {
-                    const storageKey = 'analytics_ad_collapsed_' + ad.id + '_' + ad.type;
+                    const siteKey = window.ANALYTICS_SITE_KEY || 'default';
+                    const storageKey = 'analytics_ad_collapsed_' + siteKey + '_' + ad.id + '_' + ad.type;
                     wasCollapsed = localStorage.getItem(storageKey) === 'true';
                     
                     if (wasCollapsed) {
-                        // البدء في الحالة المطوية
+                        // البدء في الحالة المطوية - الإعلان مخفي بالكامل
                         adContainer.classList.add('analytics-ad-collapsed');
                         const toggleBtn = adContainer.querySelector('.analytics-ad-toggle');
-                        // ارتفاع الـ toggle handle: 40px button + 8px margin = 48px
-                        const toggleHandleHeight = 48;
+                        
+                        // ارتفاع toggle button فقط (يظهر بعد الإغلاق)
+                        const toggleButtonHeight = 56; // 48px button + 8px padding
                         const translateValue = ad.type === 'pop_from_bottom' 
-                            ? 'translateY(calc(100% - ' + toggleHandleHeight + 'px))' 
-                            : 'translateY(calc(-100% + ' + toggleHandleHeight + 'px))';
+                            ? 'translateY(calc(100% - ' + toggleButtonHeight + 'px))' 
+                            : 'translateY(calc(-100% + ' + toggleButtonHeight + 'px))';
                         adContainer.style.transform = translateValue;
                         
                         if (toggleBtn) {
-                            // تغيير الأيقونة لاتجاه الفتح (عكس الاتجاه)
-                            toggleBtn.innerHTML = ad.type === 'pop_from_bottom' ? '⬆️' : '⬇️';
+                            // تغيير الأيقونة لاتجاه الفتح (مغلق → يشير لاتجاه الفتح)
+                            // pop_from_bottom مغلق: ▼ (down) | pop_from_top مغلق: ▲ (up)
+                            const iconDirection = ad.type === 'pop_from_bottom' ? 'down' : 'up';
+                            toggleBtn.innerHTML = createToggleIcon(iconDirection);
                         }
                     }
                 }
