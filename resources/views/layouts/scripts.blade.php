@@ -56,4 +56,5 @@ toastr.options={"positionClass": "toast-top-left"};
         toastr.info("{{ $error }}");
     @endforeach
 @endif
+
 </script>

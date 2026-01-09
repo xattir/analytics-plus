@@ -1554,10 +1554,10 @@
                                 <th>إلى الصفحة</th>
                                 <th>الوقت</th>
                                 <th>الدولة</th>
+                                <th>عدد المسارات</th>
                                 <th>عنوان IP</th>
                                 <th>الجهاز</th>
                                 <th>المتصفح</th>
-                                <th>عدد المسارات</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1687,6 +1687,11 @@
                                         <span title="{{ $countryNameAr }}">
                                             {{ $countryFlag }} {{ $countryNameAr }}
                                         </span>
+                                    </td>
+                                    <td class="visits-table-paths">
+                                        <a href="{{ route($routeName, [$site, $visit['session_id']]) }}" class="paths-count-link">
+                                            {{ $visit['pages_count'] ?? 0 }}
+                                        </a>
                                     </td>
                                     <td class="visits-table-ip">
                                         <code class="ip-address">{{ $visit['ip'] ?? '—' }}</code>
