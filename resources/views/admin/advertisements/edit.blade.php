@@ -241,9 +241,12 @@ function initSelect2() {
     }
 }
 
-// Toggle selector fields based on ad type
-function toggleSelectorFields() {
-    const adType = document.getElementById('ad_type').value;
+// Toggle selector fields based on ad type - make it global for inline handlers
+window.toggleSelectorFields = function() {
+    const adTypeSelect = document.getElementById('ad_type');
+    if (!adTypeSelect) return;
+    
+    const adType = adTypeSelect.value;
     const selectorFields = document.getElementById('selector_fields');
     const customSelectorField = document.getElementById('custom_selector_field');
     const paddingFields = document.getElementById('padding_fields');
@@ -283,7 +286,9 @@ function initializeForm() {
     initSelect2();
     // Wait a bit for select2 to initialize, then toggle fields
     setTimeout(function() {
-        toggleSelectorFields();
+        if (window.toggleSelectorFields) {
+            window.toggleSelectorFields();
+        }
     }, 100);
 }
 
