@@ -393,6 +393,8 @@ class AnalyticsController extends Controller
                                 'selector' => null,
                                 'content' => $ad->renderContent(),
                                 'url' => $ad->url,
+                                'padding_x' => $ad->padding_x ?? 20,
+                                'padding_y' => $ad->padding_y ?? 20,
                                 'interval_period' => $ad->interval_period ?? null,
                                 'url_pattern_id' => $urlPatternId,
                             ];

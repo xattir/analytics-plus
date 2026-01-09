@@ -819,16 +819,24 @@
             const specialTypes = ['pop_from_bottom', 'pop_from_top', 'Interstitial'];
             if (specialTypes.includes(ad.type)) {
                 // Check interval period for Interstitial ads
-                if (ad.type === 'Interstitial' && ad.interval_period) {
-                    const lastShown = localStorage.getItem('analytics_ad_interstitial_' + ad.id);
-                    if (lastShown) {
-                        const timeSinceLastShown = (Date.now() - parseInt(lastShown)) / 1000;
-                        if (timeSinceLastShown < parseInt(ad.interval_period)) {
-                            return; // Don't show yet
+                if (ad.type === 'Interstitial') {
+                    // interval_period can be: null/undefined (no interval, auto-close after 10s)
+                    // or a number > 0 (show again after X seconds)
+                    const intervalPeriod = ad.interval_period !== null && ad.interval_period !== undefined ? parseInt(ad.interval_period) : null;
+                    
+                    if (intervalPeriod !== null && intervalPeriod > 0) {
+                        // Has interval period - check if enough time has passed
+                        const lastShown = localStorage.getItem('analytics_ad_interstitial_' + ad.id);
+                        if (lastShown) {
+                            const timeSinceLastShown = (Date.now() - parseInt(lastShown)) / 1000;
+                            if (timeSinceLastShown < intervalPeriod) {
+                                return; // Don't show yet - not enough time has passed
+                            }
                         }
+                        // Store current time for next interval check
+                        localStorage.setItem('analytics_ad_interstitial_' + ad.id, Date.now().toString());
                     }
-                    // Store current time
-                    localStorage.setItem('analytics_ad_interstitial_' + ad.id, Date.now().toString());
+                    // If interval_period is null/0, will show and auto-close after 10s (handled below)
                 }
 
                 // Always create structure with iframe isolation in JavaScript
@@ -887,14 +895,22 @@
                     });
                 });
 
-                // Auto-close Interstitial after 10 seconds if no interval
-                if (ad.type === 'Interstitial' && !ad.interval_period) {
-                    setTimeout(function() {
-                        const closeBtn = adContainer.querySelector('.analytics-ad-close');
-                        if (closeBtn) {
-                            closeAdPopup(closeBtn);
-                        }
-                    }, 10000);
+                // Auto-close Interstitial after 10 seconds if no interval_period set
+                // If interval_period is set, user must close manually (or it will show again after interval)
+                if (ad.type === 'Interstitial') {
+                    const intervalPeriod = ad.interval_period !== null && ad.interval_period !== undefined ? parseInt(ad.interval_period) : null;
+                    
+                    if (intervalPeriod === null || intervalPeriod === 0) {
+                        // No interval - auto-close after 10 seconds
+                        setTimeout(function() {
+                            const closeBtn = adContainer.querySelector('.analytics-ad-close');
+                            if (closeBtn) {
+                                closeAdPopup(closeBtn);
+                            }
+                        }, 10000);
+                    }
+                    // If interval_period > 0, don't auto-close - user must close manually
+                    // It will show again after the interval period
                 }
 
                 return;
