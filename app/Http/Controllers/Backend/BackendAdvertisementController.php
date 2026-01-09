@@ -50,7 +50,7 @@ class BackendAdvertisementController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:html,image,video,text,script',
+            'type' => 'required|in:html,image,video,text,script,pop-bottom,pop-top,interstitial',
             'content' => 'required|string',
             'url' => 'nullable|url|max:2048',
             'priority' => 'nullable|integer|min:0',
@@ -203,7 +203,7 @@ class BackendAdvertisementController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:html,image,video,text,script',
+            'type' => 'required|in:html,image,video,text,script,pop-bottom,pop-top,interstitial',
             'content' => 'required|string',
             'url' => 'nullable|url|max:2048',
             'priority' => 'nullable|integer|min:0',
