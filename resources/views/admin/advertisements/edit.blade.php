@@ -178,3 +178,27 @@
 </div>
 @endsection
 
+@section('scripts')
+<script type="module">
+// Wait for jQuery and select2 to be available
+function initSelect2() {
+    if (typeof window.$ !== 'undefined' && typeof window.$.fn.select2 !== 'undefined') {
+        $('.select2-select').select2({
+            dir: 'rtl',
+            language: 'ar',
+            width: '100%'
+        });
+    } else {
+        setTimeout(initSelect2, 100);
+    }
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSelect2);
+} else {
+    initSelect2();
+}
+</script>
+@endsection
+
