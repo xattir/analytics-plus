@@ -138,12 +138,85 @@
     .select2-container--default .select2-selection--multiple {
         border: 2px solid #e5e7eb;
         border-radius: 12px;
-        padding: 4px;
+        padding: 4px 8px;
         min-height: 48px;
+        height: auto !important;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: normal;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        margin: 4px 4px 4px 0;
+        padding: 4px 8px;
+        background-color: #7b60fb;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: white;
+        margin-left: 6px;
+        cursor: pointer;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: rgba(255, 255, 255, 0.8);
     }
     
     .select2-container--default.select2-container--focus .select2-selection--multiple {
         border-color: #7b60fb;
+    }
+    
+    .select2-container--default .select2-search--inline {
+        float: right;
+        width: 100%;
+    }
+    
+    .select2-container--default .select2-search--inline .select2-search__field {
+        margin-top: 4px;
+        padding: 4px 8px;
+        border: none;
+        outline: none;
+        width: 100% !important;
+    }
+    
+    /* Ensure select2 container expands properly */
+    .select2-container {
+        width: 100% !important;
+    }
+    
+    .select2-container--default .select2-selection--multiple {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+    
+    /* Fix for select2 dropdown positioning */
+    .select2-dropdown {
+        border-radius: 12px;
+        border: 2px solid #e5e7eb;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .select2-container--default .select2-results__option {
+        padding: 8px 12px;
+    }
+    
+    .select2-container--default .select2-results__option--highlighted {
+        background-color: #7b60fb;
+        color: white;
     }
     
     @media (max-width: 768px) {
@@ -645,7 +718,9 @@ function initSelect2() {
                     searching: function() { return 'جاري البحث...'; }
                 },
                 width: '100%',
-                allowClear: true
+                allowClear: true,
+                closeOnSelect: false,
+                maximumSelectionLength: null
             };
             
             // إضافة placeholder للحقول المتعددة (multiple)
@@ -664,6 +739,24 @@ function initSelect2() {
             // إزالة الخيار الفارغ بعد التهيئة للحقول المتعددة (إذا لم يكن هناك خيارات محددة)
             if (isMultiple && $select.find('option:selected').length === 0) {
                 // الحقل فارغ - placeholder سيظهر
+            }
+            
+            // إعادة حساب الارتفاع عند تغيير الاختيارات
+            if (isMultiple) {
+                $select.on('select2:select select2:unselect', function() {
+                    const $container = $(this).next('.select2-container');
+                    const $selection = $container.find('.select2-selection--multiple');
+                    // إعادة حساب الارتفاع تلقائياً
+                    setTimeout(function() {
+                        $selection.css('height', 'auto');
+                        const height = $selection[0].scrollHeight;
+                        if (height > 48) {
+                            $selection.css('height', Math.min(height, 200) + 'px');
+                        } else {
+                            $selection.css('height', '48px');
+                        }
+                    }, 10);
+                });
             }
         });
     } else {
