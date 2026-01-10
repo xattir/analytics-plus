@@ -359,6 +359,17 @@
             margin: 2px 0 !important;
         }
         
+        .top-nav #fileUploadIcon {
+            display: inline-block !important;
+            visibility: visible !important;
+        }
+        
+        .top-nav #fileUploadIcon > div {
+            background: transparent;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
         .top-nav #fileUploadIcon > div:hover {
             background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
             color: #7b60fb !important;
@@ -367,6 +378,11 @@
         
         .top-nav #fileUploadIcon > div:hover .fal {
             transform: scale(1.1);
+        }
+        
+        .top-nav #fileUploadIcon .fal {
+            display: inline-block !important;
+            visibility: visible !important;
         }
         
         .top-nav .dropdown-item:hover {
@@ -669,11 +685,11 @@
 
 
 
-                    @can('hub-files-create')
                     <!-- File Upload Icon -->
+                    @can('hub-files-create')
                     <div class="btn-group" id="fileUploadIcon" style="width:44px;height:44px;margin-right: 8px;">
-                        <div class="d-flex justify-content-center align-items-center btn" style="width: 44px;height: 44px;position: relative;cursor: pointer;" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
-                            <span class="fal fa-cloud-upload-alt font-3 d-inline-block" style="color: var(--color-2);transition: all 0.3s ease;"></span>
+                        <div class="d-flex justify-content-center align-items-center btn" style="width: 44px;height: 44px;position: relative;cursor: pointer;border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
+                            <span class="fal fa-cloud-upload-alt font-3 d-inline-block" style="color: var(--color-2);transition: all 0.3s ease;font-size: 18px;"></span>
                         </div>
                     </div>
                     @endcan
@@ -828,14 +844,14 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="padding: 24px;">
-                    <div class="upload-area-modal" id="uploadAreaModal" style="border: 2px dashed #7b60fb; border-radius: 12px; padding: 60px 40px; text-align: center; background: #f8f9fa; transition: all 0.3s ease; cursor: pointer; position: relative;">
-                        <div class="upload-icon-modal" style="font-size: 64px; color: #7b60fb; margin-bottom: 20px;">
+                    <div class="upload-area-modal" id="uploadAreaModal" style="border: 2px dashed #7b60fb; border-radius: 12px; padding: 60px 40px; background: #f8f9fa; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px;">
+                        <div class="upload-icon-modal" style="font-size: 64px; color: #7b60fb; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
                             <i class="fas fa-cloud-upload-alt"></i>
                         </div>
-                        <div class="upload-text-modal" style="font-size: 18px; color: #495057; margin-bottom: 12px; font-weight: 500;">
+                        <div class="upload-text-modal" style="font-size: 18px; color: #495057; margin-bottom: 12px; font-weight: 500; text-align: center;">
                             اسحب الملفات هنا أو اضغط للاختيار
                         </div>
-                        <div class="upload-hint-modal" style="font-size: 14px; color: #6c757d;">
+                        <div class="upload-hint-modal" style="font-size: 14px; color: #6c757d; text-align: center;">
                             صور أو فيديو - الحد الأقصى 100MB
                         </div>
                         <input type="file" id="fileInputModal" accept="image/*,video/*" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer;">
