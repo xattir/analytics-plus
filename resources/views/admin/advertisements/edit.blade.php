@@ -1,17 +1,73 @@
 @extends('layouts.admin')
 @section('content')
-<div class="col-12 p-3">
-    <div class="col-12 col-lg-12 p-0 ">
-        <form id="validate-form" class="row" method="POST" action="{{route('admin.advertisements.update',['advertisement'=>$advertisement])}}">
-            @csrf
-            @method('PUT')
-            <div class="col-12 col-lg-8 p-0 main-box">
-                <div class="col-12 px-0">
-                    <div class="col-12 px-3 py-3">
-                        <span class="fas fa-ad"></span> تعديل الإعلان
-                    </div>
-                    <div class="col-12 divider" style="min-height: 2px;"></div>
-                </div>
+@include('admin.advertisements.create', ['isEdit' => true, 'advertisement' => $advertisement])
+@section('edit-overrides')
+<style>
+    .ad-form-header h1::after { content: 'تعديل'; }
+    #validate-form { action: '{{route('admin.advertisements.update',['advertisement'=>$advertisement])}}'; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('validate-form');
+    if (form) {
+        form.action = '{{route('admin.advertisements.update',['advertisement'=>$advertisement])}}';
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'PUT';
+        form.appendChild(methodInput);
+        
+        // Update form values from advertisement model
+        @if(isset($advertisement))
+            // Set name
+            const nameInput = form.querySelector('input[name="name"]');
+            if (nameInput && !nameInput.value) nameInput.value = '{{old('name', $advertisement->name)}}';
+            
+            // Set type and trigger change
+            const typeSelect = form.querySelector('select[name="type"]');
+            if (typeSelect) {
+                typeSelect.value = '{{old('type', $advertisement->type)}}';
+                if (window.toggleSelectorFields) window.toggleSelectorFields();
+            }
+            
+            // Set content
+            const contentEditor = document.getElementById('content-editor');
+            if (contentEditor) {
+                contentEditor.value = {!! json_encode(old('content', $advertisement->content)) !!};
+            }
+            
+            // Set URL
+            const urlInput = form.querySelector('input[name="url"]');
+            if (urlInput && !urlInput.value) urlInput.value = '{{old('url', $advertisement->url ?? '')}}';
+            
+            // Set open_in_new_tab
+            const openInNewTabSelect = form.querySelector('select[name="open_in_new_tab"]');
+            if (openInNewTabSelect) {
+                @php
+                    $currentValue = old('open_in_new_tab', $advertisement->open_in_new_tab ?? true);
+                    $isNewTab = ($currentValue == '1' || $currentValue == 1 || $currentValue === true);
+                @endphp
+                openInNewTabSelect.value = '{{$isNewTab ? '1' : '0'}}';
+            }
+            
+            // Set priority
+            const priorityInput = form.querySelector('input[name="priority"]');
+            if (priorityInput && !priorityInput.value) priorityInput.value = '{{old('priority', $advertisement->priority ?? 0)}}';
+            
+            // Set is_active
+            const isActiveSelect = form.querySelector('select[name="is_active"]');
+            if (isActiveSelect) {
+                isActiveSelect.value = '{{old('is_active', $advertisement->is_active ? '1' : '0')}}';
+            }
+        @endif
+    }
+    
+    // Update header title
+    const headerTitle = document.querySelector('.ad-form-header h1');
+    if (headerTitle) headerTitle.textContent = 'تعديل الإعلان';
+});
+</script>
+@endsection
                 <div class="col-12 p-3 row">
                     <div class="col-12 col-lg-6 p-2">
                         <div class="col-12">
