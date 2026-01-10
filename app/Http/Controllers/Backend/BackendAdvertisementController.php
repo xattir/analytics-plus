@@ -558,6 +558,26 @@ class BackendAdvertisementController extends Controller
             ->orderBy('count', 'desc')
             ->get();
 
+        // Get top browsers by clicks
+        $topBrowsers = DB::table('advertisement_clicks')
+            ->where('advertisement_id', $advertisement->id)
+            ->whereNotNull('browser')
+            ->select('browser', DB::raw('COUNT(*) as count'))
+            ->groupBy('browser')
+            ->orderBy('count', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Get top operating systems by clicks
+        $topOperatingSystems = DB::table('advertisement_clicks')
+            ->where('advertisement_id', $advertisement->id)
+            ->whereNotNull('operating_system')
+            ->select('operating_system', DB::raw('COUNT(*) as count'))
+            ->groupBy('operating_system')
+            ->orderBy('count', 'desc')
+            ->limit(10)
+            ->get();
+
         $countries = config('countries', []);
 
         return view('admin.advertisements.stats', compact(
@@ -573,6 +593,8 @@ class BackendAdvertisementController extends Controller
             'topPagesByImpressions',
             'impressionsByDevice',
             'clicksByDevice',
+            'topBrowsers',
+            'topOperatingSystems',
             'countries'
         ));
     }
