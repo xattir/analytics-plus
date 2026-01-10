@@ -188,7 +188,10 @@ class BackendAdvertisementController extends Controller
                     $customSelectors = array_filter(array_map('trim', explode("\n", $request->custom_selectors)));
                     $selectors = array_merge($selectors, $customSelectors);
                 }
-                foreach (array_unique($selectors) as $selector) {
+                // Filter out empty selectors before creating
+                foreach (array_unique(array_filter($selectors, function($selector) {
+                    return !empty($selector) && trim($selector) !== '';
+                })) as $selector) {
                     $advertisement->selectors()->create(['selector' => $selector]);
                 }
             }
@@ -405,7 +408,10 @@ class BackendAdvertisementController extends Controller
                     $customSelectors = array_filter(array_map('trim', explode("\n", $request->custom_selectors)));
                     $selectors = array_merge($selectors, $customSelectors);
                 }
-                foreach (array_unique($selectors) as $selector) {
+                // Filter out empty selectors before creating
+                foreach (array_unique(array_filter($selectors, function($selector) {
+                    return !empty($selector) && trim($selector) !== '';
+                })) as $selector) {
                     $advertisement->selectors()->create(['selector' => $selector]);
                 }
             } else {
