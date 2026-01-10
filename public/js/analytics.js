@@ -1330,6 +1330,13 @@
                 const adElement = document.createElement('div');
                 adElement.className = 'analytics-ad';
                 adElement.setAttribute('data-ad-id', ad.id);
+                
+                // Apply padding if available
+                const paddingX = ad.padding_x || 20;
+                const paddingY = ad.padding_y || 20;
+                adElement.style.padding = paddingY + 'px ' + paddingX + 'px';
+                adElement.style.boxSizing = 'border-box';
+                
                 adElement.innerHTML = ad.content;
 
                 // Insert ad
