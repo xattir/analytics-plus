@@ -37,8 +37,42 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
+     * List all websites (for superadmin only - shows all sites from all users)
+     */
+    public function websites(Request $request)
+    {
+        if (!$this->isSuperAdmin()) {
+            abort(403, 'Only superadmin can access this page');
+        }
+        
+        $query = AnalyticsSite::withCount('sessions')
+            ->with('owner')
+            ->orderBy('id', 'DESC');
+        
+        // Filter by owner if provided
+        if ($request->has('user_id') && $request->user_id) {
+            $query->where('user_id', $request->user_id);
+        }
+        
+        // Filter by domain if provided
+        if ($request->has('domain') && $request->domain) {
+            $query->where('domain', 'like', '%' . $request->domain . '%');
+        }
+        
+        // Filter by title if provided
+        if ($request->has('title') && $request->title) {
+            $query->where('title', 'like', '%' . $request->title . '%');
+        }
+        
+        $sites = $query->paginate(20);
+        $users = User::orderBy('id','DESC')->get();
+        
+        return view('admin.analytics.websites', compact('sites', 'users'));
+    }
+
+    /**
      * List all analytics sites
-     * - Superadmin: sees all sites
+     * - Superadmin: sees all sites they created (their own sites)
      * - Admin: sees only their own sites and sites they're members of
      * - Regular users: sees only their own sites and sites they're members of
      */
@@ -48,8 +82,9 @@ class BackendAnalyticsController extends Controller
         $isSuperAdmin = $this->isSuperAdmin();
         
         if ($isSuperAdmin) {
-            // Superadmin sees all sites
-            $sitesQuery = AnalyticsSite::withCount('sessions')
+            // Superadmin sees only their own sites (sites they created)
+            $sitesQuery = AnalyticsSite::where('user_id', $userId)
+                ->withCount('sessions')
                 ->with('owner');
         } else {
             // Regular users and admins see only their sites

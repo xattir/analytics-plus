@@ -152,6 +152,29 @@
 	</div>
 </div>
 @endcan
+@can('admin-analytics-read')
+@php
+    $isSuperAdmin = auth()->user()->hasRole('superadmin');
+    $mySitesCount = $isSuperAdmin ? \App\Models\AnalyticsSite::where('user_id', auth()->id())->count() : 0;
+@endphp
+@if($isSuperAdmin && $mySitesCount > 0)
+<div class="col-6 col-sm-6 col-lg-4 col-xl-3 col-xxl-2 px-2 my-2">
+	<div class="col-12 px-0 py-1 d-flex main-box-wedit">
+		<div style="width: 65px;" class="p-2">
+			<div class="col-12 px-0 text-center d-flex align-items-center justify-content-center" style="background: #7b60fb;color: #fff; border-radius: 50%;width: 55px;height:55px">
+				<span class="fal fa-globe font-5"></span>
+			</div>
+		</div>
+		<div style="width: calc(100% - 80px)" class="px-2 py-2">
+			<a class="font-1" href="{{route('admin.analytics.index')}}" style="color: #212529;">
+				مواقعي
+				<h6 class="font-3">{{$mySitesCount}}</h6>
+			</a>
+		</div>
+	</div>
+</div>
+@endif
+@endcan
 
 <div class="col-12 px-2 py-2">
 	<div style="height: 4px ;background: rgb(118 169 169);border-radius: 7px;transition: width .5s ease-in-out;width: 0%;" id="home-dashboard-divider"></div>

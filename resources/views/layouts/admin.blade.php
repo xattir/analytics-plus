@@ -757,6 +757,9 @@
                                 @endcan
                                 
                                 <li><a class="dropdown-item font-1" href="{{route('admin.analytics.index')}}"><span class="fal fa-chart-line font-1"></span> التحليلات</a></li>
+                                @if(auth()->user()->hasRole('superadmin'))
+                                <li><a class="dropdown-item font-1" href="{{route('admin.analytics.websites')}}"><span class="fal fa-globe font-1"></span> جميع المواقع</a></li>
+                                @endif
                                 
                                 @can('hub-files-read')
                                 <li><hr style="height: 1px;margin: 10px 0px 5px;"></li>
