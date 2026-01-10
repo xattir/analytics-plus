@@ -40,8 +40,8 @@
         <tbody>
             @foreach($logs as $log)
             <tr>
-                <td style="background:@if($log->user_id!=null) green @endif">
-                    @if($log->user_id!=null) 
+                <td style="background:@if($log->user_id!=null && $log->user) green @endif">
+                    @if($log->user_id!=null && $log->user) 
                     <a href="{{route('admin.users.show',$log->user)}}" style="color:#fff;font-size:11px">{{$log->id}}-{{$log->user->name}}</a>
                     @else
                     {{$log->id}}
@@ -49,9 +49,13 @@
                 </td>
                 
                 <td style="font-size: 12px;">
-                    <a href="{{$log->rate_limit->prev_link}}" target="_blank">
-                        {{str_ireplace('www.', '', parse_url($log->rate_limit->prev_link, PHP_URL_HOST)) }}
-                    </a>
+                    @if($log->rate_limit && $log->rate_limit->prev_link)
+                        <a href="{{$log->rate_limit->prev_link}}" target="_blank">
+                            {{str_ireplace('www.', '', parse_url($log->rate_limit->prev_link, PHP_URL_HOST)) }}
+                        </a>
+                    @else
+                        N/A
+                    @endif
                 </td>
                 <td style="font-size: 12px;">
                     <a href="{{$log->url}}" target="_blank">
@@ -59,13 +63,17 @@
                     </a>
                 </td>
                 <td style="font-size: 12px;">
-                    {{$log->rate_limit->ip}}
+                    {{$log->rate_limit->ip ?? 'N/A'}}
                 </td> 
                 <td style="font-size: 12px;">
-                    {{$log->rate_limit->browser}} - {{$log->rate_limit->device}} - {{$log->rate_limit->operating_system}} - {{$log->rate_limit->country_name}}
-                    <br>
-                    <span c></span>
-                    {{$log->rate_limit->agent_name}}
+                    @if($log->rate_limit)
+                        {{$log->rate_limit->browser ?? 'N/A'}} - {{$log->rate_limit->device ?? 'N/A'}} - {{$log->rate_limit->operating_system ?? 'N/A'}} - {{$log->rate_limit->country_name ?? 'N/A'}}
+                        <br>
+                        <span></span>
+                        {{$log->rate_limit->agent_name ?? 'N/A'}}
+                    @else
+                        N/A
+                    @endif
                 </td>
                 <td style="font-size: 12px;">
                     {{$log->created_at}} {{\Carbon::parse($log->created_at)->diffForHumans()}}
