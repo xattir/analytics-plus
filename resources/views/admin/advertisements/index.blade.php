@@ -43,7 +43,7 @@
 		<div class="col-12 px-0">
 			<div class="col-12 p-0 row">
 				<div class="col-12 col-lg-4 py-3 px-3">
-					<span class="fas fa-ad"></span> الإعلانات
+					<span class="fal fa-bullhorn"></span> الإعلانات
 				</div>
 				<div class="col-12 col-lg-4 p-0">
 				</div>
@@ -146,6 +146,7 @@
 			            				'icon'=>"fal fa-trash",
 			            				'can'=>"advertisements-delete",
 			            				'url'=>route('admin.advertisements.destroy',['advertisement'=>$advertisement]),
+			            				'method'=>'DELETE',
 			            				'class'=>'delete-btn'
 			            			]
 			            		]

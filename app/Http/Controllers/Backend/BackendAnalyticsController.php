@@ -2465,12 +2465,13 @@ HTML;
                     ->exists();
 
                 if (!$exists) {
-                    // Only insert if it doesn't exist
+                    // Only insert if it doesn't exist (auto-generated patterns)
                     DB::table('analytics_url_patterns')->insert([
                         'site_id' => $siteId,
                         'domain'  => $domain,
                         'pattern' => $pattern,
                         'generated_at' => now(),
+                        'is_generated' => true,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -2629,6 +2630,7 @@ HTML;
                 'domain' => $request->domain,
                 'pattern' => $request->pattern,
                 'generated_at' => now(),
+                'is_generated' => false, // Manual pattern
             ]);
 
             $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
@@ -2701,6 +2703,7 @@ HTML;
                 'domain' => $request->domain,
                 'pattern' => $request->pattern,
                 'generated_at' => now(), // Update generated_at when manually edited
+                'is_generated' => false, // Mark as manual when edited
             ]);
 
             $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
@@ -2732,11 +2735,17 @@ HTML;
         $limit = $request->input('limit', 10000);
 
         try {
+            // Delete only auto-generated patterns (keep manual ones)
+            DB::table('analytics_url_patterns')
+                ->where('site_id', $site->id)
+                ->where('is_generated', true)
+                ->delete();
+            
             $result = $this->extractUrlPatternsForSite($site->id, $limit);
 
             $routeName = request()->routeIs('admin.*') ? 'admin.analytics.patterns' : 'user.analytics.patterns';
             
-            $message = 'URL patterns processed successfully. ';
+            $message = 'URL patterns regenerated successfully. Auto-generated patterns replaced, manual patterns preserved. ';
             if ($result['added_count'] > 0) {
                 $message .= 'Added ' . $result['added_count'] . ' new pattern(s). ';
             }

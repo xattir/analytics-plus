@@ -13,10 +13,12 @@ class AnalyticsUrlPattern extends Model
         'domain',
         'pattern',
         'generated_at',
+        'is_generated',
     ];
     
     protected $casts = [
         'generated_at' => 'datetime',
+        'is_generated' => 'boolean',
     ];
     
     /**

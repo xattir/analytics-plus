@@ -162,14 +162,17 @@
 </style>
 
 <div class="ad-form-container">
-    <form id="validate-form" method="POST" action="{{route('admin.advertisements.store')}}">
+    <form id="validate-form" method="POST" action="@if(isset($advertisement)){{route('admin.advertisements.update',['advertisement'=>$advertisement])}}@else{{route('admin.advertisements.store')}}@endif">
         @csrf
+        @if(isset($advertisement))
+            @method('PUT')
+        @endif
         <div class="ad-form-card">
             <div class="ad-form-header">
                 <div class="ad-form-header-icon">
-                    <i class="fas fa-ad"></i>
+                    <i class="fal fa-bullhorn"></i>
                 </div>
-                <h1>إضافة إعلان جديد</h1>
+                <h1>@if(isset($advertisement)) تعديل الإعلان @else إضافة إعلان جديد @endif</h1>
             </div>
             
             <div class="row">
@@ -186,7 +189,7 @@
                                     <label class="form-label-modern">
                                         <span class="required">*</span> اسم الإعلان
                                     </label>
-                                    <input type="text" name="name" required maxlength="255" class="form-control-modern" value="{{old('name')}}" placeholder="أدخل اسم الإعلان">
+                                    <input type="text" name="name" required maxlength="255" class="form-control-modern" value="{{old('name', isset($advertisement) ? $advertisement->name : '')}}" placeholder="أدخل اسم الإعلان">
                                 </div>
                             </div>
                             
@@ -196,10 +199,10 @@
                                         <span class="required">*</span> نوع الإعلان
                                     </label>
                                     <select class="form-control-modern" name="type" id="ad_type" required onchange="toggleSelectorFields()">
-                                        <option value="in_content" @if(old('type') == 'in_content') selected @endif>In Content</option>
-                                        <option value="pop_from_bottom" @if(old('type') == 'pop_from_bottom') selected @endif>Pop from Bottom</option>
-                                        <option value="pop_from_top" @if(old('type') == 'pop_from_top') selected @endif>Pop from Top</option>
-                                        <option value="Interstitial" @if(old('type') == 'Interstitial') selected @endif>Interstitial</option>
+                                        <option value="in_content" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'in_content') selected @endif>In Content</option>
+                                        <option value="pop_from_bottom" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'pop_from_bottom') selected @endif>Pop from Bottom</option>
+                                        <option value="pop_from_top" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'pop_from_top') selected @endif>Pop from Top</option>
+                                        <option value="Interstitial" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'Interstitial') selected @endif>Interstitial</option>
                                     </select>
                                 </div>
                             </div>
@@ -209,7 +212,7 @@
                             <label class="form-label-modern">
                                 <span class="required">*</span> المحتوى
                             </label>
-                            <textarea name="content" id="content" required class="form-control-modern" rows="8" style="direction: ltr; text-align: left; font-family: 'Courier New', monospace;">{{old('content')}}</textarea>
+                            <textarea name="content" id="content" required class="form-control-modern" rows="10" style="direction: ltr; text-align: left; font-family: 'Courier New', monospace; resize: vertical;">{{old('content', isset($advertisement) ? $advertisement->content : '')}}</textarea>
                             <span class="form-text-modern">لصورة: أدخل رابط الصورة فقط. لـ HTML/Script: أدخل الكود. لـ نص: أدخل النص.</span>
                         </div>
                         
@@ -217,7 +220,7 @@
                             <div class="col-12 col-lg-6">
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">رابط الإعلان (اختياري)</label>
-                                    <input type="url" name="url" id="url-editor" maxlength="2048" class="form-control-modern" value="{{old('url')}}" placeholder="https://example.com" style="direction: ltr; text-align: left;">
+                                    <input type="url" name="url" id="url-editor" maxlength="2048" class="form-control-modern" value="{{old('url', isset($advertisement) ? $advertisement->url : '')}}" placeholder="https://example.com" style="direction: ltr; text-align: left;">
                                 </div>
                             </div>
                             
@@ -225,8 +228,11 @@
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">فتح الرابط في تبويب جديد</label>
                                     <select class="form-control-modern" name="open_in_new_tab">
-                                        <option value="1" @if(old('open_in_new_tab', '1') == '1') selected @endif>نعم (تبويب جديد)</option>
-                                        <option value="0" @if(old('open_in_new_tab') == '0') selected @endif>لا (نفس الصفحة)</option>
+                                        @php
+                                            $openInNewTab = old('open_in_new_tab', isset($advertisement) ? ($advertisement->open_in_new_tab ? '1' : '0') : '1');
+                                        @endphp
+                                        <option value="1" @if($openInNewTab == '1') selected @endif>نعم (تبويب جديد)</option>
+                                        <option value="0" @if($openInNewTab == '0') selected @endif>لا (نفس الصفحة)</option>
                                     </select>
                                     <span class="form-text-modern">اختر إذا كان الرابط يفتح في تبويب جديد أم في نفس الصفحة</span>
                                 </div>
@@ -237,7 +243,7 @@
                             <div class="col-12 col-lg-6">
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">الأولوية</label>
-                                    <input type="number" name="priority" min="0" class="form-control-modern" value="{{old('priority', 0)}}" placeholder="0">
+                                    <input type="number" name="priority" min="0" class="form-control-modern" value="{{old('priority', isset($advertisement) ? $advertisement->priority : 0)}}" placeholder="0">
                                     <span class="form-text-modern">كلما زاد الرقم، زادت الأولوية</span>
                                 </div>
                             </div>
@@ -246,8 +252,11 @@
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">الحالة</label>
                                     <select class="form-control-modern" name="is_active">
-                                        <option value="1" @if(old('is_active', '1') == '1') selected @endif>نشط</option>
-                                        <option value="0" @if(old('is_active') == '0') selected @endif>غير نشط</option>
+                                        @php
+                                            $isActive = old('is_active', isset($advertisement) ? ($advertisement->is_active ? '1' : '0') : '1');
+                                        @endphp
+                                        <option value="1" @if($isActive == '1') selected @endif>نشط</option>
+                                        <option value="0" @if($isActive == '0') selected @endif>غير نشط</option>
                                     </select>
                                 </div>
                             </div>
@@ -266,7 +275,7 @@
                             <label class="form-label-modern">المواقع</label>
                             <select class="form-control-modern select2-select" name="site_ids[]" multiple size="1" style="height:30px;opacity: 0;">
                                 @foreach($sites as $site)
-                                <option value="{{$site->id}}" @if(old('site_ids') && in_array($site->id, old('site_ids'))) selected @endif>{{$site->title}} ({{$site->domain}})</option>
+                                <option value="{{$site->id}}" @if((old('site_ids') && in_array($site->id, old('site_ids'))) || (isset($advertisement) && $advertisement->sites->contains('id', $site->id))) selected @endif>{{$site->title}} ({{$site->domain}})</option>
                                 @endforeach
                             </select>
                         </div>
@@ -275,7 +284,7 @@
                             <label class="form-label-modern">الدول (اترك فارغاً للكل)</label>
                             <select class="form-control-modern select2-select" name="country_codes[]" multiple size="1" style="height:30px;opacity: 0;">
                                 @foreach($countries as $country)
-                                <option value="{{$country['iso2']}}" @if(old('country_codes') && in_array($country['iso2'], old('country_codes'))) selected @endif>{{$country['name_ar'] ?? $country['name']}} ({{$country['iso2']}})</option>
+                                <option value="{{$country['iso2']}}" @if((old('country_codes') && in_array($country['iso2'], old('country_codes'))) || (isset($advertisement) && $advertisement->countries->contains('country_code', $country['iso2']))) selected @endif>{{$country['name_ar'] ?? $country['name']}} ({{$country['iso2']}})</option>
                                 @endforeach
                             </select>
                         </div>
@@ -283,9 +292,9 @@
                         <div class="form-group-modern">
                             <label class="form-label-modern">الأجهزة (اترك فارغاً للكل)</label>
                             <select class="form-control-modern select2-select" name="device_types[]" multiple size="1" style="height:30px;opacity: 0;">
-                                <option value="desktop" @if(old('device_types') && in_array('desktop', old('device_types'))) selected @endif>كمبيوتر</option>
-                                <option value="mobile" @if(old('device_types') && in_array('mobile', old('device_types'))) selected @endif>موبايل</option>
-                                <option value="tablet" @if(old('device_types') && in_array('tablet', old('device_types'))) selected @endif>تابلت</option>
+                                <option value="desktop" @if((old('device_types') && in_array('desktop', old('device_types'))) || (isset($advertisement) && $advertisement->devices->contains('device_type', 'desktop'))) selected @endif>كمبيوتر</option>
+                                <option value="mobile" @if((old('device_types') && in_array('mobile', old('device_types'))) || (isset($advertisement) && $advertisement->devices->contains('device_type', 'mobile'))) selected @endif>موبايل</option>
+                                <option value="tablet" @if((old('device_types') && in_array('tablet', old('device_types'))) || (isset($advertisement) && $advertisement->devices->contains('device_type', 'tablet'))) selected @endif>تابلت</option>
                             </select>
                         </div>
                         
@@ -294,14 +303,14 @@
                             <select class="form-control-modern select2-select url-patterns-select" name="url_pattern_ids[]" multiple size="1" style="height:30px;opacity: 0;" data-placeholder="اترك فارغاً للكل">
                                 <option></option>
                                 @foreach($urlPatterns as $pattern)
-                                <option value="{{$pattern->id}}" @if(old('url_pattern_ids') && in_array($pattern->id, old('url_pattern_ids'))) selected @endif>{{$pattern->site->title}}: {{$pattern->pattern}}</option>
+                                <option value="{{$pattern->id}}" @if((old('url_pattern_ids') && in_array($pattern->id, old('url_pattern_ids'))) || (isset($advertisement) && $advertisement->urlPatterns->contains('id', $pattern->id))) selected @endif>{{$pattern->site->title}}: {{$pattern->pattern}}</option>
                                 @endforeach
                             </select>
                         </div>
                         
                         <div class="form-group-modern">
                             <label class="form-label-modern">Custom URL Patterns</label>
-                            <textarea name="custom_patterns" id="patterns-editor" style="display:none;">{{old('custom_patterns')}}</textarea>
+                            <textarea name="custom_patterns" id="patterns-editor" style="display:none;">{{old('custom_patterns', (isset($advertisement) && method_exists($advertisement, 'getCustomPatterns')) ? $advertisement->getCustomPatterns() : (isset($currentCustomPatterns) ? $currentCustomPatterns : ''))}}</textarea>
                             <div id="patterns-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
                             <span class="form-text-modern">أدخل patterns مخصصة (مثل /products/* أو /blog/*). يمكنك استخدام * كـ wildcard. سطر واحد لكل pattern.</span>
                         </div>
@@ -310,7 +319,7 @@
                             <label class="form-label-modern">استثناء أنماط URL</label>
                             <select class="form-control-modern select2-select" name="excluded_pattern_ids[]" multiple size="1" style="height:30px;opacity: 0;">
                                 @foreach($urlPatterns as $pattern)
-                                <option value="{{$pattern->id}}" @if(old('excluded_pattern_ids') && in_array($pattern->id, old('excluded_pattern_ids'))) selected @endif>{{$pattern->site->title}}: {{$pattern->pattern}}</option>
+                                <option value="{{$pattern->id}}" @if((old('excluded_pattern_ids') && in_array($pattern->id, old('excluded_pattern_ids'))) || (isset($advertisement) && $advertisement->excludedPatterns->contains('id', $pattern->id))) selected @endif>{{$pattern->site->title}}: {{$pattern->pattern}}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -319,21 +328,29 @@
                             <label class="form-label-modern">Selectors المحددة مسبقاً</label>
                             <select class="form-control-modern select2-select" name="predefined_selectors[]" id="predefined_selectors" multiple size="1" style="height:30px;opacity: 0;">
                                 @foreach($predefinedSelectors as $tag => $selector)
-                                <option value="{{$tag}}" @if(old('predefined_selectors') && in_array($tag, old('predefined_selectors'))) selected @endif>{{$tag}} ({{$selector}})</option>
+                                @php
+                                    $isSelected = false;
+                                    if(old('predefined_selectors') && in_array($tag, old('predefined_selectors'))) {
+                                        $isSelected = true;
+                                    } elseif(isset($advertisement) && isset($currentPredefinedTags) && is_array($currentPredefinedTags) && in_array($tag, $currentPredefinedTags)) {
+                                        $isSelected = true;
+                                    }
+                                @endphp
+                                <option value="{{$tag}}" @if($isSelected) selected @endif>{{$tag}} ({{$selector}})</option>
                                 @endforeach
                             </select>
                         </div>
                         
                         <div class="form-group-modern" id="custom_selector_field">
                             <label class="form-label-modern">Selectors مخصصة</label>
-                            <textarea name="custom_selectors" id="selectors-editor" style="display:none;">{{old('custom_selectors')}}</textarea>
+                            <textarea name="custom_selectors" id="selectors-editor" style="display:none;">{{old('custom_selectors', (isset($advertisement) && isset($currentCustomSelectors) && is_array($currentCustomSelectors)) ? implode("\n", $currentCustomSelectors) : '')}}</textarea>
                             <div id="selectors-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
                             <span class="form-text-modern">سطر واحد لكل selector</span>
                         </div>
                         
                         <div class="form-group-modern">
                             <label class="form-label-modern">Subdomains (مفصولة بفواصل، اترك فارغاً للكل)</label>
-                            <textarea name="subdomains" id="subdomains-editor" style="display:none;">{{old('subdomains')}}</textarea>
+                            <textarea name="subdomains" id="subdomains-editor" style="display:none;">{{old('subdomains', isset($advertisement) ? $advertisement->subdomains->whereNotNull('subdomain')->pluck('subdomain')->implode(',') : '')}}</textarea>
                             <div id="subdomains-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
                         </div>
                         
@@ -341,11 +358,11 @@
                             <label class="form-label-modern">Padding (بالـ px) - للـ Pop from Bottom/Top</label>
                             <div class="row">
                                 <div class="col-6">
-                                    <input type="number" name="padding_x" min="0" max="100" class="form-control-modern" value="{{old('padding_x', 20)}}" placeholder="20">
+                                    <input type="number" name="padding_x" min="0" max="100" class="form-control-modern" value="{{old('padding_x', isset($advertisement) ? ($advertisement->padding_x ?? 20) : 20)}}" placeholder="20">
                                     <span class="form-text-modern">Padding X</span>
                                 </div>
                                 <div class="col-6">
-                                    <input type="number" name="padding_y" min="0" max="100" class="form-control-modern" value="{{old('padding_y', 20)}}" placeholder="20">
+                                    <input type="number" name="padding_y" min="0" max="100" class="form-control-modern" value="{{old('padding_y', isset($advertisement) ? ($advertisement->padding_y ?? 20) : 20)}}" placeholder="20">
                                     <span class="form-text-modern">Padding Y</span>
                                 </div>
                             </div>
@@ -355,11 +372,11 @@
                             <label class="form-label-modern">Padding (بالـ px) - للـ Interstitial</label>
                             <div class="row">
                                 <div class="col-6">
-                                    <input type="number" name="padding_x" id="interstitial_padding_x" min="0" max="100" class="form-control-modern" value="{{old('padding_x', 20)}}" placeholder="20">
+                                    <input type="number" name="padding_x" id="interstitial_padding_x" min="0" max="100" class="form-control-modern" value="{{old('padding_x', isset($advertisement) ? ($advertisement->padding_x ?? 20) : 20)}}" placeholder="20">
                                     <span class="form-text-modern">Padding X</span>
                                 </div>
                                 <div class="col-6">
-                                    <input type="number" name="padding_y" id="interstitial_padding_y" min="0" max="100" class="form-control-modern" value="{{old('padding_y', 20)}}" placeholder="20">
+                                    <input type="number" name="padding_y" id="interstitial_padding_y" min="0" max="100" class="form-control-modern" value="{{old('padding_y', isset($advertisement) ? ($advertisement->padding_y ?? 20) : 20)}}" placeholder="20">
                                     <span class="form-text-modern">Padding Y</span>
                                 </div>
                             </div>
@@ -368,7 +385,7 @@
                         
                         <div class="form-group-modern" id="interval_field" style="display: none;">
                             <label class="form-label-modern">Interval Period (بالثواني) - للـ Interstitial</label>
-                            <input type="number" name="interval_period" id="interval_period_input" min="0" class="form-control-modern" value="{{old('interval_period')}}" placeholder="3600">
+                            <input type="number" name="interval_period" id="interval_period_input" min="0" class="form-control-modern" value="{{old('interval_period', isset($advertisement) ? ($advertisement->interval_period ?? '') : '')}}" placeholder="3600">
                             <span class="form-text-modern">المدة بالثواني قبل إظهار الإعلان مرة أخرى (0 = إظهار دائماً، اترك فارغاً = إخفاء تلقائي بعد 10 ثوانٍ)</span>
                         </div>
                     </div>
@@ -400,8 +417,6 @@
 <style>
 .CodeMirror,
 .CodeMirror *,
-#content-editor-container,
-#content-editor-container *,
 #patterns-editor-container,
 #patterns-editor-container *,
 #selectors-editor-container,
@@ -462,7 +477,6 @@
     text-align: left !important;
 }
 
-#content-editor-container .CodeMirror,
 #patterns-editor-container .CodeMirror,
 #selectors-editor-container .CodeMirror,
 #subdomains-editor-container .CodeMirror {
@@ -474,74 +488,14 @@
 </style>
 
 <script type="module">
-// Initialize CodeMirror editors
-let contentEditor, patternsEditor, selectorsEditor, subdomainsEditor;
+// Initialize CodeMirror editors (only for patterns, selectors, and subdomains)
+let patternsEditor, selectorsEditor, subdomainsEditor;
 
 function initCodeEditors() {
     // Check if CodeMirror is loaded
     if (typeof CodeMirror === 'undefined') {
         setTimeout(initCodeEditors, 100);
         return;
-    }
-    
-    // Content Editor
-    const contentTextarea = document.getElementById('content-editor');
-    const contentContainer = document.getElementById('content-editor-container');
-    if (contentTextarea && contentContainer) {
-        // Force LTR on container
-        contentContainer.style.direction = 'ltr';
-        contentContainer.style.textAlign = 'left';
-        
-        contentEditor = CodeMirror(contentContainer, {
-            value: contentTextarea.value || '',
-            mode: 'htmlmixed',
-            theme: 'default',
-            lineNumbers: true,
-            lineWrapping: true,
-            direction: 'ltr',
-            indentUnit: 2,
-            autoCloseTags: true,
-            matchBrackets: true,
-            rtlMoveVisually: false,
-        });
-        contentEditor.setSize('100%', '200px');
-        
-        // Force LTR on all CodeMirror elements
-        const cmWrapper = contentEditor.getWrapperElement();
-        cmWrapper.style.direction = 'ltr';
-        cmWrapper.style.textAlign = 'left';
-        cmWrapper.setAttribute('dir', 'ltr');
-        
-        // Force LTR on scroll element
-        const cmScroll = cmWrapper.querySelector('.CodeMirror-scroll');
-        if (cmScroll) {
-            cmScroll.style.direction = 'ltr';
-            cmScroll.style.textAlign = 'left';
-        }
-        
-        // Force LTR on lines
-        const cmLines = cmWrapper.querySelector('.CodeMirror-lines');
-        if (cmLines) {
-            cmLines.style.direction = 'ltr';
-            cmLines.style.textAlign = 'left';
-        }
-        
-        // Force LTR on gutters
-        const cmGutters = cmWrapper.querySelector('.CodeMirror-gutters');
-        if (cmGutters) {
-            cmGutters.style.direction = 'ltr';
-            cmGutters.style.left = '0';
-            cmGutters.style.right = 'auto';
-        }
-        
-        contentEditor.on('change', function(cm) {
-            contentTextarea.value = cm.getValue();
-        });
-        
-        // Force refresh to apply changes
-        setTimeout(function() {
-            contentEditor.refresh();
-        }, 100);
     }
 
     // Patterns Editor
@@ -747,9 +701,6 @@ function initializeForm() {
     const form = document.getElementById('validate-form');
     if (form) {
         form.addEventListener('submit', function(e) {
-            if (contentEditor) {
-                document.getElementById('content-editor').value = contentEditor.getValue();
-            }
             if (patternsEditor) {
                 document.getElementById('patterns-editor').value = patternsEditor.getValue();
             }

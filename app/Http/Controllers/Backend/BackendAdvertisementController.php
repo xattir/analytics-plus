@@ -38,8 +38,24 @@ class BackendAdvertisementController extends Controller
 
     public function create()
     {
-        $sites = AnalyticsSite::orderBy('title')->get();
-        $urlPatterns = AnalyticsUrlPattern::with('site')->orderBy('pattern')->get();
+        $user = auth()->user();
+        
+        // Filter sites: show only user-owned or member sites (treat superadmin as normal user)
+        if ($user->hasRole('superadmin')) {
+            $sites = AnalyticsSite::where('user_id', $user->id)->orderBy('title')->get();
+        } else {
+            $sites = AnalyticsSite::where(function($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhereHas('members', function($q) use ($user) {
+                          $q->where('user_id', $user->id);
+                      });
+            })->orderBy('title')->get();
+        }
+        
+        // Filter URL patterns to only show patterns for user's sites
+        $siteIds = $sites->pluck('id');
+        $urlPatterns = AnalyticsUrlPattern::whereIn('site_id', $siteIds)->with('site')->orderBy('pattern')->get();
+        
         $countries = config('countries', []);
         $predefinedSelectors = config('advertisements.predefined_selectors', []);
 
@@ -206,9 +222,25 @@ class BackendAdvertisementController extends Controller
 
     public function edit(Advertisement $advertisement)
     {
+        $user = auth()->user();
         $advertisement->load(['sites', 'countries', 'devices', 'urlPatterns', 'excludedPatterns', 'selectors', 'subdomains']);
-        $sites = AnalyticsSite::orderBy('title')->get();
-        $urlPatterns = AnalyticsUrlPattern::with('site')->orderBy('pattern')->get();
+        
+        // Filter sites: show only user-owned or member sites (treat superadmin as normal user)
+        if ($user->hasRole('superadmin')) {
+            $sites = AnalyticsSite::where('user_id', $user->id)->orderBy('title')->get();
+        } else {
+            $sites = AnalyticsSite::where(function($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhereHas('members', function($q) use ($user) {
+                          $q->where('user_id', $user->id);
+                      });
+            })->orderBy('title')->get();
+        }
+        
+        // Filter URL patterns to only show patterns for user's sites
+        $siteIds = $sites->pluck('id');
+        $urlPatterns = AnalyticsUrlPattern::whereIn('site_id', $siteIds)->with('site')->orderBy('pattern')->get();
+        
         $countries = config('countries', []);
         $predefinedSelectors = config('advertisements.predefined_selectors', []);
 

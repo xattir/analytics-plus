@@ -61,7 +61,8 @@
             $(".aside a[href='" + window.location.href + "'] >div").addClass('active');
             $(".aside a[href='" + window.location.href + "']").addClass('active');
 
-            $('input[required],select[required],textarea[required]').parent().parent().find('>div:nth-of-type(1)').append('<span style="color:red;font-size:16px">*</span>');
+            // Removed automatic red asterisk for required fields
+            // $('input[required],select[required],textarea[required]').parent().parent().find('>div:nth-of-type(1)').append('<span style="color:red;font-size:16px">*</span>');
             $("[name='title']:not(.not-countable),[name='slug']:not(.not-countable),[name='meta_description']:not(.not-countable)").on('keyup',function(){
                 var length = $(this).val().length;
                 var maxLength = $(this).attr('maxlength');

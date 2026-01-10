@@ -249,9 +249,10 @@
                 <table class="patterns-table">
                     <thead>
                         <tr>
-                            <th style="width: 25%;">النطاق</th>
-                            <th style="width: 40%;">النمط</th>
-                            <th style="width: 20%;">تاريخ الإنشاء</th>
+                            <th style="width: 20%;">النطاق</th>
+                            <th style="width: 35%;">النمط</th>
+                            <th style="width: 15%;">النوع</th>
+                            <th style="width: 15%;">تاريخ الإنشاء</th>
                             <th style="width: 15%;">الإجراءات</th>
                         </tr>
                     </thead>
@@ -265,6 +266,17 @@
                                     <div class="pattern-path">
                                         {!! str_replace('*', '<span class="wildcard">*</span>', htmlspecialchars($pattern->pattern)) !!}
                                     </div>
+                                </td>
+                                <td>
+                                    @if($pattern->is_generated)
+                                        <span class="badge badge-info" style="background: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                            <i class="fas fa-robot"></i> تلقائي
+                                        </span>
+                                    @else
+                                        <span class="badge badge-warning" style="background: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                            <i class="fas fa-hand-paper"></i> يدوي
+                                        </span>
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="pattern-date">
