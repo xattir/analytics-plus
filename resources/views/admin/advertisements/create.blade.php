@@ -1,17 +1,276 @@
 @extends('layouts.admin')
 @section('content')
-<div class="col-12 p-3">
-    <div class="col-12 col-lg-12 p-0 ">
-        <form id="validate-form" class="row" method="POST" action="{{route('admin.advertisements.store')}}">
-            @csrf
-            <div class="col-12 col-lg-8 p-0 main-box">
-                <div class="col-12 px-0">
-                    <div class="col-12 px-3 py-3">
-                        <span class="fas fa-ad"></span> إضافة إعلان جديد
-                    </div>
-                    <div class="col-12 divider" style="min-height: 2px;"></div>
+<style>
+    .ad-form-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+    
+    .ad-form-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(123, 96, 251, 0.1);
+        backdrop-filter: blur(10px);
+        margin-bottom: 24px;
+    }
+    
+    .ad-form-header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding-bottom: 24px;
+        border-bottom: 2px solid rgba(123, 96, 251, 0.1);
+    }
+    
+    .ad-form-header-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, #7b60fb 0%, #667eea 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(123, 96, 251, 0.3);
+    }
+    
+    .ad-form-header-icon i {
+        font-size: 36px;
+        color: white;
+    }
+    
+    .ad-form-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 8px 0;
+        background: linear-gradient(135deg, #7b60fb 0%, #667eea 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .form-section {
+        margin-bottom: 32px;
+    }
+    
+    .form-section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(123, 96, 251, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-section-title i {
+        color: #7b60fb;
+        font-size: 20px;
+    }
+    
+    .form-group-modern {
+        margin-bottom: 24px;
+    }
+    
+    .form-label-modern {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    
+    .form-label-modern .required {
+        color: #ef4444;
+        margin-right: 4px;
+    }
+    
+    .form-control-modern {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background: #fff;
+    }
+    
+    .form-control-modern:focus {
+        outline: none;
+        border-color: #7b60fb;
+        box-shadow: 0 0 0 4px rgba(123, 96, 251, 0.1);
+    }
+    
+    .form-text-modern {
+        display: block;
+        margin-top: 6px;
+        font-size: 13px;
+        color: #6b7280;
+    }
+    
+    .btn-submit-modern {
+        padding: 16px 48px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, #7b60fb 0%, #667eea 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(123, 96, 251, 0.3);
+    }
+    
+    .btn-submit-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(123, 96, 251, 0.4);
+        color: white;
+    }
+    
+    .select2-container--default .select2-selection--multiple {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 4px;
+        min-height: 48px;
+    }
+    
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #7b60fb;
+    }
+    
+    @media (max-width: 768px) {
+        .ad-form-container {
+            padding: 20px 16px;
+        }
+        
+        .ad-form-card {
+            padding: 24px 20px;
+        }
+        
+        .ad-form-header h1 {
+            font-size: 24px;
+        }
+    }
+</style>
+
+<div class="ad-form-container">
+    <form id="validate-form" method="POST" action="{{route('admin.advertisements.store')}}">
+        @csrf
+        <div class="ad-form-card">
+            <div class="ad-form-header">
+                <div class="ad-form-header-icon">
+                    <i class="fas fa-ad"></i>
                 </div>
-                <div class="col-12 p-3 row">
+                <h1>إضافة إعلان جديد</h1>
+            </div>
+            
+            <div class="row">
+                <div class="col-12 col-lg-8">
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-info-circle"></i>
+                            <span>معلومات الإعلان الأساسية</span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12 col-lg-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">
+                                        <span class="required">*</span> اسم الإعلان
+                                    </label>
+                                    <input type="text" name="name" required maxlength="255" class="form-control-modern" value="{{old('name')}}" placeholder="أدخل اسم الإعلان">
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-lg-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">
+                                        <span class="required">*</span> نوع الإعلان
+                                    </label>
+                                    <select class="form-control-modern" name="type" id="ad_type" required onchange="toggleSelectorFields()">
+                                        <option value="in_content" @if(old('type') == 'in_content') selected @endif>In Content</option>
+                                        <option value="pop_from_bottom" @if(old('type') == 'pop_from_bottom') selected @endif>Pop from Bottom</option>
+                                        <option value="pop_from_top" @if(old('type') == 'pop_from_top') selected @endif>Pop from Top</option>
+                                        <option value="Interstitial" @if(old('type') == 'Interstitial') selected @endif>Interstitial</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">
+                                <span class="required">*</span> المحتوى
+                            </label>
+                            <textarea name="content" id="content-editor" required style="display:none;">{{old('content')}}</textarea>
+                            <div id="content-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
+                            <span class="form-text-modern">لصورة: أدخل رابط الصورة فقط. لـ HTML/Script: أدخل الكود. لـ نص: أدخل النص.</span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12 col-lg-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">رابط الإعلان (اختياري)</label>
+                                    <input type="url" name="url" id="url-editor" maxlength="2048" class="form-control-modern" value="{{old('url')}}" placeholder="https://example.com" style="direction: ltr; text-align: left;">
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-lg-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">فتح الرابط في تبويب جديد</label>
+                                    <select class="form-control-modern" name="open_in_new_tab">
+                                        <option value="1" @if(old('open_in_new_tab', '1') == '1') selected @endif>نعم (تبويب جديد)</option>
+                                        <option value="0" @if(old('open_in_new_tab') == '0') selected @endif>لا (نفس الصفحة)</option>
+                                    </select>
+                                    <span class="form-text-modern">اختر إذا كان الرابط يفتح في تبويب جديد أم في نفس الصفحة</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12 col-lg-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">الأولوية</label>
+                                    <input type="number" name="priority" min="0" class="form-control-modern" value="{{old('priority', 0)}}" placeholder="0">
+                                    <span class="form-text-modern">كلما زاد الرقم، زادت الأولوية</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-lg-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">الحالة</label>
+                                    <select class="form-control-modern" name="is_active">
+                                        <option value="1" @if(old('is_active', '1') == '1') selected @endif>نشط</option>
+                                        <option value="0" @if(old('is_active') == '0') selected @endif>غير نشط</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12 col-lg-4">
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-cog"></i>
+                            <span>الإعدادات المتقدمة</span>
+                        </div>
+                        
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">المواقع</label>
+                            <select class="form-control-modern select2-select" name="site_ids[]" multiple size="1" style="height:30px;opacity: 0;">
+                                @foreach($sites as $site)
+                                <option value="{{$site->id}}" @if(old('site_ids') && in_array($site->id, old('site_ids'))) selected @endif>{{$site->title}} ({{$site->domain}})</option>
+                                @endforeach
+                            </select>
+                        </div>
                     <div class="col-12 col-lg-6 p-2">
                         <div class="col-12">
                             اسم الإعلان <span class="text-danger">*</span>

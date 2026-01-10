@@ -360,29 +360,38 @@
         }
         
         .top-nav #fileUploadIcon {
-            display: inline-block !important;
+            display: inline-flex !important;
             visibility: visible !important;
+            opacity: 1 !important;
         }
         
         .top-nav #fileUploadIcon > div {
             background: transparent;
             border: none;
             transition: all 0.3s ease;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
         }
         
         .top-nav #fileUploadIcon > div:hover {
             background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
-            color: #7b60fb !important;
             transform: scale(1.05);
         }
         
-        .top-nav #fileUploadIcon > div:hover .fal {
+        .top-nav #fileUploadIcon > div:hover i {
+            color: #7b60fb !important;
             transform: scale(1.1);
         }
         
+        .top-nav #fileUploadIcon i,
+        .top-nav #fileUploadIcon .fas,
         .top-nav #fileUploadIcon .fal {
             display: inline-block !important;
             visibility: visible !important;
+            opacity: 1 !important;
+            font-size: 18px !important;
+            color: var(--color-2) !important;
         }
         
         .top-nav .dropdown-item:hover {
@@ -687,9 +696,9 @@
 
                     <!-- File Upload Icon -->
                     @can('hub-files-create')
-                    <div class="btn-group" id="fileUploadIcon" style="width:44px;height:44px;margin-right: 8px;">
-                        <div class="d-flex justify-content-center align-items-center btn" style="width: 44px;height: 44px;position: relative;cursor: pointer;border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
-                            <span class="fal fa-cloud-upload-alt font-3 d-inline-block" style="color: var(--color-2);transition: all 0.3s ease;font-size: 18px;"></span>
+                    <div class="btn-group" id="fileUploadIcon" style="width:44px;height:44px;margin-right: 8px;display: inline-flex !important;visibility: visible !important;">
+                        <div class="d-flex justify-content-center align-items-center" style="width: 44px;height: 44px;position: relative;cursor: pointer;border-radius: 8px;border: none;background: transparent;padding: 0;" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
+                            <i class="fas fa-cloud-upload-alt" style="color: var(--color-2);transition: all 0.3s ease;font-size: 18px;display: inline-block !important;visibility: visible !important;"></i>
                         </div>
                     </div>
                     @endcan
