@@ -1262,99 +1262,24 @@
                 // Track impression
                 trackAdImpression(ad.id, ad.type, ad.url_pattern_id);
 
-                // Track click if ad has URL - track all links in content
-                const allLinks = adContainer.querySelectorAll('.analytics-ad-content-wrapper a[href], a[href]');
-                let hasLinks = false;
-                
-                // Process links - use a closure to track processed links
-                const processedLinks = new WeakSet();
-                
-                allLinks.forEach(function(link) {
-                    if (!link.classList.contains('analytics-ad-toggle') && !processedLinks.has(link)) {
-                        hasLinks = true;
-                        processedLinks.add(link);
+                // If ad has URL, make the entire content wrapper clickable
+                if (ad.url && ad.url.trim() !== '') {
+                    const contentWrapper = adContainer.querySelector('.analytics-ad-content-wrapper');
+                    if (contentWrapper) {
+                        contentWrapper.style.cursor = 'pointer';
                         
-                        // Store original href
-                        const originalHref = link.getAttribute('href');
-                        if (originalHref && originalHref !== '#' && originalHref !== 'javascript:void(0);' && !originalHref.startsWith('javascript:')) {
-                            link.setAttribute('data-original-href', originalHref);
-                        }
-                        
-                        // Set attributes to prevent default behavior
-                        link.removeAttribute('target');
-                        link.setAttribute('rel', 'noopener noreferrer');
-                        // Change href to javascript:void(0) to prevent default navigation
-                        link.setAttribute('href', 'javascript:void(0);');
-                        
-                        // Create a unique handler function per link
-                        let linkClicked = false;
-                        const clickHandler = function(e) {
-                            // Prevent ALL default behavior FIRST
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-                            
-                            // Prevent double execution
-                            if (linkClicked) {
-                                return false;
-                            }
-                            linkClicked = true;
-                            
-                            // Get target URL from stored original href
-                            const storedHref = link.getAttribute('data-original-href') || originalHref;
-                            
-                            // Use ad.url if it exists and is not empty, otherwise use link href
-                            const targetUrl = (ad.url && ad.url.trim() !== '') ? ad.url : storedHref;
-                            
-                            if (targetUrl && targetUrl !== '#' && targetUrl !== 'javascript:void(0);' && !targetUrl.startsWith('javascript:')) {
-                                // Track click first
-                                trackAdClick(ad.id, targetUrl, ad.type, ad.url_pattern_id);
-                                
-                                // Open based on open_in_new_tab setting (default: true for new tab)
-                                const openInNewTab = ad.open_in_new_tab !== undefined ? ad.open_in_new_tab : true;
-                                if (openInNewTab) {
-                                    window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                                } else {
-                                    window.location.href = targetUrl;
-                                }
-                            } else {
-                                linkClicked = false; // Reset if no valid href
-                            }
-                            
-                            return false;
-                        };
-                        
-                        // Attach handler using capture phase to catch event early
-                        link.addEventListener('click', clickHandler, { capture: true, passive: false, once: false });
-                    }
-                });
-                
-                // If ad has URL but no links in content, make entire ad clickable
-                if (ad.url && !hasLinks && ad.url.trim() !== '') {
-                    // Make wrapper clickable (but not toggle button)
-                    const wrapper = adContainer.querySelector('.analytics-ad-wrapper, .analytics-ad-interstitial-wrapper');
-                    if (wrapper) {
-                        wrapper.style.cursor = 'pointer';
-                        
-                        let wrapperClicked = false;
-                        const wrapperClickHandler = function(e) {
+                        let contentWrapperClicked = false;
+                        const contentWrapperClickHandler = function(e) {
                             // Don't trigger if clicking on toggle button or close button
                             if (e.target.closest('.analytics-ad-toggle, .analytics-ad-close-interstitial')) {
                                 return;
                             }
                             
-                            // Don't trigger if clicking on ANY link (even if processed)
-                            const clickedLink = e.target.closest('a[href]');
-                            if (clickedLink) {
-                                // Let the link handler deal with it
-                                return;
-                            }
-                            
                             // Prevent double-click
-                            if (wrapperClicked) {
+                            if (contentWrapperClicked) {
                                 return false;
                             }
-                            wrapperClicked = true;
+                            contentWrapperClicked = true;
                             
                             // Prevent any default behavior
                             e.preventDefault();
@@ -1374,8 +1299,8 @@
                             return false;
                         };
                         
-                        // Attach handler in bubble phase (after capture phase) so link handlers run first
-                        wrapper.addEventListener('click', wrapperClickHandler, { capture: false, passive: false });
+                        // Attach handler to content wrapper
+                        contentWrapper.addEventListener('click', contentWrapperClickHandler, { capture: true, passive: false });
                     }
                 }
 
