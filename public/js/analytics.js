@@ -557,17 +557,17 @@
         
         contentWrapper.innerHTML = cleanAdHtml || '';
         
-        // Remove target attributes and prepare links for JavaScript handling
+        // Prepare links for JavaScript handling - change href to prevent default navigation
         setTimeout(function() {
             const allLinksInContent = contentWrapper.querySelectorAll('a[href]');
             allLinksInContent.forEach(function(link) {
                 // Store original href if exists
                 const originalHref = link.getAttribute('href');
-                if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
+                if (originalHref && originalHref !== '#' && originalHref !== 'javascript:void(0);' && !originalHref.startsWith('javascript:')) {
                     link.setAttribute('data-original-href', originalHref);
-                    // Set href to # to prevent default navigation - will be handled by event listeners
-                    link.setAttribute('href', '#');
                 }
+                // Set href to javascript:void(0) to completely prevent default navigation
+                link.setAttribute('href', 'javascript:void(0);');
                 // Remove target attribute - we'll handle navigation via JavaScript
                 link.removeAttribute('target');
                 link.setAttribute('rel', 'noopener noreferrer');
@@ -624,11 +624,12 @@
                 // Store original href if exists and not already stored
                 if (!link.hasAttribute('data-original-href')) {
                     const originalHref = link.getAttribute('href');
-                    if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
+                    if (originalHref && originalHref !== '#' && originalHref !== 'javascript:void(0);' && !originalHref.startsWith('javascript:')) {
                         link.setAttribute('data-original-href', originalHref);
-                        link.setAttribute('href', '#');
                     }
                 }
+                // Set href to javascript:void(0) to completely prevent default navigation
+                link.setAttribute('href', 'javascript:void(0);');
                 // Remove target attribute - we'll handle navigation via JavaScript
                 link.removeAttribute('target');
                 link.setAttribute('rel', 'noopener noreferrer');
@@ -1265,34 +1266,67 @@
                 const allLinks = adContainer.querySelectorAll('.analytics-ad-content-wrapper a[href], a[href]');
                 let hasLinks = false;
                 
+                // Process links - use a closure to track processed links
+                const processedLinks = new WeakSet();
+                
                 allLinks.forEach(function(link) {
-                    if (!link.classList.contains('analytics-ad-toggle')) {
+                    if (!link.classList.contains('analytics-ad-toggle') && !processedLinks.has(link)) {
                         hasLinks = true;
-                        // Remove target attribute to prevent default link behavior
-                        link.removeAttribute('target');
-                        link.setAttribute('rel', 'noopener noreferrer');
-                        // Set href to # to prevent default navigation, we'll handle it in JS
+                        processedLinks.add(link);
+                        
+                        // Store original href
                         const originalHref = link.getAttribute('href');
-                        if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
+                        if (originalHref && originalHref !== '#' && originalHref !== 'javascript:void(0);' && !originalHref.startsWith('javascript:')) {
                             link.setAttribute('data-original-href', originalHref);
-                            link.setAttribute('href', '#');
                         }
                         
-                        link.addEventListener('click', function(e) {
+                        // Set attributes to prevent default behavior
+                        link.removeAttribute('target');
+                        link.setAttribute('rel', 'noopener noreferrer');
+                        // Change href to javascript:void(0) to prevent default navigation
+                        link.setAttribute('href', 'javascript:void(0);');
+                        
+                        // Create a unique handler function per link
+                        let linkClicked = false;
+                        const clickHandler = function(e) {
+                            // Prevent ALL default behavior FIRST
                             e.preventDefault();
                             e.stopPropagation();
                             e.stopImmediatePropagation();
                             
-                            const originalHref = link.getAttribute('data-original-href') || link.getAttribute('href');
-                            if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
-                                // Use ad.url if available, otherwise use link href
-                                const targetUrl = ad.url || originalHref;
-                                trackAdClick(ad.id, targetUrl, ad.type, ad.url_pattern_id);
-                                // Always open in new tab
-                                window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                            // Prevent double execution
+                            if (linkClicked) {
+                                return false;
                             }
+                            linkClicked = true;
+                            
+                            // Get target URL from stored original href
+                            const storedHref = link.getAttribute('data-original-href') || originalHref;
+                            
+                            if (storedHref && storedHref !== '#' && storedHref !== 'javascript:void(0);' && !storedHref.startsWith('javascript:')) {
+                                // Use ad.url if available, otherwise use link href
+                                const targetUrl = ad.url || storedHref;
+                                
+                                // Track click first
+                                trackAdClick(ad.id, targetUrl, ad.type, ad.url_pattern_id);
+                                
+                                // Open in new tab after a minimal delay to ensure preventDefault took effect
+                                setTimeout(function() {
+                                    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                                    // Reset flag after a delay to allow normal behavior later if needed
+                                    setTimeout(function() {
+                                        linkClicked = false;
+                                    }, 1000);
+                                }, 1);
+                            } else {
+                                linkClicked = false; // Reset if no valid href
+                            }
+                            
                             return false;
-                        }, true); // Use capture phase to catch event early
+                        };
+                        
+                        // Attach handler using capture phase to catch event early
+                        link.addEventListener('click', clickHandler, { capture: true, passive: false, once: false });
                     }
                 });
                 
@@ -1302,26 +1336,48 @@
                     const wrapper = adContainer.querySelector('.analytics-ad-wrapper, .analytics-ad-interstitial-wrapper');
                     if (wrapper) {
                         wrapper.style.cursor = 'pointer';
-                        wrapper.addEventListener('click', function(e) {
+                        
+                        let wrapperClicked = false;
+                        const wrapperClickHandler = function(e) {
                             // Don't trigger if clicking on toggle button or close button
                             if (e.target.closest('.analytics-ad-toggle, .analytics-ad-close-interstitial')) {
                                 return;
                             }
                             
-                            // Don't trigger if clicking on a link
-                            if (e.target.closest('a[href]')) {
+                            // Don't trigger if clicking on ANY link (even if processed)
+                            const clickedLink = e.target.closest('a[href]');
+                            if (clickedLink) {
+                                // Let the link handler deal with it
                                 return;
                             }
                             
+                            // Prevent double-click
+                            if (wrapperClicked) {
+                                return false;
+                            }
+                            wrapperClicked = true;
+                            
+                            // Prevent any default behavior
                             e.preventDefault();
                             e.stopPropagation();
                             e.stopImmediatePropagation();
                             
                             trackAdClick(ad.id, ad.url, ad.type, ad.url_pattern_id);
-                            // Always open in new tab
-                            window.open(ad.url, '_blank', 'noopener,noreferrer');
+                            
+                            // Open in new tab after minimal delay
+                            setTimeout(function() {
+                                window.open(ad.url, '_blank', 'noopener,noreferrer');
+                                // Reset flag
+                                setTimeout(function() {
+                                    wrapperClicked = false;
+                                }, 1000);
+                            }, 1);
+                            
                             return false;
-                        }, true); // Use capture phase
+                        };
+                        
+                        // Attach handler in bubble phase (after capture phase) so link handlers run first
+                        wrapper.addEventListener('click', wrapperClickHandler, { capture: false, passive: false });
                     }
                 }
 
@@ -1361,51 +1417,87 @@
                     
                     adLinks.forEach(function(link) {
                         hasLinks = true;
-                        // Remove target attribute to prevent default link behavior
-                        link.removeAttribute('target');
-                        link.setAttribute('rel', 'noopener noreferrer');
-                        // Set href to # to prevent default navigation, we'll handle it in JS
+                        
+                        // Store original href
                         const originalHref = link.getAttribute('href');
                         if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
                             link.setAttribute('data-original-href', originalHref);
-                            link.setAttribute('href', '#');
                         }
                         
-                        link.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
+                        // Remove any existing click handlers first (prevent duplicates)
+                        const newLink = link.cloneNode(true);
+                        link.parentNode.replaceChild(newLink, link);
+                        const currentLink = newLink;
+                        
+                        // Set attributes to prevent default behavior
+                        currentLink.removeAttribute('target');
+                        currentLink.setAttribute('rel', 'noopener noreferrer');
+                        currentLink.setAttribute('href', 'javascript:void(0);');
+                        
+                        // Add click handler with flag to prevent multiple triggers
+                        let linkClicked = false;
+                        currentLink.addEventListener('click', function(e) {
+                            // Prevent any default behavior
+                            if (e.preventDefault) e.preventDefault();
+                            if (e.stopPropagation) e.stopPropagation();
+                            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
                             
-                            const originalHref = link.getAttribute('data-original-href') || link.getAttribute('href');
-                            if (originalHref && originalHref !== '#' && !originalHref.startsWith('javascript:')) {
-                                // Use ad.url if available, otherwise use link href
-                                const targetUrl = ad.url || originalHref;
-                                trackAdClick(ad.id, targetUrl, ad.selector, ad.url_pattern_id);
-                                // Always open in new tab
-                                window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                            // Prevent double-click
+                            if (linkClicked) {
+                                return false;
                             }
+                            linkClicked = true;
+                            
+                            // Get target URL
+                            const storedHref = currentLink.getAttribute('data-original-href');
+                            const href = storedHref || originalHref || currentLink.getAttribute('href');
+                            
+                            if (href && href !== '#' && href !== 'javascript:void(0);' && !href.startsWith('javascript:')) {
+                                // Use ad.url if available, otherwise use link href
+                                const targetUrl = ad.url || href;
+                                trackAdClick(ad.id, targetUrl, ad.selector, ad.url_pattern_id);
+                                
+                                // Small delay to ensure preventDefault was processed
+                                setTimeout(function() {
+                                    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                                }, 10);
+                            }
+                            
                             return false;
-                        }, true); // Use capture phase to catch event early
+                        }, { capture: true, once: true, passive: false });
                     });
                     
                     // If ad has URL but no links in content, make entire ad clickable
                     if (!hasLinks) {
                         adElement.style.cursor = 'pointer';
+                        
+                        let elementClicked = false;
                         adElement.addEventListener('click', function(e) {
                             // Don't trigger if clicking on a link
                             if (e.target.closest('a[href]')) {
                                 return;
                             }
                             
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
+                            // Prevent double-click
+                            if (elementClicked) {
+                                return false;
+                            }
+                            elementClicked = true;
+                            
+                            // Prevent any default behavior
+                            if (e.preventDefault) e.preventDefault();
+                            if (e.stopPropagation) e.stopPropagation();
+                            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
                             
                             trackAdClick(ad.id, ad.url, ad.selector, ad.url_pattern_id);
-                            // Always open in new tab
-                            window.open(ad.url, '_blank', 'noopener,noreferrer');
+                            
+                            // Small delay to ensure preventDefault was processed
+                            setTimeout(function() {
+                                window.open(ad.url, '_blank', 'noopener,noreferrer');
+                            }, 10);
+                            
                             return false;
-                        }, true); // Use capture phase
+                        }, { capture: true, once: false, passive: false });
                     }
                 }
             });
