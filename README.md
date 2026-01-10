@@ -11,31 +11,31 @@
 ## 📸 لقطات الشاشة
 
 ### لوحة التحكم الرئيسية
-![Dashboard](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/1.png)
+![Dashboard](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/master/public/images/screenshots2/1.png)
 
 ### إحصائيات الموقع التفصيلية
-![Site Statistics](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/2.png)
+![Site Statistics](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/master/public/images/screenshots2/2.png)
 
 ### إدارة المواقع
-![Sites Management](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/3.png)
+![Sites Management](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/master/public/images/screenshots2/3.png)
 
 ### كود التتبع
-![Tracking Code](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/4.png)
+![Tracking Code](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/master/public/images/screenshots2/4.png)
 
 ### إحصائيات الإعلانات
-![Advertisement Statistics](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/5.png)
+![Advertisement Statistics](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/master/public/images/screenshots2/5.png)
 
 ### إدارة الإعلانات
-![Advertisement Management](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/6.png)
+![Advertisement Management](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/master/public/images/screenshots2/6.png)
 
 ### تفاصيل الزيارة
-![Visit Details](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/7.png)
+![Visit Details](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/master/public/images/screenshots2/7.png)
 
 ### رفع الملفات
-![File Upload](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/8.png)
+![File Upload](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/master/public/images/screenshots2/8.png)
 
 ### تعديل الإعلان
-![Edit Advertisement](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/9.png)
+![Edit Advertisement](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/master/public/images/screenshots2/9.png)
 
 ## 📋 نظرة عامة
 
