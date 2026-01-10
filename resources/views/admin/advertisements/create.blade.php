@@ -271,9 +271,124 @@
                                 @endforeach
                             </select>
                         </div>
+                        
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">الدول (اترك فارغاً للكل)</label>
+                            <select class="form-control-modern select2-select" name="country_codes[]" multiple size="1" style="height:30px;opacity: 0;">
+                                @foreach($countries as $country)
+                                <option value="{{$country['iso2']}}" @if(old('country_codes') && in_array($country['iso2'], old('country_codes'))) selected @endif>{{$country['name_ar'] ?? $country['name']}} ({{$country['iso2']}})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">الأجهزة (اترك فارغاً للكل)</label>
+                            <select class="form-control-modern select2-select" name="device_types[]" multiple size="1" style="height:30px;opacity: 0;">
+                                <option value="desktop" @if(old('device_types') && in_array('desktop', old('device_types'))) selected @endif>كمبيوتر</option>
+                                <option value="mobile" @if(old('device_types') && in_array('mobile', old('device_types'))) selected @endif>موبايل</option>
+                                <option value="tablet" @if(old('device_types') && in_array('tablet', old('device_types'))) selected @endif>تابلت</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">أنماط URL (اترك فارغاً للكل)</label>
+                            <select class="form-control-modern select2-select url-patterns-select" name="url_pattern_ids[]" multiple size="1" style="height:30px;opacity: 0;" data-placeholder="اترك فارغاً للكل">
+                                <option></option>
+                                @foreach($urlPatterns as $pattern)
+                                <option value="{{$pattern->id}}" @if(old('url_pattern_ids') && in_array($pattern->id, old('url_pattern_ids'))) selected @endif>{{$pattern->site->title}}: {{$pattern->pattern}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Custom URL Patterns</label>
+                            <textarea name="custom_patterns" id="patterns-editor" style="display:none;">{{old('custom_patterns')}}</textarea>
+                            <div id="patterns-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
+                            <span class="form-text-modern">أدخل patterns مخصصة (مثل /products/* أو /blog/*). يمكنك استخدام * كـ wildcard. سطر واحد لكل pattern.</span>
+                        </div>
+                        
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">استثناء أنماط URL</label>
+                            <select class="form-control-modern select2-select" name="excluded_pattern_ids[]" multiple size="1" style="height:30px;opacity: 0;">
+                                @foreach($urlPatterns as $pattern)
+                                <option value="{{$pattern->id}}" @if(old('excluded_pattern_ids') && in_array($pattern->id, old('excluded_pattern_ids'))) selected @endif>{{$pattern->site->title}}: {{$pattern->pattern}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="form-group-modern" id="selector_fields">
+                            <label class="form-label-modern">Selectors المحددة مسبقاً</label>
+                            <select class="form-control-modern select2-select" name="predefined_selectors[]" id="predefined_selectors" multiple size="1" style="height:30px;opacity: 0;">
+                                @foreach($predefinedSelectors as $tag => $selector)
+                                <option value="{{$tag}}" @if(old('predefined_selectors') && in_array($tag, old('predefined_selectors'))) selected @endif>{{$tag}} ({{$selector}})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="form-group-modern" id="custom_selector_field">
+                            <label class="form-label-modern">Selectors مخصصة</label>
+                            <textarea name="custom_selectors" id="selectors-editor" style="display:none;">{{old('custom_selectors')}}</textarea>
+                            <div id="selectors-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
+                            <span class="form-text-modern">سطر واحد لكل selector</span>
+                        </div>
+                        
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Subdomains (مفصولة بفواصل، اترك فارغاً للكل)</label>
+                            <textarea name="subdomains" id="subdomains-editor" style="display:none;">{{old('subdomains')}}</textarea>
+                            <div id="subdomains-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
+                        </div>
+                        
+                        <div class="form-group-modern" id="padding_fields" style="display: none;">
+                            <label class="form-label-modern">Padding (بالـ px) - للـ Pop from Bottom/Top</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" name="padding_x" min="0" max="100" class="form-control-modern" value="{{old('padding_x', 20)}}" placeholder="20">
+                                    <span class="form-text-modern">Padding X</span>
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" name="padding_y" min="0" max="100" class="form-control-modern" value="{{old('padding_y', 20)}}" placeholder="20">
+                                    <span class="form-text-modern">Padding Y</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-modern" id="interstitial_padding_field" style="display: none;">
+                            <label class="form-label-modern">Padding (بالـ px) - للـ Interstitial</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" name="padding_x" id="interstitial_padding_x" min="0" max="100" class="form-control-modern" value="{{old('padding_x', 20)}}" placeholder="20">
+                                    <span class="form-text-modern">Padding X</span>
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" name="padding_y" id="interstitial_padding_y" min="0" max="100" class="form-control-modern" value="{{old('padding_y', 20)}}" placeholder="20">
+                                    <span class="form-text-modern">Padding Y</span>
+                                </div>
+                            </div>
+                            <span class="form-text-modern">Padding للمحتوى داخل الصندوق</span>
+                        </div>
+                        
+                        <div class="form-group-modern" id="interval_field" style="display: none;">
+                            <label class="form-label-modern">Interval Period (بالثواني) - للـ Interstitial</label>
+                            <input type="number" name="interval_period" id="interval_period_input" min="0" class="form-control-modern" value="{{old('interval_period')}}" placeholder="3600">
+                            <span class="form-text-modern">المدة بالثواني قبل إظهار الإعلان مرة أخرى (0 = إظهار دائماً، اترك فارغاً = إخفاء تلقائي بعد 10 ثوانٍ)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center" style="margin-top: 40px; padding-top: 32px; border-top: 2px solid rgba(123, 96, 251, 0.1);">
+                <button type="submit" class="btn-submit-modern" id="submitEvaluation">
+                    <i class="fas fa-save"></i>
+                    <span>حفظ الإعلان</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
 @endsection
 
 @section('scripts')
+<style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/monokai.css">
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
@@ -299,15 +414,15 @@
 }
 
 .CodeMirror {
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    border: none !important;
+    border-radius: 12px;
     font-size: 14px;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
 }
 
 .CodeMirror-focused {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border: none !important;
+    box-shadow: 0 0 0 4px rgba(123, 96, 251, 0.1) !important;
 }
 
 .CodeMirror-scroll {
