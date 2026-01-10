@@ -1310,14 +1310,8 @@
                                 // Track click first
                                 trackAdClick(ad.id, targetUrl, ad.type, ad.url_pattern_id);
                                 
-                                // Open in new tab after a minimal delay to ensure preventDefault took effect
-                                setTimeout(function() {
-                                    window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                                    // Reset flag after a delay to allow normal behavior later if needed
-                                    setTimeout(function() {
-                                        linkClicked = false;
-                                    }, 1000);
-                                }, 1);
+                                // انتقال في نفس الصفحة فقط
+                                window.location.href = targetUrl;
                             } else {
                                 linkClicked = false; // Reset if no valid href
                             }
@@ -1364,14 +1358,8 @@
                             
                             trackAdClick(ad.id, ad.url, ad.type, ad.url_pattern_id);
                             
-                            // Open in new tab after minimal delay
-                            setTimeout(function() {
-                                window.open(ad.url, '_blank', 'noopener,noreferrer');
-                                // Reset flag
-                                setTimeout(function() {
-                                    wrapperClicked = false;
-                                }, 1000);
-                            }, 1);
+                            // انتقال في نفس الصفحة فقط
+                            window.location.href = ad.url;
                             
                             return false;
                         };
@@ -1457,10 +1445,8 @@
                                 const targetUrl = ad.url || href;
                                 trackAdClick(ad.id, targetUrl, ad.selector, ad.url_pattern_id);
                                 
-                                // Small delay to ensure preventDefault was processed
-                                setTimeout(function() {
-                                    window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                                }, 10);
+                                // انتقال في نفس الصفحة فقط
+                                window.location.href = targetUrl;
                             }
                             
                             return false;
@@ -1491,10 +1477,8 @@
                             
                             trackAdClick(ad.id, ad.url, ad.selector, ad.url_pattern_id);
                             
-                            // Small delay to ensure preventDefault was processed
-                            setTimeout(function() {
-                                window.open(ad.url, '_blank', 'noopener,noreferrer');
-                            }, 10);
+                            // انتقال في نفس الصفحة فقط
+                            window.location.href = ad.url;
                             
                             return false;
                         }, { capture: true, once: false, passive: false });
@@ -1562,6 +1546,7 @@
         const basePath = baseApiUrl.includes('/api') ? baseApiUrl.split('/api')[0] + '/api' : '/api';
         const clickUrl = basePath + '/ads/click';
 
+        // 🔴 تتبع فقط — بدون redirect
         fetch(clickUrl, {
             method: 'POST',
             headers: {
@@ -1569,17 +1554,7 @@
             },
             body: JSON.stringify(data),
             keepalive: true
-        }).then(function() {
-            // After tracking click, navigate to target URL
-            if (targetUrl) {
-                window.location.href = targetUrl;
-            }
-        }).catch(function(error) {
-            // Even if tracking fails, navigate to target URL
-            if (targetUrl) {
-                window.location.href = targetUrl;
-            }
-        });
+        }).catch(function () {});
     }
 
     // Expose API
