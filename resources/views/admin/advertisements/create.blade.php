@@ -303,7 +303,7 @@
                             <select class="form-control-modern select2-select url-patterns-select" name="url_pattern_ids[]" multiple size="1" style="height:30px;opacity: 0;" data-placeholder="اترك فارغاً للكل">
                                 <option></option>
                                 @foreach($urlPatterns as $pattern)
-                                <option value="{{$pattern->id}}" @if((old('url_pattern_ids') && in_array($pattern->id, old('url_pattern_ids'))) || (isset($advertisement) && $advertisement->urlPatterns->contains('id', $pattern->id))) selected @endif>{{$pattern->site->title}}: {{$pattern->pattern}}</option>
+                                <option value="{{$pattern->id}}" @if(old('url_pattern_ids') && in_array($pattern->id, old('url_pattern_ids'))) selected @endif>{{$pattern->site->title}}: {{$pattern->pattern}}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -314,11 +314,6 @@
                                 $patternsValue = '';
                                 if (old('custom_patterns')) {
                                     $patternsValue = is_array(old('custom_patterns')) ? implode("\n", old('custom_patterns')) : old('custom_patterns');
-                                } elseif (isset($advertisement) && method_exists($advertisement, 'getCustomPatterns')) {
-                                    $patterns = $advertisement->getCustomPatterns();
-                                    $patternsValue = is_array($patterns) ? implode("\n", $patterns) : (string)$patterns;
-                                } elseif (isset($currentCustomPatterns)) {
-                                    $patternsValue = is_array($currentCustomPatterns) ? implode("\n", $currentCustomPatterns) : (string)$currentCustomPatterns;
                                 }
                             @endphp{{ $patternsValue }}</textarea>
                             <div id="patterns-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
