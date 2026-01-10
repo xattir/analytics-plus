@@ -1,206 +1,418 @@
-# مزايا لوحة التحكم
+# تحليلات + (Analytics Plus)
 
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/peter-tharwat/analytics-plus)
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-red)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-blue)](https://php.net)
 
-- ✅ مهيئة للسيو بشكل تلقائي وذكي
-- ✅ جاهزة لعرض اشعارات مع صور
-- ✅ عرض التنبيهات بشكل لطيف
-- ✅ عرض الأخطاء بشكل لحظي وتلقائي
-- ✅ طريقة لعرض الصور باحترافية
-- ✅ تدعم السحب والافلات
-- ✅ الاشعارات في الوقت الفعلي
-- ✅ أيقونات مدفوعة بشكل مجاني
-- ✅ أفضل وأجمل الخطوط العربية
-- ✅ اعدادات Robots جاهزة
-- ✅ منشئ SiteMap تلقائي
-- ✅ جاهزة للتحويل إلى تطبيق هاتف
-- ✅ جميع الصفحات الأساسية وأكثر
-- ✅ احصائيات رائعة في لوحة التحكم
-- ✅ امكانية انشاء قوائم وتحديد أماكنها
-- ✅ امكانية ترتيب الروابط داخل القوائم
-- ✅ امكانية انشاء صفحات مخصصة
-- ✅ نظام اعلانات جاهز
-- ✅ مدونة متكاملة أقسام،مقالات ..
-- ✅ نظام تحويل الروابط
-- ✅ عربية بالكامل !
-- ✅ محرر جميل مع امكانية رفع صور
-- ✅ نظام مستخدمين ولهم صور
-- ✅ متجاوبة بالكامل
-- ✅ تستخدم آخر اصدار Laravel
-- ✅ تستخدم آخر اصدار Bootstrap
-- ✅ الاشعارات في الوقت الفعلي
-- ✅ راصد الأخطاء الذكي
-- ✅ نظام تتبع شامل
-- ✅ اضافة حدود الزيارات لزيادة الحماية
-- ✅ صفحات 404 مخصصة
-- ✅ صفحات الدخول والتسجيل وغيرها
-- ✅ نظام اعدادات الموقع
-- ✅ جاهزة للدمج مع كلاود فلاير
-- ✅ نظام متابعة ذكي
-- ✅ نظام صلاحيات متقدم
-- ✅ مرفق نماذج لصناعة الصفحات
-- ✅ نظام التذاكر للتواصل معنا
-- ✅ نظام Plugins جاهز لاضافة المزيد
-- ✅ المزيد 
+نظام تحليلات متقدم وشامل مبني على Laravel لتتبع وإدارة المواقع الإلكترونية والإعلانات.
 
+**المستودع:** [https://github.com/peter-tharwat/analytics-plus.git](https://github.com/peter-tharwat/analytics-plus.git)
 
-### Screenshots
+## 📸 لقطات الشاشة
 
+### لوحة التحكم الرئيسية
+![Dashboard](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/1.png)
 
-![screenshots/25.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/25.jpg)
-![screenshots/18.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/18.jpg)
-![screenshots/19.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/19.jpg)
-![screenshots/20.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/20.jpg)
-![screenshots/24.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/24.jpg)
-![screenshots/6.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/6.jpg)
-![screenshots/7.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/7.jpg)
-![screenshots/8.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/8.jpg)
-![screenshots/9.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/9.jpg)
-![screenshots/10.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/10.jpg)
-![screenshots/11.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/11.jpg)
-![screenshots/12.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/12.jpg)
-![screenshots/13.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/13.jpg)
-![screenshots/14.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/14.jpg)
-![screenshots/15.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/15.jpg)
-![screenshots/16.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/16.jpg)
-![screenshots/17.jpg](https://raw.githubusercontent.com/peter-tharwat/dashboard/master/public/images/screenshots/17.jpg)
+### إحصائيات الموقع التفصيلية
+![Site Statistics](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/2.png)
 
+### إدارة المواقع
+![Sites Management](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/3.png)
 
+### كود التتبع
+![Tracking Code](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/4.png)
 
-<!-- - ✅ Auto & Smart Seo
-- ✅ Optimized Notifications With Images
-- ✅ Smart Alerts
-- ✅ Auto Js Validations
-- ✅ Front End Alert
-- ✅ Nice Image Viewing FancyBox
-- ✅ Drag And drop Feature
-- ✅ Fully Arabic 😀
-- ✅ Smart Editor With Upload Images
-- ✅ Select from Already uploaded Files
-- ✅ Fully Profile System With Avatars ( Can Resize Avatar )
-- ✅ Fully Responsive
-- ✅ Intervally Getting Notifcations Out Of The Box
-- ✅ FontAwesome PRO 💥 + ResponsiveFonts + Noto Sans Arabic fonts Included
-- ✅ Robots.txt , SiteMapGenerator , manifest.json
-- ✅ General Statistics On Home Page ( Traffic , New Users , Top Pages , Top Browsers , Top Devices , Top OSs , Top Ips , Top Users , and so on ... )
-- ✅ basic pages ( contact , articles , privacy , terms , about , categories , redirections )
-- ✅ You can Create Menus With Links ( can change order by Drag And drop )
-- ✅ Ability to Create custom pages
-- ✅ Smart Error Listeners
-- ✅ Smart Traffic tracker
-- ✅ RateLimit Plugin
-- ✅ Custom 404 Page
-- ✅ Nice Login , Register and Confirm Email Pages
-- ✅ Most Common Settings
-- ✅ Ready to integrate CloudFlare Firewall
-- ✅ Smart Logging System -->
-    
- 
+### إحصائيات الإعلانات
+![Advertisement Statistics](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/5.png)
 
-### How to setup
+### إدارة الإعلانات
+![Advertisement Management](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/6.png)
+
+### تفاصيل الزيارة
+![Visit Details](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/7.png)
+
+### رفع الملفات
+![File Upload](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/8.png)
+
+### تعديل الإعلان
+![Edit Advertisement](https://raw.githubusercontent.com/peter-tharwat/analytics-plus/main/public/images/screenshots2/9.png)
+
+## 📋 نظرة عامة
+
+تحليلات + هو نظام متكامل يوفر:
+- **تحليلات المواقع**: تتبع شامل لزوار المواقع مع إحصائيات مفصلة
+- **إدارة الإعلانات**: نظام متقدم لإدارة وتتبع الإعلانات مع إحصائيات مفصلة
+- **لوحة تحكم احترافية**: واجهة عربية كاملة مع تصميم عصري
+- **إدارة المحتوى**: مقالات، صفحات، قوائم، وأكثر
+- **نظام المستخدمين**: إدارة المستخدمين والصلاحيات
+
+## ✨ المميزات الرئيسية
+
+### 📊 تحليلات المواقع
+- تتبع الزوار في الوقت الفعلي
+- إحصائيات مفصلة (الصفحات، الدول، الأجهزة، المتصفحات)
+- رسوم بيانية تفاعلية باستخدام Chart.js
+- تتبع الجلسات والزيارات
+- تحليل مصادر الزيارات
+- تتبع URL Patterns مخصصة
+
+### 📢 نظام الإعلانات
+- أنواع إعلانات متعددة:
+  - داخل المحتوى (In Content)
+  - منبثق من الأسفل/الأعلى (Pop from Bottom/Top)
+  - شاشة كاملة (Interstitial)
+- استهداف متقدم:
+  - حسب الموقع
+  - حسب نوع الجهاز
+  - حسب الدولة
+  - حسب URL Patterns
+  - حسب CSS Selectors
+- إحصائيات مفصلة لكل إعلان:
+  - عدد العروض والضغطات
+  - نسبة الضغط (CTR)
+  - أعلى الصفحات والمواقع
+  - أعلى الدول والأجهزة
+  - رسوم بيانية تفاعلية
+
+### 🎨 لوحة التحكم
+- تصميم عصري ومتجاوب بالكامل
+- دعم اللغة العربية بالكامل
+- خط Baloo Bhaijaan 2
+- أيقونات Font Awesome Pro
+- إشعارات في الوقت الفعلي
+- نظام تنبيهات ذكي
+
+### 📝 إدارة المحتوى
+- نظام مقالات متكامل مع أقسام
+- صفحات مخصصة مع محرر متقدم
+- نظام قوائم قابل للتخصيص
+- نظام تحويل الروابط (Redirections)
+- إدارة الملفات والصور
+
+### 👥 إدارة المستخدمين
+- نظام صلاحيات متقدم (Spatie Permissions)
+- إدارة الأدوار
+- ملفات شخصية مع صور
+- نظام إشعارات متكامل
+
+### 🔒 الأمان والحماية
+- نظام Rate Limiting
+- حماية من الهجمات
+- تتبع الأخطاء والتنبيهات
+- دعم Cloudflare
+- نظام تسجيل دخول آمن
+
+## 🛠️ المتطلبات
+
+- PHP >= 8.2.0
+- Composer
+- Node.js & NPM
+- MySQL/MariaDB
+- Redis (اختياري للأداء)
+- ImageMagick PHP Extension
+
+## 📦 التثبيت
+
+### 1. تثبيت المتطلبات
 
 ```bash
-#dont forget to install 
+# تثبيت ImageMagick
 sudo apt-get install php-imagick
+
+# تثبيت Composer dependencies
 composer install
-# copy .env.example to .env
+
+# تثبيت NPM dependencies
+npm install
+```
+
+### 2. إعداد البيئة
+
+```bash
+# نسخ ملف البيئة
 cp .env.example .env
-# generate security key , link storage file
+
+# توليد مفتاح التطبيق
 php artisan key:generate
+
+# ربط مجلد التخزين
 php artisan storage:link
-# after connect your database via .env file
+```
+
+### 3. إعداد قاعدة البيانات
+
+قم بتعديل ملف `.env` وإضافة بيانات الاتصال بقاعدة البيانات:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=analytics
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+ثم قم بتشغيل Migrations:
+
+```bash
 php artisan migrate:fresh
 php artisan db:seed
-
-# dont forget to start queuing and run schedule on the background 
-php artisan queue:work && php artisan schedule:run 
 ```
 
-### Credentials
+### 4. بناء الأصول
 
-```
-login page : <http://127.0.0.1:8000/login>
-email : admin@admin.com
-password : password
+```bash
+# للتطوير
+npm run dev
 
-```
-
-### Main Yield Sections
-
-```jsx
-@yield('styles')
-@yield('content')
-@yield('after-body')
-@yield('scripts')
+# للإنتاج
+npm run build
 ```
 
-### Notifications On Response
+### 5. تشغيل المهام المجدولة والطوابير
 
-```jsx
-// docs : https://github.com/mckenziearts/laravel-notify
+```bash
+# تشغيل الطوابير
+php artisan queue:work
 
-notify()->info('content','title');
-
-notify()->success('content','title');
-
-notify()->error('content','title');
+# تشغيل المهام المجدولة
+php artisan schedule:run
 ```
 
-### Notifications On Frontend
+أو استخدام Supervisor لإدارة هذه العمليات تلقائياً.
 
-```jsx
-// docs : https://github.com/CodeSeven/toastr
-*****
-You have To put alert in scripts section
-// @yield('scripts')
-*****
-// Display a warning toast, with no title
-toastr.warning('My name is Inigo Montoya. You killed my father, prepare to die!')
+## 🔑 بيانات الدخول الافتراضية
 
-// Display a success toast, with a title
-toastr.success('Have fun storming the castle!', 'Miracle Max Says')
-
-// Display an error toast, with a title
-toastr.error('I do not think that word means what you think it means.', 'Inconceivable!')
-
-// Immediately remove current toasts without using animation
-toastr.remove()
-
-// Remove current toasts using animation
-toastr.clear()
-
-// Override global options
-toastr.success('We do have the Kapua suite available.', 'Turtle Bay Resort', {timeOut: 5000})
+```
+البريد الإلكتروني: admin@admin.com
+كلمة المرور: password
 ```
 
-### Notification to [ 'dashboard' , 'email' ]
+**⚠️ مهم**: قم بتغيير كلمة المرور فوراً بعد التثبيت!
 
-```jsx
+## 📚 الاستخدام
+
+### إضافة موقع جديد
+
+1. انتقل إلى `/admin/analytics`
+2. انقر على "إضافة موقع جديد"
+3. أدخل بيانات الموقع
+4. انسخ كود التتبع
+5. أضف الكود إلى موقعك
+
+### كود التتبع
+
+أضف الكود التالي قبل إغلاق `</body>` في موقعك:
+
+```html
+<script>
+(function() {
+    var script = document.createElement('script');
+    script.src = 'https://your-domain.com/js/analytics.js';
+    script.setAttribute('data-site-key', 'YOUR_SITE_KEY');
+    script.async = true;
+    document.body.appendChild(script);
+})();
+</script>
+```
+
+### إضافة إعلان
+
+1. انتقل إلى `/admin/advertisements`
+2. انقر على "إضافة إعلان جديد"
+3. اختر نوع الإعلان
+4. حدد المواقع المستهدفة
+5. أضف المحتوى
+6. حدد شروط العرض (الدولة، الجهاز، URL Patterns)
+7. احفظ الإعلان
+
+## 🏗️ البنية التقنية
+
+### التقنيات المستخدمة
+
+- **Backend**: Laravel 12
+- **Frontend**: Bootstrap 5, jQuery, Chart.js
+- **Database**: MySQL/MariaDB
+- **Caching**: Redis (اختياري)
+- **Queue**: Laravel Queue
+- **Real-time**: Livewire 3
+- **Permissions**: Spatie Laravel Permission
+- **Media**: Spatie Media Library
+
+### البنية الأساسية
+
+```
+analytics/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Api/          # API Controllers
+│   │   │   └── Backend/      # Admin Controllers
+│   │   └── Middleware/      # Custom Middleware
+│   ├── Models/               # Eloquent Models
+│   ├── Jobs/                 # Queue Jobs
+│   ├── Livewire/             # Livewire Components
+│   └── Helpers/              # Helper Classes
+├── database/
+│   ├── migrations/           # Database Migrations
+│   └── seeders/              # Database Seeders
+├── resources/
+│   ├── views/                # Blade Templates
+│   └── js/                   # JavaScript Files
+├── public/
+│   └── js/
+│       └── analytics.js       # Analytics Tracking Script
+└── routes/
+    ├── web.php               # Web Routes
+    └── api.php               # API Routes
+```
+
+## 🔌 API Endpoints
+
+### Analytics Tracking
+
+```
+POST /api/analytics/track
+```
+
+### Advertisement Management
+
+```
+POST /api/ads/get              # الحصول على الإعلانات المطابقة
+POST /api/ads/impression       # تتبع عرض الإعلان
+POST /api/ads/click            # تتبع ضغطة الإعلان
+```
+
+## 🎨 التخصيص
+
+### الألوان الرئيسية
+
+يمكن تخصيص الألوان من خلال ملفات CSS أو متغيرات CSS:
+
+```css
+:root {
+    --primary: #0194fe;
+    --primary-dark: #0178cc;
+    --color-2: #7b60fb;
+}
+```
+
+### الخطوط
+
+النظام يستخدم خط **Baloo Bhaijaan 2** كخط رئيسي.
+
+### الإشعارات
+
+```php
+// إشعار في لوحة التحكم
+notify()->success('تم الحفظ بنجاح', 'نجاح');
+
+// إشعار للمستخدم
 (new \MainHelper)->notify_user([
-      'user_id'=>2,
-      'message'=>"محتوى الإشعار" ,
-      'url'=>"http://example.com",
-			'methods'=>['database','mail']
+    'user_id' => 1,
+    'message' => 'رسالة الإشعار',
+    'url' => '/admin/dashboard',
+    'methods' => ['database', 'mail']
 ]);
 ```
 
-### Editor with and without file-explorer
+## 📊 الإحصائيات المتاحة
 
-```jsx
-<textarea type="text" name="description" required minlength="3" maxlength="10000" class="form-control editor with-file-explorer" ></textarea>
-<textarea type="text" name="description" required minlength="3" maxlength="10000" class="form-control editor"  ></textarea>
+### إحصائيات المواقع
+- إجمالي الزيارات
+- الزوار الفريدين
+- أعلى الصفحات
+- أعلى الدول
+- أعلى الأجهزة
+- أعلى المتصفحات
+- أعلى أنظمة التشغيل
+- مصادر الزيارات
+- الزوار الحاليين
+
+### إحصائيات الإعلانات
+- إجمالي العروض
+- إجمالي الضغطات
+- نسبة الضغط (CTR)
+- الضغطات آخر 30 دقيقة
+- العروض والضغطات آخر 30 يوم
+- أعلى الصفحات حسب الضغطات
+- أعلى المواقع حسب الضغطات/العروض
+- أعلى الدول حسب الضغطات/العروض
+- أعلى الأجهزة
+- أعلى المتصفحات
+- أعلى أنظمة التشغيل
+
+## 🔧 الصيانة
+
+### تنظيف البيانات القديمة
+
+```bash
+# تنظيف بيانات التتبع القديمة (أكثر من 90 يوم)
+php artisan analytics:cleanup
 ```
 
-### Fancybox
+### تحسين الأداء
 
-```jsx
-/* Just Add this Tag To image */
-<img src="" data-fancybox />
+- استخدم Redis للتخزين المؤقت
+- قم بتفعيل Queue للمهام الثقيلة
+- استخدم CDN للملفات الثابتة
+- قم بضغط الصور قبل الرفع
 
-/* Every image inside this class "data-fancybox" will be converted to fancy */
-<div class="fancybox">
-		<img src="" />
-</div>
+## 🐛 استكشاف الأخطاء
+
+### المشاكل الشائعة
+
+1. **لا تظهر الإحصائيات**
+   - تأكد من تشغيل `queue:work`
+   - تحقق من إعدادات قاعدة البيانات
+
+2. **الإعلانات لا تظهر**
+   - تحقق من `is_active` للإعلان
+   - تأكد من تطابق شروط الاستهداف
+   - تحقق من كود التتبع في الموقع
+
+3. **مشاكل في الصور**
+   - تأكد من تثبيت ImageMagick
+   - تحقق من صلاحيات مجلد `storage`
+
+## 📝 التطوير
+
+### إضافة ميزة جديدة
+
+1. أنشئ Migration للجداول الجديدة
+2. أنشئ Model
+3. أنشئ Controller
+4. أضف Routes
+5. أنشئ Views
+6. أضف Tests
+
+### الاختبار
+
+```bash
+php artisan test
 ```
 
-### License
-The Laravel framework is open-sourced software licensed under the MIT license.
+## 📄 الترخيص
+
+هذا المشروع مرخص تحت رخصة MIT.
+
+## 🤝 المساهمة
+
+نرحب بمساهماتكم! يرجى فتح Issue أو Pull Request.
+
+## 📞 الدعم
+
+للحصول على الدعم، يرجى فتح Issue في المستودع.
+
+## 🔄 التحديثات
+
+### الإصدار الحالي: 1.0.0
+
+- نظام تحليلات متكامل
+- نظام إعلانات متقدم
+- لوحة تحكم عربية كاملة
+- إحصائيات مفصلة ورسوم بيانية
+
+---
+
+**صُنع بـ ❤️ باستخدام Laravel**
