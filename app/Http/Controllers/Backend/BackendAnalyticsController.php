@@ -71,41 +71,35 @@ class BackendAnalyticsController extends Controller
     }
 
     /**
-     * List all analytics sites
-     * - Superadmin: sees all sites they created (their own sites)
-     * - Admin: sees only their own sites and sites they're members of
-     * - Regular users: sees only their own sites and sites they're members of
+     * List all analytics sites (My Websites)
+     * - All users (including superadmin) see only their own sites + sites they're members of
+     * - Superadmin is treated as normal user here - superadmin powers available only via dropdown menu
+     * - This is used for both /admin/ (home page) and /admin/analytics routes
      */
     public function index(Request $request)
     {
         $userId = auth()->id();
         $isSuperAdmin = $this->isSuperAdmin();
         
-        if ($isSuperAdmin) {
-            // Superadmin sees only their own sites (sites they created)
-            $sitesQuery = AnalyticsSite::where('user_id', $userId)
-                ->withCount('sessions')
-                ->with('owner');
-        } else {
-            // Regular users and admins see only their sites
-            // Get sites user owns
-            $ownedSites = AnalyticsSite::where('user_id', $userId)
-                ->withCount('sessions')
-                ->get();
-            
-            // Get sites user is a member of
-            $memberSites = AnalyticsSite::whereHas('users', function($query) use ($userId) {
-                $query->where('user_id', $userId);
-            })->withCount('sessions')->get();
-            
-            // Merge
-            $allSites = $ownedSites->merge($memberSites)->unique('id');
-            $siteIds = $allSites->pluck('id')->toArray();
-            
-            $sitesQuery = AnalyticsSite::whereIn('id', $siteIds)
-                ->withCount('sessions')
-                ->with('owner');
-        }
+        // All users (including superadmin) see only their own sites + sites they're members of
+        // Treat superadmin as normal user on home page - superadmin powers only in dropdown menu
+        // Get sites user owns
+        $ownedSites = AnalyticsSite::where('user_id', $userId)
+            ->withCount('sessions')
+            ->get();
+        
+        // Get sites user is a member of
+        $memberSites = AnalyticsSite::whereHas('users', function($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })->withCount('sessions')->get();
+        
+        // Merge
+        $allSites = $ownedSites->merge($memberSites)->unique('id');
+        $siteIds = $allSites->pluck('id')->toArray();
+        
+        $sitesQuery = AnalyticsSite::whereIn('id', $siteIds)
+            ->withCount('sessions')
+            ->with('owner');
         
         // Order by user's order preference, then by created_at
         $sites = $sitesQuery->orderBy('order', 'asc')
