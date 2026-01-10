@@ -209,8 +209,7 @@
                             <label class="form-label-modern">
                                 <span class="required">*</span> المحتوى
                             </label>
-                            <textarea name="content" id="content-editor" required style="display:none;">{{old('content')}}</textarea>
-                            <div id="content-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
+                            <textarea name="content" id="content" required class="form-control-modern" rows="8" style="direction: ltr; text-align: left; font-family: 'Courier New', monospace;">{{old('content')}}</textarea>
                             <span class="form-text-modern">لصورة: أدخل رابط الصورة فقط. لـ HTML/Script: أدخل الكود. لـ نص: أدخل النص.</span>
                         </div>
                         
