@@ -359,6 +359,16 @@
             margin: 2px 0 !important;
         }
         
+        .top-nav #fileUploadIcon > div:hover {
+            background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
+            color: #7b60fb !important;
+            transform: scale(1.05);
+        }
+        
+        .top-nav #fileUploadIcon > div:hover .fal {
+            transform: scale(1.1);
+        }
+        
         .top-nav .dropdown-item:hover {
             background: linear-gradient(135deg, rgba(123, 96, 251, 0.1) 0%, rgba(123, 96, 251, 0.05) 100%) !important;
             color: #7b60fb !important;
@@ -659,6 +669,15 @@
 
 
 
+                    @can('hub-files-create')
+                    <!-- File Upload Icon -->
+                    <div class="btn-group" id="fileUploadIcon" style="width:44px;height:44px;margin-right: 8px;">
+                        <div class="d-flex justify-content-center align-items-center btn" style="width: 44px;height: 44px;position: relative;cursor: pointer;" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
+                            <span class="fal fa-cloud-upload-alt font-3 d-inline-block" style="color: var(--color-2);transition: all 0.3s ease;"></span>
+                        </div>
+                    </div>
+                    @endcan
+
                     <div class="btn-group" id="notificationDropdown" style="width:44px;height:44px;">
 
                         <div class="d-flex justify-content-center align-items-center btn" style="width: 44px;height: 44px;position: relative;" data-bs-toggle="dropdown" aria-expanded="false" id="dropdown-notifications">
@@ -796,5 +815,246 @@
     @include('layouts.scripts')
     @yield('scripts')
     @stack('scripts')
+    
+    @can('hub-files-create')
+    <!-- File Upload Modal -->
+    <div class="modal fade" id="fileUploadModal" tabindex="-1" aria-labelledby="fileUploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="border-bottom: 1px solid #e9ecef; padding: 20px 24px;">
+                    <h5 class="modal-title font-1" id="fileUploadModalLabel" style="font-weight: 600; color: #212529;">
+                        <i class="fal fa-cloud-upload-alt me-2" style="color: #7b60fb;"></i> رفع ملف جديد
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 24px;">
+                    <div class="upload-area-modal" id="uploadAreaModal" style="border: 2px dashed #7b60fb; border-radius: 12px; padding: 60px 40px; text-align: center; background: #f8f9fa; transition: all 0.3s ease; cursor: pointer; position: relative;">
+                        <div class="upload-icon-modal" style="font-size: 64px; color: #7b60fb; margin-bottom: 20px;">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="upload-text-modal" style="font-size: 18px; color: #495057; margin-bottom: 12px; font-weight: 500;">
+                            اسحب الملفات هنا أو اضغط للاختيار
+                        </div>
+                        <div class="upload-hint-modal" style="font-size: 14px; color: #6c757d;">
+                            صور أو فيديو - الحد الأقصى 100MB
+                        </div>
+                        <input type="file" id="fileInputModal" accept="image/*,video/*" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer;">
+                    </div>
+                    
+                    <div class="file-upload-progress-modal mt-4" id="uploadProgressModal" style="display: none;">
+                        <div class="progress" style="height: 24px; border-radius: 12px; overflow: hidden;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #7b60fb 0%, #667eea 100%);"></div>
+                        </div>
+                        <div class="mt-3 text-center" id="uploadStatusModal" style="font-size: 14px; color: #495057;"></div>
+                    </div>
+                    
+                    <div class="uploaded-file-result mt-4" id="uploadedFileResult" style="display: none;">
+                        <div class="alert alert-success d-flex align-items-center justify-content-between" style="border-radius: 12px; border: none; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 16px 20px;">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle me-2" style="font-size: 24px; color: #28a745;"></i>
+                                <div>
+                                    <div style="font-weight: 600; color: #155724; margin-bottom: 4px;">تم رفع الملف بنجاح!</div>
+                                    <div id="fileLinkContainer" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                        <input type="text" id="fileLinkInput" readonly style="flex: 1; padding: 8px 12px; border: 1px solid #c3e6cb; border-radius: 8px; background: #fff; font-size: 13px;">
+                                        <button type="button" class="btn btn-sm btn-primary" id="copyLinkBtn" onclick="copyModalLink()" style="padding: 8px 16px; border-radius: 8px; font-weight: 500;">
+                                            <i class="fas fa-copy me-1"></i> نسخ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #e9ecef; padding: 16px 24px;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px; padding: 10px 20px;">إغلاق</button>
+                    <button type="button" class="btn btn-primary" id="uploadAnotherBtn" onclick="resetUploadModal()" style="border-radius: 8px; padding: 10px 20px; background: linear-gradient(135deg, #7b60fb 0%, #667eea 100%); border: none; display: none;">
+                        <i class="fas fa-plus me-1"></i> رفع ملف آخر
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    (function() {
+        'use strict';
+        
+        const uploadAreaModal = document.getElementById('uploadAreaModal');
+        const fileInputModal = document.getElementById('fileInputModal');
+        const uploadProgressModal = document.getElementById('uploadProgressModal');
+        const uploadStatusModal = document.getElementById('uploadStatusModal');
+        const progressBarModal = uploadProgressModal.querySelector('.progress-bar');
+        const uploadedFileResult = document.getElementById('uploadedFileResult');
+        const fileLinkInput = document.getElementById('fileLinkInput');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const uploadAnotherBtn = document.getElementById('uploadAnotherBtn');
+        
+        // Click to select files
+        uploadAreaModal.addEventListener('click', function(e) {
+            if (e.target !== fileInputModal) {
+                fileInputModal.click();
+            }
+        });
+        
+        // File input change
+        fileInputModal.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                handleModalFile(e.target.files[0]);
+            }
+        });
+        
+        // Drag and drop
+        uploadAreaModal.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadAreaModal.style.background = '#e3f2fd';
+            uploadAreaModal.style.borderColor = '#1976d2';
+            uploadAreaModal.style.transform = 'scale(1.02)';
+        });
+        
+        uploadAreaModal.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadAreaModal.style.background = '#f8f9fa';
+            uploadAreaModal.style.borderColor = '#7b60fb';
+            uploadAreaModal.style.transform = 'scale(1)';
+        });
+        
+        uploadAreaModal.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadAreaModal.style.background = '#f8f9fa';
+            uploadAreaModal.style.borderColor = '#7b60fb';
+            uploadAreaModal.style.transform = 'scale(1)';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleModalFile(files[0]);
+            }
+        });
+        
+        function handleModalFile(file) {
+            // Validate file size (100MB = 104857600 bytes)
+            const maxSize = 100 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('حجم الملف ' + file.name + ' أكبر من 100MB');
+                return;
+            }
+            
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 
+                               'video/mp4', 'video/avi', 'video/quicktime', 'video/x-msvideo', 
+                               'video/x-ms-wmv', 'video/x-flv', 'video/webm'];
+            if (!validTypes.includes(file.type)) {
+                alert('نوع الملف غير مدعوم: ' + file.name);
+                return;
+            }
+            
+            // Hide previous result
+            uploadedFileResult.style.display = 'none';
+            uploadAnotherBtn.style.display = 'none';
+            
+            // Show progress
+            uploadProgressModal.style.display = 'block';
+            progressBarModal.style.width = '0%';
+            progressBarModal.classList.remove('bg-success', 'bg-danger');
+            progressBarModal.classList.add('progress-bar-animated');
+            uploadStatusModal.innerHTML = 'جاري رفع <strong>' + file.name + '</strong>...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('_token', '{{csrf_token()}}');
+            
+            const xhr = new XMLHttpRequest();
+            
+            // Upload progress
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressBarModal.style.width = percentComplete + '%';
+                }
+            });
+            
+            // Upload complete
+            xhr.addEventListener('load', function() {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        // Hide progress
+                        uploadProgressModal.style.display = 'none';
+                        
+                        // Show result with link
+                        fileLinkInput.value = response.file.url;
+                        uploadedFileResult.style.display = 'block';
+                        uploadAnotherBtn.style.display = 'inline-block';
+                        
+                        // Add file to table if on files page
+                        if (typeof addFileToTable === 'function') {
+                            addFileToTable(response.file);
+                        }
+                        
+                        uploadStatusModal.innerHTML = '<span style="color: #28a745;"><i class="fas fa-check-circle"></i> تم رفع الملف بنجاح!</span>';
+                    } else {
+                        uploadStatusModal.innerHTML = '<span style="color: #dc3545;"><i class="fas fa-times-circle"></i> خطأ: ' + (response.message || 'فشل الرفع') + '</span>';
+                        progressBarModal.classList.remove('progress-bar-animated');
+                        progressBarModal.classList.add('bg-danger');
+                    }
+                } else {
+                    uploadStatusModal.innerHTML = '<span style="color: #dc3545;"><i class="fas fa-times-circle"></i> خطأ في رفع الملف</span>';
+                    progressBarModal.classList.remove('progress-bar-animated');
+                    progressBarModal.classList.add('bg-danger');
+                }
+            });
+            
+            // Upload error
+            xhr.addEventListener('error', function() {
+                uploadStatusModal.innerHTML = '<span style="color: #dc3545;"><i class="fas fa-times-circle"></i> حدث خطأ أثناء الرفع</span>';
+                progressBarModal.classList.remove('progress-bar-animated');
+                progressBarModal.classList.add('bg-danger');
+            });
+            
+            xhr.open('POST', '{{route("admin.files.upload")}}');
+            xhr.send(formData);
+        }
+        
+        // Reset modal on close
+        const modal = document.getElementById('fileUploadModal');
+        modal.addEventListener('hidden.bs.modal', function() {
+            resetUploadModal();
+        });
+        
+        window.resetUploadModal = function() {
+            uploadedFileResult.style.display = 'none';
+            uploadProgressModal.style.display = 'none';
+            uploadAnotherBtn.style.display = 'none';
+            fileInputModal.value = '';
+            uploadAreaModal.style.background = '#f8f9fa';
+            uploadAreaModal.style.borderColor = '#7b60fb';
+            uploadAreaModal.style.transform = 'scale(1)';
+        };
+        
+        window.copyModalLink = function() {
+            fileLinkInput.select();
+            fileLinkInput.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                const originalText = copyLinkBtn.innerHTML;
+                copyLinkBtn.innerHTML = '<i class="fas fa-check me-1"></i> تم النسخ!';
+                copyLinkBtn.classList.remove('btn-primary');
+                copyLinkBtn.classList.add('btn-success');
+                
+                setTimeout(function() {
+                    copyLinkBtn.innerHTML = originalText;
+                    copyLinkBtn.classList.remove('btn-success');
+                    copyLinkBtn.classList.add('btn-primary');
+                }, 2000);
+            } catch (err) {
+                alert('فشل نسخ الرابط');
+            }
+        };
+    })();
+    </script>
+    @endcan
 </body>
 </html>
