@@ -107,6 +107,14 @@
 								<span class="badge badge-secondary">نص</span>
 							@elseif($advertisement->type == 'script')
 								<span class="badge badge-dark">Script</span>
+							@elseif($advertisement->type == 'pop-bottom' || $advertisement->type == 'pop_from_bottom')
+								<span class="badge badge-info">منبثق من الأسفل</span>
+							@elseif($advertisement->type == 'pop-top' || $advertisement->type == 'pop_from_top')
+								<span class="badge badge-info">منبثق من الأعلى</span>
+							@elseif($advertisement->type == 'interstitial' || $advertisement->type == 'Interstitial')
+								<span class="badge badge-info">شاشة كاملة</span>
+							@elseif($advertisement->type == 'in_content')
+								<span class="badge badge-info">داخل المحتوى</span>
 							@endif
 						</td>
 						<td>{{$advertisement->priority}}</td>

@@ -272,10 +272,10 @@
                                         <span class="required">*</span> نوع الإعلان
                                     </label>
                                     <select class="form-control-modern" name="type" id="ad_type" required onchange="toggleSelectorFields()">
-                                        <option value="in_content" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'in_content') selected @endif>In Content</option>
-                                        <option value="pop_from_bottom" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'pop_from_bottom') selected @endif>Pop from Bottom</option>
-                                        <option value="pop_from_top" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'pop_from_top') selected @endif>Pop from Top</option>
-                                        <option value="Interstitial" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'Interstitial') selected @endif>Interstitial</option>
+                                        <option value="in_content" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'in_content') selected @endif>داخل المحتوى</option>
+                                        <option value="pop_from_bottom" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'pop_from_bottom') selected @endif>منبثق من الأسفل</option>
+                                        <option value="pop_from_top" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'pop_from_top') selected @endif>منبثق من الأعلى</option>
+                                        <option value="Interstitial" @if(old('type', isset($advertisement) ? $advertisement->type : '') == 'Interstitial') selected @endif>شاشة كاملة</option>
                                     </select>
                                 </div>
                             </div>
