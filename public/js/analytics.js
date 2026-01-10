@@ -1268,18 +1268,23 @@
                     if (contentWrapper) {
                         contentWrapper.style.cursor = 'pointer';
                         
-                        let contentWrapperClicked = false;
+                        let isProcessing = false;
                         const contentWrapperClickHandler = function(e) {
                             // Don't trigger if clicking on toggle button or close button
                             if (e.target.closest('.analytics-ad-toggle, .analytics-ad-close-interstitial')) {
                                 return;
                             }
                             
-                            // Prevent double-click
-                            if (contentWrapperClicked) {
+                            // Prevent rapid double-clicks (debounce)
+                            if (isProcessing) {
                                 return false;
                             }
-                            contentWrapperClicked = true;
+                            isProcessing = true;
+                            
+                            // Reset flag after a short delay to allow clicking again
+                            setTimeout(function() {
+                                isProcessing = false;
+                            }, 500);
                             
                             // Prevent any default behavior
                             e.preventDefault();
