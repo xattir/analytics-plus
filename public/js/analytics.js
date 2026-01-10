@@ -1303,10 +1303,10 @@
                             // Get target URL from stored original href
                             const storedHref = link.getAttribute('data-original-href') || originalHref;
                             
-                            if (storedHref && storedHref !== '#' && storedHref !== 'javascript:void(0);' && !storedHref.startsWith('javascript:')) {
-                                // Use ad.url if available, otherwise use link href
-                                const targetUrl = ad.url || storedHref;
-                                
+                            // Use ad.url if it exists and is not empty, otherwise use link href
+                            const targetUrl = (ad.url && ad.url.trim() !== '') ? ad.url : storedHref;
+                            
+                            if (targetUrl && targetUrl !== '#' && targetUrl !== 'javascript:void(0);' && !targetUrl.startsWith('javascript:')) {
                                 // Track click first
                                 trackAdClick(ad.id, targetUrl, ad.type, ad.url_pattern_id);
                                 
@@ -1450,9 +1450,10 @@
                             const storedHref = currentLink.getAttribute('data-original-href');
                             const href = storedHref || originalHref || currentLink.getAttribute('href');
                             
-                            if (href && href !== '#' && href !== 'javascript:void(0);' && !href.startsWith('javascript:')) {
-                                // Use ad.url if available, otherwise use link href
-                                const targetUrl = ad.url || href;
+                            // Use ad.url if it exists and is not empty, otherwise use link href
+                            const targetUrl = (ad.url && ad.url.trim() !== '') ? ad.url : href;
+                            
+                            if (targetUrl && targetUrl !== '#' && targetUrl !== 'javascript:void(0);' && !targetUrl.startsWith('javascript:')) {
                                 trackAdClick(ad.id, targetUrl, ad.selector, ad.url_pattern_id);
                                 
                                 // Open based on open_in_new_tab setting (default: true for new tab)
