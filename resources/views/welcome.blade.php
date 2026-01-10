@@ -19,21 +19,26 @@
             --primary: #0194fe;
             --primary-dark: #0178cc;
             --primary-light: #e6f4ff;
-            --secondary: #10b981;
-            --accent: #f59e0b;
-            --text: #1f2937;
-            --text-light: #6b7280;
+            --gradient-1: linear-gradient(135deg, #0194fe 0%, #0178cc 100%);
+            --gradient-2: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --text: #1e293b;
+            --text-light: #64748b;
             --bg: #ffffff;
-            --bg-light: #f9fafb;
+            --bg-light: #f8fafc;
             --bg-dark: #0f172a;
-            --border: #e5e7eb;
         }
         
         body {
-            font-family: 'Baloo Bhaijaan', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Baloo Bhaijaan', sans-serif;
             color: var(--text);
-            line-height: 1.6;
+            line-height: 1.7;
             overflow-x: hidden;
+            background: var(--bg);
+        }
+        
+        /* Smooth Scroll */
+        html {
+            scroll-behavior: smooth;
         }
         
         /* Header */
@@ -42,30 +47,46 @@
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(1, 148, 254, 0.1);
             z-index: 1000;
-            padding: 1rem 0;
+            padding: 1.25rem 0;
+            transition: all 0.3s ease;
+        }
+        
+        .header.scrolled {
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
         }
         
         .header-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 2rem;
+            padding: 0 3rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
         .logo {
-            font-size: 1.8rem;
+            font-size: 1.75rem;
             font-weight: 800;
-            color: var(--primary);
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+        }
+        
+        .logo i {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .nav-buttons {
@@ -75,29 +96,49 @@
         }
         
         .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
+            padding: 0.875rem 2rem;
+            border-radius: 50px;
             font-weight: 600;
             font-size: 1rem;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
             cursor: pointer;
-            font-family: 'Baloo Bhaijaan 2', sans-serif;
+            font-family: 'Baloo Bhaijaan', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
         }
         
         .btn-primary {
-            background: var(--primary);
+            background: var(--gradient-1);
             color: white;
-            box-shadow: 0 4px 15px rgba(1, 148, 254, 0.3);
+            box-shadow: 0 4px 20px rgba(1, 148, 254, 0.3);
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(1, 148, 254, 0.4);
+            box-shadow: 0 8px 30px rgba(1, 148, 254, 0.4);
         }
         
         .btn-outline {
@@ -109,6 +150,7 @@
         .btn-outline:hover {
             background: var(--primary);
             color: white;
+            transform: translateY(-2px);
         }
         
         /* Hero Section */
@@ -118,46 +160,93 @@
             align-items: center;
             justify-content: center;
             position: relative;
-            background: linear-gradient(135deg, #0194fe 0%, #0178cc 100%);
             padding: 8rem 2rem 4rem;
             overflow: hidden;
+            background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%);
         }
         
         .hero-section::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
-            pointer-events: none;
+            top: -50%;
+            right: -20%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(1, 148, 254, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(1, 148, 254, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 15s ease-in-out infinite reverse;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, -30px) rotate(180deg); }
         }
         
         .hero-content {
             position: relative;
             z-index: 2;
             text-align: center;
-            color: white;
-            max-width: 900px;
+            max-width: 1000px;
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            background: rgba(1, 148, 254, 0.1);
+            border-radius: 50px;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(1, 148, 254, 0.2);
         }
         
         .hero-title {
-            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-size: clamp(2.5rem, 8vw, 5.5rem);
             font-weight: 800;
             margin-bottom: 1.5rem;
             line-height: 1.1;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .hero-subtitle {
-            font-size: clamp(1.1rem, 3vw, 1.5rem);
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
             margin-bottom: 2.5rem;
-            opacity: 0.95;
+            color: var(--text-light);
             font-weight: 400;
-            line-height: 1.6;
+            line-height: 1.8;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .hero-cta {
@@ -169,74 +258,111 @@
         
         /* Features Section */
         .features-section {
-            padding: 6rem 2rem;
-            background: var(--bg-light);
+            padding: 8rem 2rem;
+            background: var(--bg);
+            position: relative;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
-        .section-title {
+        .section-header {
             text-align: center;
-            font-size: clamp(2rem, 5vw, 3rem);
-            font-weight: 800;
-            color: var(--text);
+            margin-bottom: 5rem;
+        }
+        
+        .section-badge {
+            display: inline-block;
+            padding: 0.5rem 1.25rem;
+            background: rgba(1, 148, 254, 0.1);
+            border-radius: 50px;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
             margin-bottom: 1rem;
         }
         
+        .section-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+        
         .section-subtitle {
-            text-align: center;
             font-size: 1.2rem;
             color: var(--text-light);
-            margin-bottom: 4rem;
             max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            margin: 0 auto;
         }
         
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 2rem;
-            margin-top: 3rem;
+            margin-top: 4rem;
         }
         
         .feature-card {
             background: white;
             padding: 2.5rem;
-            border-radius: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
+            border-radius: 24px;
+            border: 1px solid rgba(1, 148, 254, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-1);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
         }
         
         .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(1, 148, 254, 0.15);
-            border-color: var(--primary-light);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(1, 148, 254, 0.15);
+            border-color: rgba(1, 148, 254, 0.3);
+        }
+        
+        .feature-card:hover::before {
+            transform: scaleX(1);
         }
         
         .feature-icon {
             width: 70px;
             height: 70px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            border-radius: 18px;
+            background: var(--gradient-1);
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2rem;
             color: white;
             margin-bottom: 1.5rem;
-            box-shadow: 0 4px 15px rgba(1, 148, 254, 0.3);
+            box-shadow: 0 8px 25px rgba(1, 148, 254, 0.25);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
         }
         
         .feature-title {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--text);
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
         
         .feature-description {
@@ -248,8 +374,21 @@
         /* Stats Section */
         .stats-section {
             padding: 6rem 2rem;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: var(--gradient-1);
             color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.1;
         }
         
         .stats-grid {
@@ -257,6 +396,8 @@
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 3rem;
             margin-top: 3rem;
+            position: relative;
+            z-index: 1;
         }
         
         .stat-card {
@@ -265,26 +406,27 @@
         }
         
         .stat-number {
-            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
             font-weight: 800;
             margin-bottom: 0.5rem;
             display: block;
+            line-height: 1;
         }
         
         .stat-label {
             font-size: 1.2rem;
-            opacity: 0.9;
+            opacity: 0.95;
             font-weight: 500;
         }
         
         /* How It Works */
         .how-it-works {
-            padding: 6rem 2rem;
-            background: white;
+            padding: 8rem 2rem;
+            background: var(--bg-light);
         }
         
         .steps-container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 4rem auto 0;
             position: relative;
         }
@@ -292,8 +434,8 @@
         .step {
             display: flex;
             align-items: center;
-            gap: 2rem;
-            margin-bottom: 3rem;
+            gap: 3rem;
+            margin-bottom: 4rem;
             position: relative;
         }
         
@@ -302,26 +444,43 @@
         }
         
         .step-number {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            width: 90px;
+            height: 90px;
+            background: var(--gradient-1);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 800;
             color: white;
             flex-shrink: 0;
-            box-shadow: 0 4px 15px rgba(1, 148, 254, 0.3);
+            box-shadow: 0 8px 30px rgba(1, 148, 254, 0.3);
+            position: relative;
+        }
+        
+        .step-number::after {
+            content: '';
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            border: 2px solid rgba(1, 148, 254, 0.2);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
         }
         
         .step-content {
             flex: 1;
-            background: var(--bg-light);
-            padding: 2rem;
-            border-radius: 20px;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 24px;
             border-right: 4px solid var(--primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
         
         .step:nth-child(even) .step-content {
@@ -330,29 +489,45 @@
         }
         
         .step-title {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: var(--text);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
         }
         
         .step-description {
             color: var(--text-light);
             line-height: 1.8;
+            font-size: 1.1rem;
         }
         
         /* CTA Section */
         .cta-section {
-            padding: 6rem 2rem;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #1e293b 100%);
+            padding: 8rem 2rem;
+            background: var(--bg-dark);
             color: white;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(1, 148, 254, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
         }
         
         .cta-title {
             font-size: clamp(2rem, 5vw, 3.5rem);
             font-weight: 800;
             margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
         }
         
         .cta-subtitle {
@@ -362,43 +537,46 @@
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
+            position: relative;
+            z-index: 1;
         }
         
         /* Footer */
         .footer {
-            background: var(--bg-dark);
+            background: #0a0f1a;
             color: white;
-            padding: 3rem 2rem 2rem;
+            padding: 4rem 2rem 2rem;
             text-align: center;
         }
         
         .footer-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
         .footer-links {
             display: flex;
             justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
+            gap: 2.5rem;
+            margin-bottom: 2.5rem;
             flex-wrap: wrap;
         }
         
         .footer-links a {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.7);
             text-decoration: none;
             transition: color 0.3s ease;
+            font-size: 1rem;
         }
         
         .footer-links a:hover {
-            color: white;
+            color: var(--primary);
         }
         
         .footer-copyright {
             padding-top: 2rem;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.5);
         }
         
         /* Auth Modal */
@@ -409,7 +587,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             backdrop-filter: blur(8px);
             z-index: 2000;
             align-items: center;
@@ -423,19 +601,19 @@
         
         .auth-container {
             background: white;
-            border-radius: 24px;
-            max-width: 480px;
+            border-radius: 28px;
+            max-width: 500px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 25px 80px rgba(0,0,0,0.3);
             animation: slideUp 0.3s ease;
         }
         
         @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px);
             }
             to {
                 opacity: 1;
@@ -444,17 +622,20 @@
         }
         
         .auth-header {
-            padding: 32px 32px 24px;
-            border-bottom: 1px solid var(--border);
+            padding: 2rem 2rem 1.5rem;
+            border-bottom: 1px solid rgba(1, 148, 254, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
         .auth-title {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
-            color: var(--text);
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .auth-close {
@@ -465,20 +646,21 @@
             cursor: pointer;
             padding: 4px;
             line-height: 1;
+            transition: color 0.3s ease;
         }
         
         .auth-close:hover {
-            color: var(--text);
+            color: var(--primary);
         }
         
         .auth-tabs {
             display: flex;
-            border-bottom: 2px solid var(--border);
+            border-bottom: 2px solid rgba(1, 148, 254, 0.1);
         }
         
         .auth-tab {
             flex: 1;
-            padding: 16px;
+            padding: 1rem;
             text-align: center;
             cursor: pointer;
             font-weight: 600;
@@ -489,7 +671,8 @@
             border-top: none;
             border-left: none;
             border-right: none;
-            font-family: 'Baloo Bhaijaan 2', sans-serif;
+            font-family: 'Baloo Bhaijaan', sans-serif;
+            font-size: 1rem;
         }
         
         .auth-tab.active {
@@ -499,7 +682,7 @@
         
         .auth-form {
             display: none;
-            padding: 32px;
+            padding: 2rem;
         }
         
         .auth-form.active {
@@ -507,24 +690,24 @@
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
         }
         
         .form-label {
             display: block;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
             color: var(--text);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
         
         .form-control {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid var(--border);
-            border-radius: 10px;
+            padding: 0.875rem 1.25rem;
+            border: 2px solid rgba(1, 148, 254, 0.2);
+            border-radius: 12px;
             font-size: 1rem;
-            font-family: 'Baloo Bhaijaan 2', sans-serif;
+            font-family: 'Baloo Bhaijaan', sans-serif;
             transition: all 0.3s ease;
             background: var(--bg);
         }
@@ -542,58 +725,58 @@
         .error-message {
             color: #ef4444;
             font-size: 0.875rem;
-            margin-top: 6px;
+            margin-top: 0.5rem;
         }
         
         .btn-auth {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 1rem;
+            background: var(--gradient-1);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: 600;
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 8px;
-            font-family: 'Baloo Bhaijaan 2', sans-serif;
+            margin-top: 0.5rem;
+            font-family: 'Baloo Bhaijaan', sans-serif;
         }
         
         .btn-auth:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(1, 148, 254, 0.4);
+            box-shadow: 0 8px 25px rgba(1, 148, 254, 0.4);
         }
         
         .form-check {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
         }
         
         .form-check input {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
         }
         
         .form-check label {
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: var(--text);
         }
         
         .auth-footer {
-            padding: 24px 32px;
-            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            border-top: 1px solid rgba(1, 148, 254, 0.1);
             text-align: center;
         }
         
         .auth-footer a {
             color: var(--primary);
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
         }
         
         .auth-footer a:hover {
@@ -601,6 +784,10 @@
         }
         
         @media (max-width: 768px) {
+            .header-container {
+                padding: 0 1.5rem;
+            }
+            
             .hero-cta {
                 flex-direction: column;
             }
@@ -624,15 +811,19 @@
             }
             
             .nav-buttons {
-                flex-direction: column;
                 gap: 0.5rem;
+            }
+            
+            .nav-buttons .btn {
+                padding: 0.625rem 1.25rem;
+                font-size: 0.9rem;
             }
         }
     </style>
 </head>
 <body>
     <!-- Header -->
-    <header class="header">
+    <header class="header" id="header">
         <div class="header-container">
             <a href="/" class="logo">
                 <i class="fas fa-chart-line"></i>
@@ -654,19 +845,22 @@
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-star"></i>
+                نظام تحليلات متقدم وسهل الاستخدام
+            </div>
             <h1 class="hero-title">
-                <i class="fas fa-chart-line" style="margin-left: 12px;"></i>
-                نظام التحليلات المتقدم
+                افهم زوارك بشكل أفضل
             </h1>
             <p class="hero-subtitle">
-                تتبع زوار موقعك وتحليل سلوكهم بسهولة وأمان مع لوحة تحكم قوية وسهلة الاستخدام
+                تتبع وتحليل زوار موقعك بسهولة تامة. احصل على إحصائيات مفصلة تساعدك على اتخاذ قرارات أفضل وزيادة أرباحك
             </p>
             <div class="hero-cta">
-                <button class="btn btn-primary" onclick="openAuth('register')" style="background: white; color: var(--primary);">
+                <button class="btn btn-primary" onclick="openAuth('register')" style="background: var(--gradient-1); color: white; font-size: 1.1rem; padding: 1rem 2.5rem;">
                     <i class="fas fa-rocket"></i>
                     ابدأ الآن مجاناً
                 </button>
-                <button class="btn btn-outline" onclick="openAuth('login')" style="background: rgba(255,255,255,0.15); color: white; border-color: white;">
+                <button class="btn btn-outline" onclick="openAuth('login')" style="font-size: 1.1rem; padding: 1rem 2.5rem;">
                     <i class="fas fa-sign-in-alt"></i>
                     تسجيل الدخول
                 </button>
@@ -677,57 +871,30 @@
     <!-- Features Section -->
     <section class="features-section">
         <div class="container">
-            <h2 class="section-title">ميزات النظام المتكاملة</h2>
-            <p class="section-subtitle">نظام تحليلات شامل يوفر لك كل ما تحتاجه لتتبع وتحليل زوار موقعك</p>
+            <div class="section-header">
+                <span class="section-badge">ميزات النظام</span>
+                <h2 class="section-title">لماذا تختار نظامنا؟</h2>
+                <p class="section-subtitle">نوفر لك كل ما تحتاجه لتحسين موقعك وزيادة أرباحك</p>
+            </div>
             
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <h3 class="feature-title">إحصائيات شاملة</h3>
-                    <p class="feature-description">
-                        تتبع الزوار في الوقت الفعلي مع إحصائيات مفصلة عن الصفحات الأكثر زيارة، مصادر الزيارات، الدول، الأجهزة والمتصفحات
-                    </p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3 class="feature-title">حماية متقدمة</h3>
-                    <p class="feature-description">
-                        نظام حماية ذكي مع راصد الأخطاء التلقائي، حدود الزيارات، وإعدادات Robots جاهزة لحماية موقعك
-                    </p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-bullhorn"></i>
-                    </div>
-                    <h3 class="feature-title">نظام إعلانات متقدم</h3>
-                    <p class="feature-description">
-                        نظام إعلانات شامل مع تتبع الضغطات والمشاهدات، إعلانات داخل المحتوى، pop-ups، وإحصائيات مفصلة لكل إعلان
-                    </p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-link"></i>
-                    </div>
-                    <h3 class="feature-title">أنماط URL مخصصة</h3>
-                    <p class="feature-description">
-                        إنشاء أنماط URL مخصصة لتتبع صفحات محددة، مع دعم wildcards وأنماط متقدمة للتحكم الكامل في التتبع
-                    </p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
                         <i class="fas fa-users"></i>
                     </div>
-                    <h3 class="feature-title">إدارة الفرق</h3>
+                    <h3 class="feature-title">افهم زوارك بشكل أفضل</h3>
                     <p class="feature-description">
-                        دعوة أعضاء للانضمام إلى موقعك، إدارة الصلاحيات، وتتبع نشاط كل عضو مع نظام صلاحيات متقدم
+                        تعرف على من يزور موقعك، من أين يأتون، وما الذي يبحثون عنه. هذه المعلومات تساعدك على تحسين محتواك وزيادة المبيعات
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <h3 class="feature-title">اربح المزيد من الإعلانات</h3>
+                    <p class="feature-description">
+                        نظام إعلانات متقدم يتتبع كل ضغطة ومشاهدة. ضع إعلاناتك في الأماكن الصحيحة واربح المزيد من المال
                     </p>
                 </div>
                 
@@ -735,9 +902,49 @@
                     <div class="feature-icon">
                         <i class="fas fa-search"></i>
                     </div>
-                    <h3 class="feature-title">بحث متقدم</h3>
+                    <h3 class="feature-title">ظهور أفضل في محركات البحث</h3>
                     <p class="feature-description">
-                        بحث شامل في جميع البيانات مع إمكانية البحث عن زوار محددين، صفحات، جلسات، ومصادر الزيارات
+                        نظام SiteMap تلقائي يساعد محركات البحث على فهرسة موقعك بسهولة، مما يعني ظهورك في نتائج البحث أكثر
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">اتخذ قرارات صحيحة</h3>
+                    <p class="feature-description">
+                        إحصائيات مفصلة عن الصفحات الأكثر زيارة، أفضل أوقات الزيارات، وأكثر. استخدم هذه البيانات لتحسين موقعك
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">موقعك آمن ومحمي</h3>
+                    <p class="feature-description">
+                        نظام حماية ذكي يحمي موقعك من الزيارات المشبوهة والأخطاء. راصد تلقائي للأخطاء يساعدك على إصلاح المشاكل بسرعة
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h3 class="feature-title">تتبع دقيق لصفحاتك المهمة</h3>
+                    <p class="feature-description">
+                        حدد الصفحات المهمة لديك وتتبع زوارها بدقة. مثلاً: تتبع صفحة المنتجات فقط، أو صفحة التسجيل، أو أي صفحة تريدها
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h3 class="feature-title">اعمل مع فريقك بسهولة</h3>
+                    <p class="feature-description">
+                        ادعُ أعضاء فريقك للانضمام وشاركهم البيانات. كل عضو له صلاحياته الخاصة. مثالي للشركات والفرق
                     </p>
                 </div>
                 
@@ -745,9 +952,9 @@
                     <div class="feature-icon">
                         <i class="fas fa-mobile-alt"></i>
                     </div>
-                    <h3 class="feature-title">متجاوب بالكامل</h3>
+                    <h3 class="feature-title">راقب موقعك من أي مكان</h3>
                     <p class="feature-description">
-                        لوحة تحكم متجاوبة تعمل بشكل مثالي على جميع الأجهزة - الكمبيوتر، التابلت، والهواتف الذكية
+                        لوحة تحكم متجاوبة تعمل بشكل مثالي على هاتفك، تابلتك، أو كمبيوترك. تابع موقعك وأنت في الطريق
                     </p>
                 </div>
                 
@@ -755,19 +962,9 @@
                     <div class="feature-icon">
                         <i class="fas fa-bolt"></i>
                     </div>
-                    <h3 class="feature-title">أداء سريع</h3>
+                    <h3 class="feature-title">سرعة فائقة</h3>
                     <p class="feature-description">
-                        نظام محسّن للأداء مع تخزين مؤقت ذكي، استعلامات محسّنة، وتحميل سريع للبيانات
-                    </p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-sitemap"></i>
-                    </div>
-                    <h3 class="feature-title">SiteMap تلقائي</h3>
-                    <p class="feature-description">
-                        منشئ SiteMap تلقائي لتحسين محركات البحث، مع دعم الروابط المخصصة وتحديث تلقائي
+                        نظام محسّن للأداء يعمل بسرعة فائقة. لا تنتظر تحميل البيانات، كل شيء سريع وسلس
                     </p>
                 </div>
                 
@@ -775,29 +972,29 @@
                     <div class="feature-icon">
                         <i class="fas fa-bell"></i>
                     </div>
-                    <h3 class="feature-title">إشعارات فورية</h3>
+                    <h3 class="feature-title">كن على اطلاع دائم</h3>
                     <p class="feature-description">
-                        نظام إشعارات في الوقت الفعلي مع إمكانية إرسال إشعارات مخصصة للمستخدمين والفرق
+                        إشعارات فورية عن أي شيء مهم. مثلاً: عندما يصل زائر جديد، أو عندما يحدث شيء يحتاج لانتباهك
                     </p>
                 </div>
                 
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-file-alt"></i>
+                        <i class="fas fa-globe"></i>
                     </div>
-                    <h3 class="feature-title">صفحات مخصصة</h3>
+                    <h3 class="feature-title">تتبع مواقع متعددة</h3>
                     <p class="feature-description">
-                        إنشاء صفحات مخصصة مع محرر متقدم، دعم HTML/CSS/JS، وإمكانية إنشاء صفحات ديناميكية
+                        لديك أكثر من موقع؟ لا مشكلة. تتبع كل مواقعك من مكان واحد بسهولة تامة
                     </p>
                 </div>
                 
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-plug"></i>
+                        <i class="fas fa-headset"></i>
                     </div>
-                    <h3 class="feature-title">نظام Plugins</h3>
+                    <h3 class="feature-title">دعم فني متواصل</h3>
                     <p class="feature-description">
-                        نظام plugins قابل للتوسع مع إمكانية إضافة ميزات جديدة مثل Google Analytics، Facebook Pixel، والمزيد
+                        فريق دعم فني جاهز لمساعدتك في أي وقت. أسئلة؟ مشاكل؟ نحن هنا لمساعدتك دائماً
                     </p>
                 </div>
             </div>
@@ -807,8 +1004,10 @@
     <!-- Stats Section -->
     <section class="stats-section">
         <div class="container">
-            <h2 class="section-title" style="color: white;">أرقامنا تتحدث</h2>
-            <p class="section-subtitle" style="color: rgba(255,255,255,0.9);">نظام موثوق يستخدمه الآلاف</p>
+            <div class="section-header" style="color: white;">
+                <span class="section-badge" style="background: rgba(255,255,255,0.2); color: white; border-color: rgba(255,255,255,0.3);">أرقامنا</span>
+                <h2 class="section-title" style="color: white;">لماذا يثق بنا الآلاف</h2>
+            </div>
             
             <div class="stats-grid">
                 <div class="stat-card">
@@ -834,39 +1033,42 @@
     <!-- How It Works -->
     <section class="how-it-works">
         <div class="container">
-            <h2 class="section-title">كيف يعمل النظام؟</h2>
-            <p class="section-subtitle">خطوات بسيطة لبدء تتبع زوار موقعك</p>
+            <div class="section-header">
+                <span class="section-badge">كيف يعمل</span>
+                <h2 class="section-title">ابدأ في 4 خطوات بسيطة</h2>
+                <p class="section-subtitle">سجّل، أضف موقعك، ثبت الكود، وابدأ التتبع فوراً</p>
+            </div>
             
             <div class="steps-container">
                 <div class="step">
                     <div class="step-number">1</div>
                     <div class="step-content">
-                        <h3 class="step-title">إنشاء حساب</h3>
-                        <p class="step-description">سجّل حسابك مجاناً في دقائق معدودة وابدأ فوراً</p>
+                        <h3 class="step-title">سجّل حسابك مجاناً</h3>
+                        <p class="step-description">أنشئ حسابك في دقائق معدودة. لا حاجة لبطاقة ائتمان، كل شيء مجاني</p>
                     </div>
                 </div>
                 
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h3 class="step-title">إضافة موقعك</h3>
-                        <p class="step-description">أضف موقعك أو مواقعك المتعددة بسهولة مع إدارة كاملة لكل موقع</p>
+                        <h3 class="step-title">أضف موقعك</h3>
+                        <p class="step-description">أضف موقعك أو مواقعك المتعددة. يمكنك إضافة عدد غير محدود من المواقع</p>
                     </div>
                 </div>
                 
                 <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-content">
-                        <h3 class="step-title">تثبيت كود التتبع</h3>
-                        <p class="step-description">انسخ كود التتبع البسيط والصقه في موقعك - لا حاجة لخبرة تقنية</p>
+                        <h3 class="step-title">انسخ والصق كود التتبع</h3>
+                        <p class="step-description">كود بسيط واحد. انسخه والصقه في موقعك - لا حاجة لخبرة تقنية</p>
                     </div>
                 </div>
                 
                 <div class="step">
                     <div class="step-number">4</div>
                     <div class="step-content">
-                        <h3 class="step-title">ابدأ التتبع</h3>
-                        <p class="step-description">ابدأ تتبع زوارك فوراً مع إحصائيات مفصلة في الوقت الفعلي</p>
+                        <h3 class="step-title">ابدأ التتبع فوراً</h3>
+                        <p class="step-description">ابدأ رؤية البيانات فوراً. إحصائيات مفصلة في الوقت الفعلي</p>
                     </div>
                 </div>
             </div>
@@ -877,9 +1079,9 @@
     <section class="cta-section">
         <div class="container">
             <h2 class="cta-title">جاهز للبدء؟</h2>
-            <p class="cta-subtitle">انضم إلى آلاف المستخدمين الذين يثقون بنظامنا لتتبع وتحليل زوار مواقعهم</p>
+            <p class="cta-subtitle">انضم إلى آلاف المستخدمين الذين يثقون بنظامنا لتحسين مواقعهم وزيادة أرباحهم</p>
             <div class="hero-cta">
-                <button class="btn btn-primary" onclick="openAuth('register')" style="background: var(--primary); color: white; font-size: 1.2rem; padding: 1rem 2rem;">
+                <button class="btn btn-primary" onclick="openAuth('register')" style="background: var(--gradient-1); color: white; font-size: 1.2rem; padding: 1.25rem 3rem;">
                     <i class="fas fa-rocket"></i>
                     ابدأ مجاناً الآن
                 </button>
@@ -995,6 +1197,16 @@
     </div>
 
     <script>
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+        
         function openAuth(tab) {
             document.getElementById('authModal').classList.add('active');
             if (tab) {
