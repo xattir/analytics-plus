@@ -53,6 +53,18 @@
                     </div>
                     <div class="col-12 col-lg-6 p-2">
                         <div class="col-12">
+                            فتح الرابط في تبويب جديد
+                        </div>
+                        <div class="col-12 pt-3">
+                            <select class="form-control" name="open_in_new_tab">
+                                <option value="1" @if(old('open_in_new_tab', '1') == '1') selected @endif>نعم (تبويب جديد)</option>
+                                <option value="0" @if(old('open_in_new_tab') == '0') selected @endif>لا (نفس الصفحة)</option>
+                            </select>
+                            <small class="text-muted">اختر إذا كان الرابط يفتح في تبويب جديد أم في نفس الصفحة</small>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 p-2">
+                        <div class="col-12">
                             الأولوية
                         </div>
                         <div class="col-12 pt-3">

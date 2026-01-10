@@ -1310,8 +1310,13 @@
                                 // Track click first
                                 trackAdClick(ad.id, targetUrl, ad.type, ad.url_pattern_id);
                                 
-                                // انتقال في نفس الصفحة فقط
-                                window.location.href = targetUrl;
+                                // Open based on open_in_new_tab setting (default: true for new tab)
+                                const openInNewTab = ad.open_in_new_tab !== undefined ? ad.open_in_new_tab : true;
+                                if (openInNewTab) {
+                                    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                                } else {
+                                    window.location.href = targetUrl;
+                                }
                             } else {
                                 linkClicked = false; // Reset if no valid href
                             }
@@ -1358,8 +1363,13 @@
                             
                             trackAdClick(ad.id, ad.url, ad.type, ad.url_pattern_id);
                             
-                            // انتقال في نفس الصفحة فقط
-                            window.location.href = ad.url;
+                            // Open based on open_in_new_tab setting (default: true for new tab)
+                            const openInNewTab = ad.open_in_new_tab !== undefined ? ad.open_in_new_tab : true;
+                            if (openInNewTab) {
+                                window.open(ad.url, '_blank', 'noopener,noreferrer');
+                            } else {
+                                window.location.href = ad.url;
+                            }
                             
                             return false;
                         };
@@ -1445,8 +1455,13 @@
                                 const targetUrl = ad.url || href;
                                 trackAdClick(ad.id, targetUrl, ad.selector, ad.url_pattern_id);
                                 
-                                // انتقال في نفس الصفحة فقط
-                                window.location.href = targetUrl;
+                                // Open based on open_in_new_tab setting (default: true for new tab)
+                                const openInNewTab = ad.open_in_new_tab !== undefined ? ad.open_in_new_tab : true;
+                                if (openInNewTab) {
+                                    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                                } else {
+                                    window.location.href = targetUrl;
+                                }
                             }
                             
                             return false;
@@ -1477,8 +1492,13 @@
                             
                             trackAdClick(ad.id, ad.url, ad.selector, ad.url_pattern_id);
                             
-                            // انتقال في نفس الصفحة فقط
-                            window.location.href = ad.url;
+                            // Open based on open_in_new_tab setting (default: true for new tab)
+                            const openInNewTab = ad.open_in_new_tab !== undefined ? ad.open_in_new_tab : true;
+                            if (openInNewTab) {
+                                window.open(ad.url, '_blank', 'noopener,noreferrer');
+                            } else {
+                                window.location.href = ad.url;
+                            }
                             
                             return false;
                         }, { capture: true, once: false, passive: false });

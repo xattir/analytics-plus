@@ -53,6 +53,22 @@
                     </div>
                     <div class="col-12 col-lg-6 p-2">
                         <div class="col-12">
+                            فتح الرابط في تبويب جديد
+                        </div>
+                        <div class="col-12 pt-3">
+                            <select class="form-control" name="open_in_new_tab">
+                                @php
+                                    $currentValue = old('open_in_new_tab', $advertisement->open_in_new_tab ?? true);
+                                    $isNewTab = ($currentValue == '1' || $currentValue == 1 || $currentValue === true);
+                                @endphp
+                                <option value="1" @if($isNewTab) selected @endif>نعم (تبويب جديد)</option>
+                                <option value="0" @if(!$isNewTab) selected @endif>لا (نفس الصفحة)</option>
+                            </select>
+                            <small class="text-muted">اختر إذا كان الرابط يفتح في تبويب جديد أم في نفس الصفحة</small>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 p-2">
+                        <div class="col-12">
                             الأولوية
                         </div>
                         <div class="col-12 pt-3">

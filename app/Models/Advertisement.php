@@ -12,6 +12,7 @@ class Advertisement extends Model
         'type',
         'content',
         'url',
+        'open_in_new_tab',
         'padding_x',
         'padding_y',
         'interval_period',
@@ -24,6 +25,7 @@ class Advertisement extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'open_in_new_tab' => 'boolean',
         'priority' => 'integer',
         'padding_x' => 'integer',
         'padding_y' => 'integer',

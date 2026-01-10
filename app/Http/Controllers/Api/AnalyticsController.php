@@ -393,6 +393,7 @@ class AnalyticsController extends Controller
                                 'selector' => null,
                                 'content' => $ad->renderContent(),
                                 'url' => $ad->url,
+                                'open_in_new_tab' => $ad->open_in_new_tab ?? true,
                                 'padding_x' => $ad->padding_x ?? 20,
                                 'padding_y' => $ad->padding_y ?? 20,
                                 'interval_period' => $ad->interval_period ?? null,
@@ -437,6 +438,7 @@ class AnalyticsController extends Controller
                             'selector' => $selectorKey,
                             'content' => $ad->renderContent(),
                             'url' => $ad->url,
+                            'open_in_new_tab' => $ad->open_in_new_tab ?? true,
                             'interval_period' => $ad->interval_period,
                             'url_pattern_id' => $urlPatternId,
                         ];
