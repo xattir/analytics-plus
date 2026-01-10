@@ -140,9 +140,10 @@ Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->gr
         Route::get('error-reports/{report}',[BackendTrafficsController::class,'error_report'])->name('traffics.error-report');
         
         // Analytics routes for admin dashboard
-        Route::resource('analytics', BackendAnalyticsController::class, ['parameters' => ['analytics' => 'site']])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
+        // IMPORTANT: Place specific routes BEFORE resource route to avoid route conflicts
         Route::get('analytics/websites/all', [BackendAnalyticsController::class, 'websites'])->name('analytics.websites');
         Route::post('analytics/reorder', [BackendAnalyticsController::class, 'reorder'])->name('analytics.reorder');
+        Route::resource('analytics', BackendAnalyticsController::class, ['parameters' => ['analytics' => 'site']])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
         Route::get('analytics/{site}/tracking-code', [BackendAnalyticsController::class, 'trackingCode'])->name('analytics.tracking-code');
         Route::get('analytics/{site}/search', [BackendAnalyticsController::class, 'search'])->name('analytics.search');
         Route::post('analytics/{site}/search', [BackendAnalyticsController::class, 'searchResults'])->name('analytics.search-results');

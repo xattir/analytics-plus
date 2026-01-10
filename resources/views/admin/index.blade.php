@@ -154,10 +154,11 @@
 @endcan
 @can('admin-analytics-read')
 @php
-    $isSuperAdmin = auth()->user()->hasRole('superadmin');
-    $mySitesCount = $isSuperAdmin ? \App\Models\AnalyticsSite::where('user_id', auth()->id())->count() : 0;
+    $userId = auth()->id();
+    // Count only user's own sites (sites they created)
+    $mySitesCount = \App\Models\AnalyticsSite::where('user_id', $userId)->count();
 @endphp
-@if($isSuperAdmin && $mySitesCount > 0)
+@if($mySitesCount > 0)
 <div class="col-6 col-sm-6 col-lg-4 col-xl-3 col-xxl-2 px-2 my-2">
 	<div class="col-12 px-0 py-1 d-flex main-box-wedit">
 		<div style="width: 65px;" class="p-2">

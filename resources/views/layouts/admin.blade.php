@@ -599,17 +599,12 @@
                     <!-- Analytics Sites List -->
                     @php
                         $userId = auth()->id();
-                        $isSuperAdmin = auth()->user()->hasRole('superadmin');
-                        
-                        if ($isSuperAdmin) {
-                            $analyticsSites = \App\Models\AnalyticsSite::orderBy('order', 'asc')->orderBy('created_at', 'desc')->get();
-                        } else {
-                            $ownedSites = \App\Models\AnalyticsSite::where('user_id', $userId)->get();
-                            $memberSites = \App\Models\AnalyticsSite::whereHas('users', function($query) use ($userId) {
-                                $query->where('user_id', $userId);
-                            })->get();
-                            $analyticsSites = $ownedSites->merge($memberSites)->unique('id')->sortBy('order')->values();
-                        }
+                        // All users (including superadmin) see only their own sites + sites they're members of
+                        $ownedSites = \App\Models\AnalyticsSite::where('user_id', $userId)->get();
+                        $memberSites = \App\Models\AnalyticsSite::whereHas('users', function($query) use ($userId) {
+                            $query->where('user_id', $userId);
+                        })->get();
+                        $analyticsSites = $ownedSites->merge($memberSites)->unique('id')->sortBy('order')->values();
                     @endphp
                     <div class="col-12 px-0 sites-section">
                         <div class="sites-section-title">
