@@ -3,8 +3,8 @@
     "file": "assets/main-DcD9-e9F.css",
     "src": "_main-!~{005}~.js"
   },
-  "_main-BmQLPuOf.js": {
-    "file": "assets/main-BmQLPuOf.js",
+  "_main-ADtDUM9b.js": {
+    "file": "assets/main-ADtDUM9b.js",
     "name": "main",
     "css": [
       "assets/main-DcD9-e9F.css"
@@ -293,24 +293,24 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-CFOum4YU.js",
+    "file": "assets/app-BhtfY3tD.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_main-BmQLPuOf.js"
+      "_main-ADtDUM9b.js"
     ],
     "css": [
       "assets/app-BKFG0Cpy.css"
     ]
   },
   "resources/js/dashboard.js": {
-    "file": "assets/dashboard-C20mHJw3.js",
+    "file": "assets/dashboard-CjudOw4x.js",
     "name": "dashboard",
     "src": "resources/js/dashboard.js",
     "isEntry": true,
     "imports": [
-      "_main-BmQLPuOf.js"
+      "_main-ADtDUM9b.js"
     ],
     "css": [
       "assets/dashboard-DH4eK6Jk.css"
