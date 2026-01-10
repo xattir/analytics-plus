@@ -310,12 +310,13 @@
                         
                         <div class="form-group-modern">
                             <label class="form-label-modern">Custom URL Patterns</label>
-                            <textarea name="custom_patterns" id="patterns-editor" style="display:none;">@php
+                            @php
                                 $patternsValue = '';
                                 if (old('custom_patterns')) {
                                     $patternsValue = is_array(old('custom_patterns')) ? implode("\n", old('custom_patterns')) : old('custom_patterns');
                                 }
-                            @endphp{{ $patternsValue }}</textarea>
+                            @endphp
+                            <textarea name="custom_patterns" id="patterns-editor" style="display:none;">{!! htmlspecialchars($patternsValue, ENT_QUOTES, 'UTF-8') !!}</textarea>
                             <div id="patterns-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
                             <span class="form-text-modern">أدخل patterns مخصصة (مثل /products/* أو /blog/*). يمكنك استخدام * كـ wildcard. سطر واحد لكل pattern.</span>
                         </div>
@@ -348,14 +349,13 @@
                         
                         <div class="form-group-modern" id="custom_selector_field">
                             <label class="form-label-modern">Selectors مخصصة</label>
-                            <textarea name="custom_selectors" id="selectors-editor" style="display:none;">@php
+                            @php
                                 $selectorsValue = '';
                                 if (old('custom_selectors')) {
                                     $selectorsValue = is_array(old('custom_selectors')) ? implode("\n", old('custom_selectors')) : old('custom_selectors');
-                                } elseif (isset($advertisement) && isset($currentCustomSelectors) && is_array($currentCustomSelectors)) {
-                                    $selectorsValue = implode("\n", $currentCustomSelectors);
                                 }
-                            @endphp{{ $selectorsValue }}</textarea>
+                            @endphp
+                            <textarea name="custom_selectors" id="selectors-editor" style="display:none;">{!! htmlspecialchars($selectorsValue, ENT_QUOTES, 'UTF-8') !!}</textarea>
                             <div id="selectors-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
                             <span class="form-text-modern">سطر واحد لكل selector</span>
                         </div>
