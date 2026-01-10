@@ -108,6 +108,8 @@ Route::prefix('admin')->middleware(['auth','ActiveAccount'])->name('admin.')->gr
 
         Route::resource('announcements',BackendAnnouncementController::class);
         Route::resource('files',BackendFileController::class);
+        Route::post('files/upload', [BackendFileController::class, 'upload'])->name('files.upload');
+        Route::get('files/{file}/url', [BackendFileController::class, 'getUrl'])->name('files.url');
         Route::post('contacts/resolve',[BackendContactController::class,'resolve'])->name('contacts.resolve');
         Route::resource('contacts',BackendContactController::class);
         Route::resource('menus',BackendMenuController::class);

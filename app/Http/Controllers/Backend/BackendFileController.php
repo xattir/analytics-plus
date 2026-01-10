@@ -4,30 +4,93 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
+use App\Models\TempFile;
 use Illuminate\Http\Request;
 
 class BackendFileController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('can:hub-files-create', ['only' => ['create','store']]);
+        $this->middleware('can:hub-files-create', ['only' => ['create','store', 'upload']]);
         $this->middleware('can:hub-files-read',   ['only' => ['show', 'index']]);
         $this->middleware('can:hub-files-update',   ['only' => ['edit','update']]);
-        $this->middleware('can:hub-files-delete',   ['only' => ['delete']]);
+        $this->middleware('can:hub-files-delete',   ['only' => ['delete', 'destroy']]);
     }
 
 
     public function index(Request $request)
     {
-        $files = Media::where(function($q)use($request){
-
-            if($request->id!=null)
-                $q->where('id',$request->id);
-            if($request->user_id!=null)
-                $q->where('user_id',$request->user_id);
+        $userId = auth()->id();
+        
+        // Get files from TempFile model (user's uploaded files)
+        // Media files are linked to TempFile via morph relationship
+        $files = Media::where('model_type', TempFile::class)
+            ->whereHas('model', function($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
+            ->where(function($q) use ($request) {
+                if($request->id != null) {
+                    $q->where('id', $request->id);
+                }
+            })
+            ->with('model') // Eager load the TempFile model
+            ->orderBy('id', 'DESC')
+            ->paginate(20);
             
-        })->orderBy('id','DESC')->paginate();
-        return view('admin.files.index',compact('files'));
+        return view('admin.files.index', compact('files'));
+    }
+    
+    /**
+     * Upload file (image or video) with drag & drop support
+     * Maximum size: 100MB
+     */
+    public function upload(Request $request)
+    {
+        if(!auth()->user()->can('hub-files-create')) {
+            abort(403);
+        }
+        
+        $request->validate([
+            'file' => 'required|file|mimes:jpeg,jpg,png,gif,webp,mp4,avi,mov,wmv,flv,webm|max:102400', // 100MB = 102400 KB (Laravel max is in KB)
+        ], [
+            'file.required' => 'الرجاء اختيار ملف للرفع',
+            'file.mimes' => 'نوع الملف غير مدعوم. المسموح: صور (jpeg, jpg, png, gif, webp) أو فيديو (mp4, avi, mov, wmv, flv, webm)',
+            'file.max' => 'حجم الملف يجب أن يكون أقل من 100MB',
+        ]);
+        
+        try {
+            $userId = auth()->id();
+            $file = $request->file('file');
+            
+            // Create TempFile record
+            $tempFile = TempFile::create([
+                'name' => uniqid('file_'),
+                'user_id' => $userId
+            ]);
+            
+            // Upload file using Spatie Media Library
+            $media = $tempFile->addMediaFromRequest('file')
+                ->toMediaCollection('user-files');
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'تم رفع الملف بنجاح',
+                'file' => [
+                    'id' => $media->id,
+                    'name' => $media->name,
+                    'file_name' => $media->file_name,
+                    'url' => $media->getUrl(),
+                    'size' => $media->size,
+                    'mime_type' => $media->mime_type,
+                    'created_at' => $media->created_at->format('Y-m-d H:i:s'),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء رفع الملف: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -94,9 +157,35 @@ class BackendFileController extends Controller
     public function destroy(Media $file)
     {
         if(!auth()->user()->can('hub-files-delete'))abort(403);
+        
+        // Check if user owns this file
+        $userId = auth()->id();
+        if($file->model_type === TempFile::class && $file->model && $file->model->user_id != $userId) {
+            abort(403, 'ليس لديك صلاحية لحذف هذا الملف');
+        }
+        
         $file->forceDelete();
         //you have to remove it if you want
         flash()->success(__('utils/toastr.process_success_message'));
         return redirect()->back();
+    }
+    
+    /**
+     * Get file URL for copying
+     */
+    public function getUrl(Media $file)
+    {
+        if(!auth()->user()->can('hub-files-read'))abort(403);
+        
+        // Check if user owns this file
+        $userId = auth()->id();
+        if($file->model_type === TempFile::class && $file->model && $file->model->user_id != $userId) {
+            abort(403, 'ليس لديك صلاحية للوصول إلى هذا الملف');
+        }
+        
+        return response()->json([
+            'success' => true,
+            'url' => $file->getUrl()
+        ]);
     }
 }
