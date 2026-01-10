@@ -310,7 +310,17 @@
                         
                         <div class="form-group-modern">
                             <label class="form-label-modern">Custom URL Patterns</label>
-                            <textarea name="custom_patterns" id="patterns-editor" style="display:none;">{{old('custom_patterns', (isset($advertisement) && method_exists($advertisement, 'getCustomPatterns')) ? $advertisement->getCustomPatterns() : (isset($currentCustomPatterns) ? $currentCustomPatterns : ''))}}</textarea>
+                            <textarea name="custom_patterns" id="patterns-editor" style="display:none;">@php
+                                $patternsValue = '';
+                                if (old('custom_patterns')) {
+                                    $patternsValue = is_array(old('custom_patterns')) ? implode("\n", old('custom_patterns')) : old('custom_patterns');
+                                } elseif (isset($advertisement) && method_exists($advertisement, 'getCustomPatterns')) {
+                                    $patterns = $advertisement->getCustomPatterns();
+                                    $patternsValue = is_array($patterns) ? implode("\n", $patterns) : (string)$patterns;
+                                } elseif (isset($currentCustomPatterns)) {
+                                    $patternsValue = is_array($currentCustomPatterns) ? implode("\n", $currentCustomPatterns) : (string)$currentCustomPatterns;
+                                }
+                            @endphp{{ $patternsValue }}</textarea>
                             <div id="patterns-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
                             <span class="form-text-modern">أدخل patterns مخصصة (مثل /products/* أو /blog/*). يمكنك استخدام * كـ wildcard. سطر واحد لكل pattern.</span>
                         </div>
@@ -343,7 +353,14 @@
                         
                         <div class="form-group-modern" id="custom_selector_field">
                             <label class="form-label-modern">Selectors مخصصة</label>
-                            <textarea name="custom_selectors" id="selectors-editor" style="display:none;">{{old('custom_selectors', (isset($advertisement) && isset($currentCustomSelectors) && is_array($currentCustomSelectors)) ? implode("\n", $currentCustomSelectors) : '')}}</textarea>
+                            <textarea name="custom_selectors" id="selectors-editor" style="display:none;">@php
+                                $selectorsValue = '';
+                                if (old('custom_selectors')) {
+                                    $selectorsValue = is_array(old('custom_selectors')) ? implode("\n", old('custom_selectors')) : old('custom_selectors');
+                                } elseif (isset($advertisement) && isset($currentCustomSelectors) && is_array($currentCustomSelectors)) {
+                                    $selectorsValue = implode("\n", $currentCustomSelectors);
+                                }
+                            @endphp{{ $selectorsValue }}</textarea>
                             <div id="selectors-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
                             <span class="form-text-modern">سطر واحد لكل selector</span>
                         </div>

@@ -698,7 +698,7 @@
                     @can('hub-files-create')
                     <div class="btn-group" id="fileUploadIcon" style="width:44px;height:44px;margin-right: 8px;display: inline-flex !important;visibility: visible !important;">
                         <div class="d-flex justify-content-center align-items-center" style="width: 44px;height: 44px;position: relative;cursor: pointer;border-radius: 8px;border: none;background: transparent;padding: 0;" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
-                            <i class="fas fa-cloud-upload-alt" style="color: var(--color-2);transition: all 0.3s ease;font-size: 18px;display: inline-block !important;visibility: visible !important;"></i>
+                            <i class="fas fa-cloud-upload-alt" style="color: var(--color-2);transition: all 0.3s ease;font-size: 18px;display: inline-block !important;visibility: visible !important;font-family: 'Font Awesome 6 Pro' !important;"></i>
                         </div>
                     </div>
                     @endcan
