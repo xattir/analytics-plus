@@ -454,29 +454,89 @@ class BackendAdvertisementController extends Controller
     {
         $advertisement->load(['sites', 'impressions', 'clicks']);
 
-        // Get stats by date
+        // Get clicks for last 30 minutes (bars chart)
+        $thirtyMinutesAgo = now()->subMinutes(30);
+        $clicksLast30Minutes = DB::table('advertisement_clicks')
+            ->where('advertisement_id', $advertisement->id)
+            ->where('created_at', '>=', $thirtyMinutesAgo)
+            ->select(DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d %H:%i") as minute'), DB::raw('COUNT(*) as count'))
+            ->groupBy('minute')
+            ->orderBy('minute', 'asc')
+            ->get();
+
+        // Get stats by date (last 30 days)
         $impressionsByDate = DB::table('advertisement_impressions')
             ->where('advertisement_id', $advertisement->id)
+            ->where('created_at', '>=', now()->subDays(30))
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
             ->groupBy('date')
-            ->orderBy('date', 'desc')
-            ->limit(30)
+            ->orderBy('date', 'asc')
             ->get();
 
         $clicksByDate = DB::table('advertisement_clicks')
             ->where('advertisement_id', $advertisement->id)
+            ->where('created_at', '>=', now()->subDays(30))
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
             ->groupBy('date')
-            ->orderBy('date', 'desc')
-            ->limit(30)
+            ->orderBy('date', 'asc')
             ->get();
 
-        // Get stats by country
-        $impressionsByCountry = DB::table('advertisement_impressions')
+        // Get top sites by clicks
+        $topSitesByClicks = DB::table('advertisement_clicks')
+            ->join('analytics_sites', 'advertisement_clicks.site_id', '=', 'analytics_sites.id')
+            ->where('advertisement_clicks.advertisement_id', $advertisement->id)
+            ->select('analytics_sites.title', 'analytics_sites.domain', DB::raw('COUNT(*) as clicks_count'))
+            ->groupBy('analytics_sites.id', 'analytics_sites.title', 'analytics_sites.domain')
+            ->orderBy('clicks_count', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Get top sites by impressions
+        $topSitesByImpressions = DB::table('advertisement_impressions')
+            ->join('analytics_sites', 'advertisement_impressions.site_id', '=', 'analytics_sites.id')
+            ->where('advertisement_impressions.advertisement_id', $advertisement->id)
+            ->select('analytics_sites.title', 'analytics_sites.domain', DB::raw('COUNT(*) as impressions_count'))
+            ->groupBy('analytics_sites.id', 'analytics_sites.title', 'analytics_sites.domain')
+            ->orderBy('impressions_count', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Get top countries by clicks
+        $topCountriesByClicks = DB::table('advertisement_clicks')
             ->where('advertisement_id', $advertisement->id)
             ->whereNotNull('country_code')
             ->select('country_code', DB::raw('COUNT(*) as count'))
             ->groupBy('country_code')
+            ->orderBy('count', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Get top countries by impressions
+        $topCountriesByImpressions = DB::table('advertisement_impressions')
+            ->where('advertisement_id', $advertisement->id)
+            ->whereNotNull('country_code')
+            ->select('country_code', DB::raw('COUNT(*) as count'))
+            ->groupBy('country_code')
+            ->orderBy('count', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Get top pages/URLs by clicks
+        $topPagesByClicks = DB::table('advertisement_clicks')
+            ->where('advertisement_id', $advertisement->id)
+            ->whereNotNull('url')
+            ->select('url', DB::raw('COUNT(*) as count'))
+            ->groupBy('url')
+            ->orderBy('count', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Get top pages/URLs by impressions
+        $topPagesByImpressions = DB::table('advertisement_impressions')
+            ->where('advertisement_id', $advertisement->id)
+            ->whereNotNull('url')
+            ->select('url', DB::raw('COUNT(*) as count'))
+            ->groupBy('url')
             ->orderBy('count', 'desc')
             ->limit(10)
             ->get();
@@ -490,12 +550,30 @@ class BackendAdvertisementController extends Controller
             ->orderBy('count', 'desc')
             ->get();
 
+        $clicksByDevice = DB::table('advertisement_clicks')
+            ->where('advertisement_id', $advertisement->id)
+            ->whereNotNull('device_type')
+            ->select('device_type', DB::raw('COUNT(*) as count'))
+            ->groupBy('device_type')
+            ->orderBy('count', 'desc')
+            ->get();
+
+        $countries = config('countries', []);
+
         return view('admin.advertisements.stats', compact(
             'advertisement',
+            'clicksLast30Minutes',
             'impressionsByDate',
             'clicksByDate',
-            'impressionsByCountry',
-            'impressionsByDevice'
+            'topSitesByClicks',
+            'topSitesByImpressions',
+            'topCountriesByClicks',
+            'topCountriesByImpressions',
+            'topPagesByClicks',
+            'topPagesByImpressions',
+            'impressionsByDevice',
+            'clicksByDevice',
+            'countries'
         ));
     }
 }

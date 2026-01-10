@@ -366,6 +366,20 @@
                             <div id="subdomains-editor-container" style="direction: ltr; text-align: left; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;"></div>
                         </div>
                         
+                        <div class="form-group-modern" id="in_content_padding_field" style="display: none;">
+                            <label class="form-label-modern">Padding (بالـ px) - للـ In Content</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" name="padding_x" id="in_content_padding_x" min="0" max="100" class="form-control-modern" value="{{old('padding_x', isset($advertisement) ? ($advertisement->padding_x ?? 20) : 20)}}" placeholder="20">
+                                    <span class="form-text-modern">Padding X</span>
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" name="padding_y" id="in_content_padding_y" min="0" max="100" class="form-control-modern" value="{{old('padding_y', isset($advertisement) ? ($advertisement->padding_y ?? 20) : 20)}}" placeholder="20">
+                                    <span class="form-text-modern">Padding Y</span>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="form-group-modern" id="padding_fields" style="display: none;">
                             <label class="form-label-modern">Padding (بالـ px) - للـ Pop from Bottom/Top</label>
                             <div class="row">
@@ -667,6 +681,7 @@ window.toggleSelectorFields = function() {
     const customSelectorField = document.getElementById('custom_selector_field');
     const paddingFields = document.getElementById('padding_fields');
     const interstitialPaddingField = document.getElementById('interstitial_padding_field');
+    const inContentPaddingField = document.getElementById('in_content_padding_field');
     const intervalField = document.getElementById('interval_field');
     
     // Special ad types don't need CSS selectors
@@ -677,11 +692,13 @@ window.toggleSelectorFields = function() {
             paddingFields.style.setProperty('display', 'block', 'important');
         }
         if (interstitialPaddingField) interstitialPaddingField.style.display = 'none';
+        if (inContentPaddingField) inContentPaddingField.style.display = 'none';
         if (intervalField) intervalField.style.display = 'none';
     } else if (adType === 'Interstitial') {
         if (selectorFields) selectorFields.style.display = 'none';
         if (customSelectorField) customSelectorField.style.display = 'none';
         if (paddingFields) paddingFields.style.display = 'none';
+        if (inContentPaddingField) inContentPaddingField.style.display = 'none';
         if (interstitialPaddingField) {
             interstitialPaddingField.style.setProperty('display', 'block', 'important');
         }
@@ -689,10 +706,14 @@ window.toggleSelectorFields = function() {
             intervalField.style.setProperty('display', 'block', 'important');
         }
     } else {
+        // in_content type
         if (selectorFields) selectorFields.style.display = 'block';
         if (customSelectorField) customSelectorField.style.display = 'block';
         if (paddingFields) paddingFields.style.display = 'none';
         if (interstitialPaddingField) interstitialPaddingField.style.display = 'none';
+        if (inContentPaddingField) {
+            inContentPaddingField.style.setProperty('display', 'block', 'important');
+        }
         if (intervalField) intervalField.style.display = 'none';
     }
 }
