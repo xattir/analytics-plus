@@ -698,7 +698,7 @@
                     @can('hub-files-create')
                     <div class="btn-group" id="fileUploadIcon" style="width:44px;height:44px;margin-right: 8px;display: inline-flex !important;visibility: visible !important;">
                         <div class="d-flex justify-content-center align-items-center" style="width: 44px;height: 44px;position: relative;cursor: pointer;border-radius: 8px;border: none;background: transparent;padding: 0;" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
-                            <i class="fal fa-cloud-upload-alt" style="color: var(--color-2);transition: all 0.3s ease;font-size: 18px;display: inline-block !important;visibility: visible !important;"></i>
+                            <i class="fas fa-cloud-upload-alt" style="color: var(--color-2);transition: all 0.3s ease;font-size: 18px;display: inline-block !important;visibility: visible !important;"></i>
                         </div>
                     </div>
                     @endcan
@@ -848,14 +848,14 @@
             <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
                 <div class="modal-header" style="border-bottom: 1px solid #e9ecef; padding: 20px 24px;">
                     <h5 class="modal-title font-1" id="fileUploadModalLabel" style="font-weight: 600; color: #212529;">
-                        <i class="fal fa-cloud-upload-alt me-2" style="color: #7b60fb;"></i> رفع ملف جديد
+                        <i class="fas fa-cloud-upload-alt me-2" style="color: #7b60fb;"></i> رفع ملف جديد
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="padding: 24px;">
                     <div class="upload-area-modal" id="uploadAreaModal" style="border: 2px dashed #7b60fb; border-radius: 12px; padding: 60px 40px; background: #f8f9fa; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px;">
                         <div class="upload-icon-modal" style="font-size: 64px; color: #7b60fb; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fal fa-cloud-upload-alt"></i>
+                            <i class="fas fa-cloud-upload-alt"></i>
                         </div>
                         <div class="upload-text-modal" style="font-size: 18px; color: #495057; margin-bottom: 12px; font-weight: 500; text-align: center;">
                             اسحب الملفات هنا أو اضغط للاختيار
