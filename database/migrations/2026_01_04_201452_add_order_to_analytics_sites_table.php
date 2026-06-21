@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('analytics_sites', function (Blueprint $table) {
-            $table->integer('order')->default(0)->after('user_id');
+            $table->integer('order')->default(0);
             $table->index('order');
         });
     }
